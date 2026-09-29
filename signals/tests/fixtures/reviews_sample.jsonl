@@ -1,0 +1,5 @@
+{"rating": 5.0, "title": "Great", "text": "Soft and fits well.", "parent_asin": "B000TEST01", "asin": "B000TEST0A", "helpful_vote": 3, "timestamp": 1600000000000, "verified_purchase": true}
+{"rating": 1.0, "title": "Bad", "text": "Shrank after one wash.", "parent_asin": "B000TEST01", "asin": "B000TEST0B", "helpful_vote": 7, "timestamp": 1600000001000, "verified_purchase": true}
+{"rating": 4.0, "title": "Ok", "text": "Fine.", "parent_asin": "B000TEST01", "asin": "B000TEST0A", "helpful_vote": 0, "timestamp": 1500000000000, "verified_purchase": false}
+{"rating": 3.0, "title": "Meh", "text": "Average shirt.", "parent_asin": "B000TEST01", "asin": "B000TEST0A", "helpful_vote": 0, "timestamp": 1400000000000, "verified_purchase": false}
+{"rating": 2.0, "title": "Other", "text": "Not ours.", "parent_asin": "B999OTHER9", "asin": "B999OTHER9", "helpful_vote": 9, "timestamp": 1400000000000, "verified_purchase": true}
