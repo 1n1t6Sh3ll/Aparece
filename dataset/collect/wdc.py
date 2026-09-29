@@ -27,7 +27,7 @@ sys.path.insert(0, str(HERE))
 
 from extract import SCHEMA_VERSION, canonical_key, hash_id, text_or_none  # noqa: E402
 from normalize import build_normalized  # noqa: E402
-from run import NORM_FILE, NOT_SHIRT, OUT, RAW_FILE, SHIRT, clean, report  # noqa: E402
+from run import NORM_FILE, NOT_SHIRT, OUT, RAW_FILE, SHIRT, clean, read_jsonl, report  # noqa: E402
 
 WDC_BASE = "https://data.dws.informatik.uni-mannheim.de/structureddata/2024-12/quads/classspecific/Product/"
 CRAWL_DATE = "2024-10-01T00:00:00Z"  # WDC 2024-12 = Common Crawl October 2024; no per-page fetch time is published
@@ -249,6 +249,13 @@ def build_normalized_wdc(raw):
         norm["identity"][k] = decode(norm["identity"][k])
     norm["content"]["full_description"] = decode(norm["content"]["full_description"])
     norm["quality_flags"] = [f for f in norm["quality_flags"] if f != "no_json_ld"] + ["wdc_schema_org_only", "source_wdc_2024_12"]
+    cur = norm["commerce"]["currency"]
+    if cur is not None and not re.fullmatch(r"[A-Z]{3}", cur):  # e.g. '€' or '' in priceCurrency
+        norm["commerce"]["currency"] = None
+        for item in norm["variants"]["items"]:
+            item["currency"] = None
+        norm["evidence"] = [e for e in norm["evidence"] if e["field"] != "commerce.currency"]
+        norm["quality_flags"].append("invalid_currency_code")
     if norm["commerce"]["price"] is not None and norm["commerce"]["price"] <= 0:
         norm["quality_status"] = "reject"
         norm["quality_flags"].append("zero_price")
@@ -347,15 +354,31 @@ def collect(args):
     clean(args)
 
 
+def renormalize(args):
+    """Re-run normalization on the existing raw file (no download), then report and clean."""
+    raws = read_jsonl(RAW_FILE)
+    with open(NORM_FILE, "w", encoding="utf-8") as fn:
+        fn.writelines(json.dumps(build_normalized_wdc(r), ensure_ascii=False) + "\n" for r in raws)
+    report(args)
+    clean(args)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--files", nargs="+", required=True, help="WDC part file names, e.g. part_1156.gz")
+    ap.add_argument("--files", nargs="+", help="WDC part file names, e.g. part_1156.gz")
+    ap.add_argument("--renormalize", action="store_true", help="rebuild normalized/clean/report from shirts_raw.jsonl only")
     ap.add_argument("--local-dir", help="directory holding already-downloaded part files")
     ap.add_argument("--max-products", type=int, default=100000)
     ap.add_argument("--per-domain", type=int, default=50)
     ap.add_argument("--workers", type=int, default=8, help="part files processed in parallel")
     ap.add_argument("--types", choices=["tees", "shirts"], default="tees")
-    collect(ap.parse_args())
+    args = ap.parse_args()
+    if args.renormalize:
+        renormalize(args)
+    elif args.files:
+        collect(args)
+    else:
+        ap.error("--files or --renormalize is required")
 
 
 if __name__ == "__main__":

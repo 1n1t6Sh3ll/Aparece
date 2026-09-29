@@ -44,6 +44,7 @@ Builds the same outputs from the [WDC schema.org Product subset, 2024-12 release
 ```sh
 python dataset/collect/wdc.py --workers 8 --per-domain 50 --files part_1156.gz part_1274.gz part_1391.gz   # parts in parallel
 python dataset/collect/wdc.py --files part_1156.gz --local-dir /path/to/downloads   # use already-downloaded parts
+python dataset/collect/wdc.py --renormalize   # rebuild normalized/clean/report from shirts_raw.jsonl, no download
 ```
 
 - Part files are processed in parallel (`--workers`); those missing from `--local-dir` are streamed and filtered in memory (not saved). Only pages with a T-shirt word in a name/category quad are parsed. `Product_lookup.csv` on the WDC site maps domains to part files.

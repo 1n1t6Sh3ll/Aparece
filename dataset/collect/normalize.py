@@ -128,6 +128,8 @@ def parse_composition(line):
     comp = {}
     for mat, p, _, _ in found:
         comp[mat] = comp.get(mat, 0) + p
+    if any(v > 100 for v in comp.values()):  # e.g. '100% cotton ... 1% cotton' repeated; not a composition
+        return None, None
     comp = {k: int(v) if float(v).is_integer() else v for k, v in comp.items()}
     span = line[found[0][2]:found[-1][3]].strip()
     return comp, span

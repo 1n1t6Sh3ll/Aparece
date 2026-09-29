@@ -64,7 +64,7 @@ def is_shirt(p, tees_only=False):
 def read_jsonl(path):
     if not path.exists():
         return []
-    return [json.loads(ln) for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    return [json.loads(ln) for ln in path.read_text(encoding="utf-8").split("\n") if ln.strip()]  # not splitlines(): U+2028 etc. occur inside values
 
 
 def load_stores(domains=None):
