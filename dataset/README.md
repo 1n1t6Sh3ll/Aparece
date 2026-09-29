@@ -37,3 +37,13 @@ python dataset/collect/run.py clean     # drop reject, dedupe, strip HTML -> shi
 - `run.py`: shirt filter on title + product_type (tags only as a fallback), dedupe by canonical URL and SKU, quality status (`high`/`medium`/`low`/`reject` + flags), schema and evidence validation. Rerunning `collect` skips products already in `shirts_raw.jsonl`; `--fresh` starts over.
 
 Outputs in `dataset/output/` (git-ignored): `shirts_raw.jsonl`, `shirts_normalized.jsonl`, `shirts_clean.jsonl`, `shirts_validation_report.csv`, `dataset_stats.json`.
+
+## Amazon Reviews 2023 source (`collect/amazon_source.py`)
+
+Second offline source for training volume: item metadata from Amazon Reviews 2023 (McAuley Lab, https://amazon-reviews-2023.github.io/, HF `McAuley-Lab/Amazon-Reviews-2023`, `raw_meta_Clothing_Shoes_and_Jewelry`). The license is not declared, so this is for hackathon/research use only: every output line carries `provenance: {source: "amazon-reviews-2023", license: "undeclared-research-only"}` so it can be excluded later. `provenance` sits outside the schemas; validation runs on the record without it.
+
+```sh
+python dataset/collect/amazon_source.py --target 5000 --per-brand 50
+```
+
+Streams the ~18 GB file over HTTP (never stored), keeps T-shirts (title match, tops/shirts categories, other garments excluded), caps records per store, and stops at `--target` non-reject records. Raw values are copied as-is: title, features -> bullet points, description, details -> specifications (plus fabric/care sections), price, store -> brand, categories -> breadcrumbs, images, parent_asin -> sku; fields Amazon lacks are null. The full original line is kept in `shirts_raw.jsonl` under `provenance.original`. Normalization reuses `normalize.py`; `parent_asin` is the variant group, and clean dedupes by parent_asin and brand+name. The metadata has no currency or sizes, so records are at most `medium`. `scraped_at` is the run time, not the 2023 crawl date. Outputs in `dataset/output/amazon/`: `shirts_raw.jsonl`, `shirts_normalized.jsonl`, `shirts_clean.jsonl`, `dataset_stats.json`.
