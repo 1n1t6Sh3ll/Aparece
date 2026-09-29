@@ -1,0 +1,6 @@
+*
+!api/
+!dataset/requirements.txt
+!dataset/collect/
+api/tests/
+**/__pycache__

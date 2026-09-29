@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    image: productlens-api
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      MODEL_BACKEND: ${MODEL_BACKEND:-rules}
+    restart: unless-stopped
