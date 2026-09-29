@@ -6,6 +6,7 @@ Schemas and examples for the PowerLens shirt product dataset. The spec and all d
 - `schema/normalized_record.schema.json`: normalized attributes, each backed by evidence.
 - `examples/`: one real raw record and its normalized record (Thinking MU, White hemp Jules shirt).
 - `tests/test_schema.py`: validates the examples and rejects invalid records.
+- Fine-tuning on this data: see [`train/README.md`](../train/README.md).
 
 ## Run the checks
 
