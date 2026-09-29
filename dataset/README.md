@@ -42,12 +42,12 @@ Outputs in `dataset/output/` (git-ignored): `shirts_raw.jsonl`, `shirts_normaliz
 Builds the same outputs from the [WDC schema.org Product subset, 2024-12 release](https://data.dws.informatik.uni-mannheim.de/structureddata/2024-12/quads/classspecific/Product/) (Common Crawl, October 2024). No product pages are fetched.
 
 ```sh
-python dataset/collect/wdc.py --files part_1156.gz part_1274.gz part_1391.gz --per-domain 30 --max-products 4000
+python dataset/collect/wdc.py --workers 8 --per-domain 50 --files part_1156.gz part_1274.gz part_1391.gz   # parts in parallel
 python dataset/collect/wdc.py --files part_1156.gz --local-dir /path/to/downloads   # use already-downloaded parts
 ```
 
-- Part files missing from `--local-dir` are streamed and filtered in memory (not saved). `Product_lookup.csv` on the WDC site maps domains to part files.
+- Part files are processed in parallel (`--workers`); those missing from `--local-dir` are streamed and filtered in memory (not saved). Only pages with a T-shirt word in a name/category quad are parsed. `Product_lookup.csv` on the WDC site maps domains to part files.
 - N-Quads are grouped by page (the 4th element). Each top-level `Product` entity whose name/category names a T-shirt (`tee`, `t-shirt`, `camiseta`, `playera`, `remera`; golf tees, SVG/transfer designs, sets and packs excluded) becomes one raw record. `--types shirts` accepts any shirt type.
 - Raw record: the product's schema.org tree as found (`raw_product_schema`, `raw_offer_schema`; `hasVariant` -> `raw_variants`), name, description (`raw_full_description` and one `overview` section), brand, price/currency/availability, colour/size/material text, SKU/GTIN/MPN, images. HTML-only fields (`raw_title`, `raw_h1`, meta tags, breadcrumbs, care text) are `null`. `scraped_at` is the crawl month (`2024-10-01T00:00:00Z`) because WDC does not publish per-page fetch times; `merchant_name` is the domain.
-- Normalized record: the existing `normalize.py` rules. `source.language` is a stop-word guess (`en`/`es`/`other`; Portuguese counts as `other`). HTML entities and literal `\uXXXX` escapes are decoded in the normalized name, brand and description only. A price of 0 is `reject`. Every record has the flag `wdc_schema_org_only`.
+- Normalized record: the existing `normalize.py` rules. `source.language` is a stop-word guess (`en`/`es`/`other`; Portuguese counts as `other`). HTML entities and literal `\uXXXX` escapes are decoded in the normalized name, brand and description only. A price of 0 is `reject`. Every record has the flags `wdc_schema_org_only` and `source_wdc_2024_12` (the schemas have no source-dataset field).
 - At most `--per-domain` records per domain. `clean` also dedupes by GTIN and product SKU and lists each dropped duplicate with the record it duplicates in `dataset_stats.json` (`duplicates`).

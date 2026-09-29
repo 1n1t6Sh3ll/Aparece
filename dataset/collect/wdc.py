@@ -16,6 +16,7 @@ import re
 import sys
 import urllib.request
 from collections import Counter, defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -245,7 +246,7 @@ def build_normalized_wdc(raw):
     for k in ("brand", "product_name"):
         norm["identity"][k] = decode(norm["identity"][k])
     norm["content"]["full_description"] = decode(norm["content"]["full_description"])
-    norm["quality_flags"] = [f for f in norm["quality_flags"] if f != "no_json_ld"] + ["wdc_schema_org_only"]
+    norm["quality_flags"] = [f for f in norm["quality_flags"] if f != "no_json_ld"] + ["wdc_schema_org_only", "source_wdc_2024_12"]
     if norm["commerce"]["price"] is not None and norm["commerce"]["price"] <= 0:
         norm["quality_status"] = "reject"
         norm["quality_flags"].append("zero_price")
@@ -262,55 +263,77 @@ def open_part(name, local_dir):
     return io.TextIOWrapper(gzip.GzipFile(fileobj=resp), encoding="utf-8", errors="replace")
 
 
-def pages(lines):
-    """Yield (page_url, quads) per page; pages of one domain are contiguous in WDC part files,
-    so all buffered pages are flushed when the domain changes."""
-    buf, dom = defaultdict(list), None
+GRAPH = re.compile(r"<([^<>]*)>\s*\.\s*$")
+HINT = re.compile(r"schema\.org/(?:name|category)> \"[^\"]*" + TEE.pattern[2:-2], re.I)
+
+
+def pages(lines, want=lambda dom: True):
+    """Yield (page_url, quads) for pages whose name/category text hints at a T-shirt (other pages
+    are never parsed). Pages of one domain are contiguous in WDC part files, so buffered pages are
+    flushed when the domain changes; `want(domain)` False skips a domain's lines."""
+    buf, hits, dom, keep = defaultdict(list), set(), None, True
     for line in lines:
-        q = parse_quad(line)
-        if not q:
+        m = GRAPH.search(line)
+        if not m:
             continue
-        d = domain_of(q[3])
-        if d != dom and buf:
-            yield from buf.items()
-            buf = defaultdict(list)
-        dom = d
-        buf[q[3]].append(q)
-    yield from buf.items()
+        g = m.group(1)
+        d = domain_of(g)
+        if d != dom:
+            for url in hits:
+                yield url, [q for q in map(parse_quad, buf[url]) if q]
+            buf, hits, dom, keep = defaultdict(list), set(), d, want(d)
+        if keep:
+            buf[g].append(line)
+            if HINT.search(line):
+                hits.add(g)
+    for url in hits:
+        yield url, [q for q in map(parse_quad, buf[url]) if q]
+
+
+def process_part(part, local_dir, per_domain, types):
+    """Stream one part file -> list of (raw, normalized) with at most per_domain records per domain."""
+    per_dom, seen, out = Counter(), set(), []
+    match = is_tee if types == "tees" else is_shirt_any
+    ok = re.compile(r"[a-z0-9.-]+\.[a-z]{2,}").fullmatch
+    try:
+        with open_part(part, local_dir) as f:
+            for page_url, quads in pages(f, lambda d: bool(ok(d))):
+                dom = domain_of(page_url)
+                if per_dom[dom] >= per_domain:
+                    continue
+                nodes = page_nodes(quads)
+                for s in products(nodes):
+                    tree = to_tree(nodes, s)
+                    if not match(first(tree, "name"), first(tree, "category")):
+                        continue
+                    raw = build_raw_wdc(tree, page_url)
+                    if raw["product_id"] in seen or per_dom[dom] >= per_domain:
+                        continue
+                    seen.add(raw["product_id"])
+                    per_dom[dom] += 1
+                    out.append((raw, build_normalized_wdc(raw)))
+    except (OSError, EOFError) as e:  # a failed download keeps what was read so far
+        print(f"[part error] {part}: {type(e).__name__}: {e}", flush=True)
+    return part, out
 
 
 def collect(args):
     OUT.mkdir(parents=True, exist_ok=True)
-    per_dom, seen, n, skipped = Counter(), set(), 0, Counter()
-    match = is_tee if args.types == "tees" else is_shirt_any
-    with open(RAW_FILE, "w", encoding="utf-8") as fr, open(NORM_FILE, "w", encoding="utf-8") as fn:
-        for part in args.files:
-            print(f"[part] {part}", flush=True)
-            with open_part(part, args.local_dir) as f:
-                for page_url, quads in pages(f):
-                    dom = domain_of(page_url)
-                    if per_dom[dom] >= args.per_domain or not re.fullmatch(r"[a-z0-9.-]+\.[a-z]{2,}", dom):
-                        continue
-                    nodes = page_nodes(quads)
-                    for s in products(nodes):
-                        tree = to_tree(nodes, s)
-                        if not match(first(tree, "name"), first(tree, "category")):
-                            continue
-                        raw = build_raw_wdc(tree, page_url)
-                        if raw["product_id"] in seen or per_dom[dom] >= args.per_domain:
-                            skipped["duplicate_url"] += 1
-                            continue
-                        norm = build_normalized_wdc(raw)
-                        seen.add(raw["product_id"])
-                        per_dom[dom] += 1
-                        n += 1
-                        fr.write(json.dumps(raw, ensure_ascii=False) + "\n")
-                        fn.write(json.dumps(norm, ensure_ascii=False) + "\n")
-                    if n >= args.max_products:
-                        break
-            print(f"[part done] {part}: {n} records, {len(per_dom)} domains", flush=True)
-            if n >= args.max_products:
-                break
+    per_dom, seen, n = Counter(), set(), 0
+    with open(RAW_FILE, "w", encoding="utf-8") as fr, open(NORM_FILE, "w", encoding="utf-8") as fn,             ProcessPoolExecutor(max_workers=args.workers) as pool:
+        jobs = [pool.submit(process_part, p, args.local_dir, args.per_domain, args.types) for p in args.files]
+        for job in as_completed(jobs):
+            part, records = job.result()
+            for raw, norm in records:
+                dom = raw["merchant_domain"]
+                if raw["product_id"] in seen or per_dom[dom] >= args.per_domain or n >= args.max_products:
+                    continue
+                seen.add(raw["product_id"])
+                per_dom[dom] += 1
+                n += 1
+                fr.write(json.dumps(raw, ensure_ascii=False) + "\n")
+                fn.write(json.dumps(norm, ensure_ascii=False) + "\n")
+            print(f"[part done] {part}: +{len(records)}, total {n} records, {len(per_dom)} domains", flush=True)
     report(args)
     clean(args)
 
@@ -319,8 +342,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--files", nargs="+", required=True, help="WDC part file names, e.g. part_1156.gz")
     ap.add_argument("--local-dir", help="directory holding already-downloaded part files")
-    ap.add_argument("--max-products", type=int, default=1500)
-    ap.add_argument("--per-domain", type=int, default=30)
+    ap.add_argument("--max-products", type=int, default=100000)
+    ap.add_argument("--per-domain", type=int, default=50)
+    ap.add_argument("--workers", type=int, default=8, help="part files processed in parallel")
     ap.add_argument("--types", choices=["tees", "shirts"], default="tees")
     collect(ap.parse_args())
 
