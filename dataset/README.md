@@ -25,7 +25,7 @@ Collects shirt (default: T-shirt) records from Shopify stores listed with `use=y
 ```sh
 python dataset/collect/run.py collect --max-products 20 --per-store 4          # T-shirts (default --types tees)
 python dataset/collect/run.py collect --stores huitzilli.myshopify.com --types shirts --max-products 20
-python dataset/collect/run.py collect --max-products 1000 --per-store 400      # same command scales; resumes
+python dataset/collect/run.py collect --max-products 1000 --per-store 400 --workers 4   # parallel across stores; resumes
 python dataset/collect/run.py report    # validation CSV + stats only
 python dataset/collect/run.py clean     # drop reject, dedupe, strip HTML -> shirts_clean.jsonl
 ```

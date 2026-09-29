@@ -12,7 +12,9 @@ import csv
 import json
 import re
 import sys
+import threading
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -93,44 +95,51 @@ def collect(args):
     seen_ids = {r["product_id"] for r in existing}
     seen_urls = {r["source_url"] for r in existing}
     seen_skus = {(r["merchant_domain"], v["sku"]) for r in existing for v in r["raw_variants"] or [] if v["sku"]}
-    total = len(existing)
-    per_store = Counter(r["merchant_domain"] for r in existing)
-    fetcher = Fetcher(use_cache=not args.no_cache)
-    with open(RAW_FILE, "a", encoding="utf-8") as fr, open(NORM_FILE, "a", encoding="utf-8") as fn:
-        for store in load_stores(args.stores):
-            if total >= args.max_products:
+    state = {"total": len(existing), "per_store": Counter(r["merchant_domain"] for r in existing)}
+    lock = threading.Lock()
+
+    def full():
+        return state["total"] >= args.max_products
+
+    def collect_store(store, fr, fn):
+        """One thread per store; each host still gets at most 1 request/second."""
+        dom, fetcher = store["domain"], Fetcher(use_cache=not args.no_cache)
+        try:
+            candidates = shirt_candidates(fetcher, store, args.per_store * 2 + state["per_store"][dom], args.types == "tees")
+        except (Blocked, ValueError, OSError) as e:
+            print(f"[skip store] {dom}: {e}", flush=True)
+            return
+        for p in candidates:
+            if state["per_store"][dom] >= args.per_store or full():
                 break
-            dom = store["domain"]
-            try:
-                candidates = shirt_candidates(fetcher, store, args.per_store * 2 + per_store[dom], args.types == "tees")
-            except (Blocked, ValueError) as e:
-                print(f"[skip store] {dom}: {e}")
+            url = f"https://{dom}/products/{p['handle']}"
+            skus = {(dom, v["sku"]) for v in p.get("variants", []) if v.get("sku")}
+            if url in seen_urls or skus & seen_skus:
                 continue
-            for p in candidates:
-                if per_store[dom] >= args.per_store or total >= args.max_products:
-                    break
-                url = f"https://{dom}/products/{p['handle']}"
-                skus = {(dom, v["sku"]) for v in p.get("variants", []) if v.get("sku")}
-                if url in seen_urls or skus & seen_skus:
-                    continue
-                try:
-                    final_url, html = fetcher.get(url)
-                except Blocked as e:
-                    print(f"[skip] {url}: {e}")
-                    continue
+            try:
+                final_url, html = fetcher.get(url)
                 scraped_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
                 raw = build_raw(p, html, url, final_url, store, scraped_at)
-                if raw["product_id"] in seen_ids:  # same canonical URL
-                    continue
                 norm = build_normalized(raw)
+            except Exception as e:  # one bad page must not stop a long run
+                print(f"[skip] {url}: {type(e).__name__}: {e}", flush=True)
+                continue
+            with lock:
+                if raw["product_id"] in seen_ids or full():  # same canonical URL
+                    continue
                 fr.write(json.dumps(raw, ensure_ascii=False) + "\n")
                 fn.write(json.dumps(norm, ensure_ascii=False) + "\n")
                 fr.flush(), fn.flush()
                 seen_ids.add(raw["product_id"]), seen_urls.add(url)
-                seen_skus |= skus
-                per_store[dom] += 1
-                total += 1
-                print(f"[ok] {total} {norm['quality_status']:6} {url}")
+                seen_skus.update(skus)
+                state["per_store"][dom] += 1
+                state["total"] += 1
+                print(f"[ok] {state['total']} {norm['quality_status']:6} {url}", flush=True)
+
+    with open(RAW_FILE, "a", encoding="utf-8") as fr, open(NORM_FILE, "a", encoding="utf-8") as fn:
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            for f in [pool.submit(collect_store, s, fr, fn) for s in load_stores(args.stores)]:
+                f.result()
     report(args)
     clean(args)
 
@@ -241,6 +250,7 @@ def main():
     c.add_argument("--max-products", type=int, default=20)
     c.add_argument("--per-store", type=int, default=4)
     c.add_argument("--types", choices=["tees", "shirts"], default="tees", help="tees: T-shirts only (default); shirts: all shirt types")
+    c.add_argument("--workers", type=int, default=4, help="stores fetched in parallel (one thread per store)")
     c.add_argument("--fresh", action="store_true", help="delete existing output and start over")
     c.add_argument("--no-cache", action="store_true", help="refetch pages instead of using dataset/.cache")
     sub.add_parser("clean")
