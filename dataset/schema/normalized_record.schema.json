@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/1n1t6Sh3ll/powerlens/dataset/schema/normalized_record.schema.json",
+  "title": "PowerLens normalized shirt product record",
+  "description": "Normalized attributes derived from one raw record (docs/DATASET_SPEC.md sections 4-9, 11-14, 16). Every property is required; unsupported values are null. Every normalized fact should have an item in evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "record_type", "product_id", "source", "identity", "content", "materials",
+    "fit_and_style", "variants", "features", "care", "commerce", "structured_data",
+    "evidence", "conflicts", "quality_status", "quality_flags", "human_reviewed"
+  ],
+  "properties": {
+    "schema_version": { "const": "0.1.0" },
+    "record_type": { "const": "normalized" },
+    "product_id": { "$ref": "#/$defs/product_id" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "canonical_url", "merchant", "merchant_domain", "scraped_at", "language"],
+      "properties": {
+        "url": { "type": "string", "pattern": "^https?://" },
+        "canonical_url": { "type": ["string", "null"], "pattern": "^https?://" },
+        "merchant": { "type": "string", "minLength": 1 },
+        "merchant_domain": { "type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$" },
+        "scraped_at": { "description": "RFC 3339 timestamp; the pattern enforces it without optional format libraries.", "type": "string", "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$" },
+        "language": { "$ref": "#/$defs/text" }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["brand", "product_name", "product_type", "subcategory", "audience"],
+      "properties": {
+        "brand": { "$ref": "#/$defs/text" },
+        "product_name": { "$ref": "#/$defs/text" },
+        "product_type": { "enum": ["t_shirt", "polo", "button_down", "dress_shirt", "oxford", "flannel", "henley", "athletic_shirt", "performance_shirt", "overshirt", "long_sleeve_shirt", "short_sleeve_shirt", "work_shirt", "other", null] },
+        "subcategory": { "$ref": "#/$defs/text" },
+        "audience": { "enum": ["men", "women", "unisex", "kids", "unknown", null] }
+      }
+    },
+    "content": {
+      "description": "Source text copied from the raw record, not rewritten.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "full_description", "short_description", "bullet_points", "meta_title", "meta_description", "h1"],
+      "properties": {
+        "title": { "$ref": "#/$defs/text" },
+        "full_description": { "$ref": "#/$defs/text" },
+        "short_description": { "$ref": "#/$defs/text" },
+        "bullet_points": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "meta_title": { "$ref": "#/$defs/text" },
+        "meta_description": { "$ref": "#/$defs/text" },
+        "h1": { "$ref": "#/$defs/text" }
+      }
+    },
+    "materials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_material", "material_percentages", "fabric_type", "fabric_weight_gsm", "fabric_weight_raw", "stretch", "texture"],
+      "properties": {
+        "primary_material": { "anyOf": [{ "$ref": "#/$defs/material" }, { "type": "null" }] },
+        "material_percentages": {
+          "description": "Material -> percent, only when the page states percentages. Empty object when not stated.",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/material" },
+          "additionalProperties": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 }
+        },
+        "fabric_type": { "$ref": "#/$defs/text" },
+        "fabric_weight_gsm": { "description": "Integer g/m2. See the oz conversion rule in docs/DATASET_SPEC.md.", "type": ["integer", "null"], "minimum": 1 },
+        "fabric_weight_raw": { "$ref": "#/$defs/text" },
+        "stretch": { "type": ["boolean", "null"] },
+        "texture": { "$ref": "#/$defs/text" }
+      }
+    },
+    "fit_and_style": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fit", "neckline", "collar_type", "sleeve_length", "shirt_length", "pattern", "style"],
+      "properties": {
+        "fit": { "enum": ["slim", "regular", "relaxed", "oversized", "athletic", "tailored", "unknown", null] },
+        "neckline": { "enum": ["crew", "v_neck", "scoop", "henley", "other", null] },
+        "collar_type": { "$ref": "#/$defs/text" },
+        "sleeve_length": { "enum": ["sleeveless", "short", "three_quarter", "long", "unknown", null] },
+        "shirt_length": { "$ref": "#/$defs/text" },
+        "pattern": { "enum": ["solid", "striped", "plaid", "graphic", "printed", "textured", "color_block", "other", null] },
+        "style": { "$ref": "#/$defs/text" }
+      }
+    },
+    "variants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product_group_id", "colors", "sizes", "variant_count", "items"],
+      "properties": {
+        "product_group_id": { "description": "Merchant's own parent/group id (e.g. JSON-LD productGroupID), if any.", "$ref": "#/$defs/text" },
+        "colors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["original_color_name", "normalized"],
+            "properties": {
+              "original_color_name": { "type": "string", "minLength": 1 },
+              "normalized": { "type": ["string", "null"], "pattern": "^[a-z_]+$" }
+            }
+          }
+        },
+        "sizes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["raw_size", "normalized_size"],
+            "properties": {
+              "raw_size": { "type": "string", "minLength": 1 },
+              "normalized_size": { "$ref": "#/$defs/text" }
+            }
+          }
+        },
+        "variant_count": { "type": ["integer", "null"], "minimum": 0 },
+        "items": {
+          "description": "One entry per sellable variant; linked to the parent by this record's product_id.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["variant_id", "merchant_variant_id", "color", "size", "sku", "gtin", "mpn", "price", "currency", "availability"],
+            "properties": {
+              "variant_id": { "type": "string", "pattern": "^v_[0-9a-f]{16}$" },
+              "merchant_variant_id": { "$ref": "#/$defs/text" },
+              "color": { "description": "original_color_name of this variant.", "$ref": "#/$defs/text" },
+              "size": { "description": "raw_size of this variant.", "$ref": "#/$defs/text" },
+              "sku": { "$ref": "#/$defs/text" },
+              "gtin": { "type": ["string", "null"], "pattern": "^[0-9]{8,14}$" },
+              "mpn": { "$ref": "#/$defs/text" },
+              "price": { "type": ["number", "null"], "minimum": 0 },
+              "currency": { "$ref": "#/$defs/currency" },
+              "availability": { "$ref": "#/$defs/availability" }
+            }
+          }
+        }
+      }
+    },
+    "features": { "description": "Feature phrases as stated on the page.", "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "care": { "description": "Care instructions as stated on the page.", "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "commerce": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["price", "sale_price", "currency", "availability", "rating", "review_count", "sku", "gtin", "mpn"],
+      "properties": {
+        "price": { "type": ["number", "null"], "minimum": 0 },
+        "sale_price": { "type": ["number", "null"], "minimum": 0 },
+        "currency": { "$ref": "#/$defs/currency" },
+        "availability": { "$ref": "#/$defs/availability" },
+        "rating": { "type": ["number", "null"], "minimum": 0 },
+        "review_count": { "type": ["integer", "null"], "minimum": 0 },
+        "sku": { "$ref": "#/$defs/text" },
+        "gtin": { "type": ["string", "null"], "pattern": "^[0-9]{8,14}$" },
+        "mpn": { "$ref": "#/$defs/text" }
+      }
+    },
+    "structured_data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product_schema_present", "offer_schema_present", "product_group_present", "raw_json_ld"],
+      "properties": {
+        "product_schema_present": { "description": "Any JSON-LD node of @type Product, including ProductGroup variants.", "type": "boolean" },
+        "offer_schema_present": { "type": "boolean" },
+        "product_group_present": { "type": "boolean" },
+        "raw_json_ld": { "type": "array", "items": { "type": ["object", "array"] } }
+      }
+    },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
+    "conflicts": { "type": "array", "items": { "$ref": "#/$defs/conflict" } },
+    "quality_status": { "enum": ["high", "medium", "low", "reject"] },
+    "quality_flags": { "description": "Short snake_case reasons for the quality_status or for later review.", "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
+    "human_reviewed": { "description": "True once a person has reviewed this record. Corrections are stored separately; values here are never overwritten.", "type": "boolean" }
+  },
+  "$defs": {
+    "product_id": { "type": "string", "pattern": "^p_[0-9a-f]{16}$" },
+    "text": { "type": ["string", "null"], "minLength": 1 },
+    "currency": { "type": ["string", "null"], "pattern": "^[A-Z]{3}$" },
+    "availability": { "enum": ["in_stock", "out_of_stock", "preorder", "backorder", "discontinued", "unknown", null] },
+    "material": { "enum": ["cotton", "organic_cotton", "polyester", "recycled_polyester", "linen", "rayon", "viscose", "modal", "lyocell", "elastane", "spandex", "wool", "merino_wool", "nylon", "hemp", "silk", "blend", "other"] },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "value", "source_text", "source_location", "source_url", "method", "confidence", "note"],
+      "properties": {
+        "field": { "description": "Dotted path of the normalized field, e.g. fit_and_style.fit.", "type": "string", "minLength": 1 },
+        "value": { "description": "The normalized value this item supports." },
+        "source_text": { "description": "Exact substring of the raw field named by source_location.", "type": "string", "minLength": 1 },
+        "source_location": { "description": "Path into the raw record, e.g. raw_material_text or raw_description.sections[0].text.", "type": "string", "minLength": 1 },
+        "source_url": { "type": "string", "pattern": "^https?://" },
+        "method": { "enum": ["direct", "rule", "conversion", "human", "model"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "note": { "$ref": "#/$defs/text" }
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "status", "observations", "resolution"],
+      "properties": {
+        "field": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["conflicting", "resolved"] },
+        "observations": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value", "source"],
+            "properties": {
+              "value": { "type": "string", "minLength": 1 },
+              "source": { "description": "Raw record path the value came from.", "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "resolution": {
+          "description": "null unless a documented higher-authority rule decided it.",
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["value", "rule"],
+          "properties": { "value": {}, "rule": { "type": "string", "minLength": 1 } }
+        }
+      },
+      "if": { "properties": { "status": { "const": "resolved" } } },
+      "then": { "properties": { "resolution": { "type": "object" } } },
+      "else": { "properties": { "resolution": { "type": "null" } } }
+    }
+  }
+}

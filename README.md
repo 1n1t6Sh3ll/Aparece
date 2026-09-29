@@ -1,5 +1,7 @@
 # powerlens
 
+Shirt dataset: spec and decisions in [`docs/DATASET_SPEC.md`](docs/DATASET_SPEC.md); schemas, examples, and checks in [`dataset/`](dataset/README.md).
+
 ## Team workflow
 Humans, Claude Code, and Codex coordinate through the `project-team` skill. Start with `AGENTS.md` and `coordination/BOARD.md`.
 
