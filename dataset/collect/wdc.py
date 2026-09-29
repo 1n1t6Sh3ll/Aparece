@@ -14,6 +14,8 @@ import io
 import json
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -259,7 +261,14 @@ def open_part(name, local_dir):
     path = Path(local_dir or ".") / name
     if path.exists():
         return gzip.open(path, "rt", encoding="utf-8", errors="replace")
-    resp = urllib.request.urlopen(WDC_BASE + name, timeout=120)  # streamed, never saved
+    for attempt in range(1, 7):  # the server answers 429 to too many parallel downloads: back off
+        try:
+            resp = urllib.request.urlopen(WDC_BASE + name, timeout=120)  # streamed, never saved
+            break
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or attempt == 6:
+                raise
+            time.sleep(30 * attempt)
     return io.TextIOWrapper(gzip.GzipFile(fileobj=resp), encoding="utf-8", errors="replace")
 
 
