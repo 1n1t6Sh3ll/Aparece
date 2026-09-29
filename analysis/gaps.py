@@ -10,7 +10,7 @@ import json
 import statistics
 import sys
 
-from analysis.peers import find_peers, get, load_records
+from analysis.peers import find_peers, get, load_records, price_comparable
 
 # (section, key) attributes counted for completeness. A value is "present" if not
 # None and not an empty string/list/dict.
@@ -134,6 +134,14 @@ def analyze(target, peers):
             "Adding the verified attributes most peers expose is a reasonable intervention to test",
             {"attributes": missing_majority},
             "Change one thing at a time and re-measure with the benchmark."))
+
+    unpriced = [i for i, p in zip(ids, peers) if not price_comparable(target, p)]
+    if unpriced:
+        issues.append(_issue(
+            "UNKNOWN", "price_band",
+            f"Price band not applied to {len(unpriced)}/{n} peers "
+            "(price or currency unknown, or currencies differ)",
+            {"peer_ids": unpriced}, "Record price and currency to tighten the comparison."))
 
     if n < 3:
         issues.append(_issue(

@@ -10,7 +10,7 @@ from analysis.peers import find_peers
 
 
 def rec(pid, price=20.0, lang="en", ptype="t_shirt", audience="men", gsm=None,
-        schema=False, desc="Soft cotton tee.", fit="regular"):
+        schema=False, desc="Soft cotton tee.", fit="regular", currency="USD"):
     return {
         "product_id": pid,
         "source": {"language": lang},
@@ -19,7 +19,7 @@ def rec(pid, price=20.0, lang="en", ptype="t_shirt", audience="men", gsm=None,
         "materials": {"primary_material": "cotton", "fabric_weight_gsm": gsm},
         "fit_and_style": {"fit": fit},
         "variants": {"colors": ["black"], "sizes": []},
-        "commerce": {"price": price},
+        "commerce": {"price": price, "currency": currency},
         "structured_data": {"product_schema_present": schema},
     }
 
@@ -45,6 +45,17 @@ class PeerTests(unittest.TestCase):
     def test_unknown_price_and_audience_allowed(self):
         c = rec("c", price=None, audience=None)
         self.assertEqual([r["product_id"] for _, r in find_peers(TARGET, [c])], ["c"])
+
+    def test_currency_mismatch_skips_price(self):
+        inr = rec("inr", price=1500, currency="INR")  # far outside band if compared
+        nocur = rec("nocur", price=1500, currency=None)
+        usd_far = rec("usd_far", price=1500)
+        got = find_peers(TARGET, [inr, nocur, usd_far])
+        self.assertEqual(sorted(r["product_id"] for _, r in got), ["inr", "nocur"])
+        out = analyze(TARGET, got)
+        i = next(x for x in out["issues"] if x["field"] == "price_band")
+        self.assertEqual(i["type"], "UNKNOWN")
+        self.assertEqual(sorted(i["evidence"]["peer_ids"]), ["inr", "nocur"])
 
     def test_no_product_type(self):
         t = rec("x", ptype=None)
