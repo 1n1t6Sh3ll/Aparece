@@ -41,4 +41,4 @@ $PY train/eval.py                         # base zero-shot vs. base + adapter on
 $PY train/eval.py --limit 50 --skip_base
 ```
 
-Prints JSON validity rate, per-field exact match and mean field exact match for each model (greedy decoding).
+Prints, for an all-null baseline, the base model and the fine-tuned model (greedy decoding): JSON validity rate, per-field exact match, mean field exact match, accuracy on non-null gold fields and accuracy on null gold fields. A key missing from the output counts as a miss.
