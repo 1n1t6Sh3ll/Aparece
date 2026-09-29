@@ -7,6 +7,9 @@ Evidence-driven view of how products are represented in search and AI answers. V
 - `train/` — Qwen fine-tuning and evaluation pipeline (see `train/README.md`).
 - `coordination/` — task board pointer (`BOARD.md`) and human decisions (`DECISIONS.md`).
 
+## Chrome extension
+`extension/` is a no-build MV3 popup that audits the current product page via `POST /v1/extract`. See `extension/README.md` to load it unpacked or preview it with mock data.
+
 ## Checks
 CI (`ci / check`) runs `python -m unittest discover -s dataset/tests` and compiles `train/`.
 
