@@ -1,12 +1,14 @@
-# powerlens
+# ProductLens
 
-Shirt dataset: spec and decisions in [`docs/DATASET_SPEC.md`](docs/DATASET_SPEC.md); schemas, examples, and checks in [`dataset/`](dataset/README.md).
+Evidence-driven view of how products are represented in search and AI answers. Vision: `docs/VISION.md`.
 
-## Team workflow
-Humans, Claude Code, and Codex coordinate through the `project-team` skill. Start with `AGENTS.md` and `coordination/BOARD.md`.
+## Layout
+- `dataset/` — shirt dataset schemas, examples, tests (spec: `docs/DATASET_SPEC.md`).
+- `train/` — Qwen fine-tuning and evaluation pipeline (see `train/README.md`).
+- `coordination/` — task board pointer (`BOARD.md`) and human decisions (`DECISIONS.md`).
 
-- Skill: `.claude/skills/project-team/` and `.agents/skills/project-team/` (identical copies).
-- Agents: `project-manager`, `project-worker`, `project-reviewer`, `project-researcher` in `.claude/agents/` and `.codex/agents/`.
-- Check: `bash scripts/check-coordination.sh` (also runs in CI as `coordination / check`) fails if the skill copies or agent definitions drift.
-- Board: GitHub Issues + project board (see `coordination/BOARD.md`).
-- Merging: PR only; the `main` ruleset requires the `check` status and 1 approval (repo admins can bypass the approval on PR merge, which is how a solo owner merges). The real gate is independent review, updated docs, and explicit human approval of the exact revision.
+## Checks
+CI (`ci / check`) runs `python -m unittest discover -s dataset/tests` and compiles `train/`.
+
+## Merging
+PR only. `main` requires the `check` status and 1 approval (repo admins can bypass the approval on PR merge). Every merge also needs independent review, updated docs, and explicit human approval of the exact revision.
