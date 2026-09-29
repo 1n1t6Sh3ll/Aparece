@@ -1,6 +1,7 @@
 # PowerLens board
 Authoritative board: GitHub Issues in this repo, shown on the project https://github.com/users/1n1t6Sh3ll/projects/2. Each task has an issue titled `TEAM-<n> ...` with a `status:*` label (ready, in-progress, review, blocked).
 Project manager: Claude Code PM session (human-designated 2026-09-29). The human can change the owner.
+Decisions: `coordination/DECISIONS.md`. Product vision: `docs/VISION.md`. Dataset spec: `docs/DATASET_SPEC.md`. Training: `train/README.md`.
 Claim mode: until TEAM-3 (atomic `refs/claims/<TASK>` claims) is verified, propose a claim as an issue comment and wait for PM confirmation before editing. Issue assignment is not an atomic claim.
 
 Claim format: ID, owner/session, parent if any, files/scope, workspace, expected result.

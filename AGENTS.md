@@ -1,6 +1,6 @@
 # PowerLens team
 Use the project-team skill. One project manager maintains priorities, dependencies, and acceptance criteria and resolves claim conflicts with the human. The project manager can also orchestrate agents.
-Read coordination/BOARD.md. Claim before editing; stay within scope; submit evidence for independent review. Keep code and updates short. Use separate workspaces for concurrent implementation.
+Read coordination/BOARD.md. Claim before editing; stay within scope; submit evidence for independent review. Keep code and updates short. Use separate workspaces for concurrent implementation. Read coordination/DECISIONS.md for current human decisions.
 
 Follow the project-team skill's human merge gate: required checks, independent review, affected documentation updates, and explicit human approval of the exact revision before every merge. No direct pushes to main or bypassing protections. Keep handoffs concise, with evidence links. GitHub enforcement is pending until configured and verified.
 
