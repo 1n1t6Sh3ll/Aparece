@@ -65,7 +65,7 @@ PRODUCT_TYPE = [  # style types first; generic shirts fall back to the sleeve ty
     ("flannel", r"\bflannel\b|\bfranela\b"),
     ("oxford", r"\boxford\b"),
     ("work_shirt", r"\bwork ?shirts?\b"),
-    ("t_shirt", r"\bt-?shirts?\b|\btees?\b|\bcamisetas?\b"),
+    ("t_shirt", r"\bt-?shirts?\b|\btees?\b|\bcamisetas?\b|\bplayeras?\b|\bremeras?\b"),
     ("_shirt", r"\bshirts?\b|\bcamisas?\b|\bguayaberas?\b"),
 ]
 AUDIENCE = [
