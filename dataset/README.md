@@ -6,6 +6,7 @@ Schemas and examples for the PowerLens shirt product dataset. The spec and all d
 - `schema/normalized_record.schema.json`: normalized attributes, each backed by evidence.
 - `examples/`: one real raw record and its normalized record (Thinking MU, White hemp Jules shirt).
 - `tests/test_schema.py`: validates the examples and rejects invalid records.
+- Fine-tuning on this data: see [`train/README.md`](../train/README.md).
 
 ## Run the checks
 
@@ -52,3 +53,13 @@ python dataset/collect/wdc.py --renormalize   # rebuild normalized/clean/report 
 - Raw record: the product's schema.org tree as found (`raw_product_schema`, `raw_offer_schema`; `hasVariant` -> `raw_variants`), name, description (`raw_full_description` and one `overview` section), brand, price/currency/availability, colour/size/material text, SKU/GTIN/MPN, images. HTML-only fields (`raw_title`, `raw_h1`, meta tags, breadcrumbs, care text) are `null`. `scraped_at` is the crawl month (`2024-10-01T00:00:00Z`) because WDC does not publish per-page fetch times; `merchant_name` is the domain.
 - Normalized record: the existing `normalize.py` rules. `source.language` is a stop-word guess (`en`/`es`/`other`; Portuguese counts as `other`). HTML entities and literal `\uXXXX` escapes are decoded in the normalized name, brand and description only. A price of 0 is `reject`. Every record has the flags `wdc_schema_org_only` and `source_wdc_2024_12` (the schemas have no source-dataset field).
 - At most `--per-domain` records per domain. `clean` also dedupes by GTIN and product SKU and lists each dropped duplicate with the record it duplicates in `dataset_stats.json` (`duplicates`).
+
+## Amazon Reviews 2023 source (`collect/amazon_source.py`)
+
+Second offline source for training volume: item metadata from Amazon Reviews 2023 (McAuley Lab, https://amazon-reviews-2023.github.io/, HF `McAuley-Lab/Amazon-Reviews-2023`, `raw_meta_Clothing_Shoes_and_Jewelry`). The license is not declared, so this is for hackathon/research use only: every output line carries `provenance: {source: "amazon-reviews-2023", license: "undeclared-research-only"}` so it can be excluded later. `provenance` sits outside the schemas; validation runs on the record without it.
+
+```sh
+python dataset/collect/amazon_source.py --target 5000 --per-brand 50
+```
+
+Streams the ~18 GB file over HTTP (never stored), keeps T-shirts (title match, tops/shirts categories, other garments excluded), caps records per store, and stops at `--target` non-reject records. Raw values are copied as-is: title, features -> bullet points, description, details -> specifications (plus fabric/care sections), price, store -> brand, categories -> breadcrumbs, images, parent_asin -> sku; fields Amazon lacks are null. The full original line is kept in `shirts_raw.jsonl` under `provenance.original`. Normalization reuses `normalize.py`; `parent_asin` is the variant group, and clean dedupes by parent_asin and brand+name. The metadata has no currency or sizes, so records are at most `medium`. `scraped_at` is the run time, not the 2023 crawl date. Outputs in `dataset/output/amazon/`: `shirts_raw.jsonl`, `shirts_normalized.jsonl`, `shirts_clean.jsonl`, `dataset_stats.json`.

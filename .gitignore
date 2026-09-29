@@ -1,3 +1,10 @@
 dataset/output/
 dataset/.cache/
 __pycache__/
+.claude/
+.agents/
+.codex/
+CLAUDE.md
+AGENTS.md
+scripts/
+*.pyc
