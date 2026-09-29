@@ -1,0 +1,11 @@
+domain,merchant,use,tos_url,tos_checked,tos_finding,robots_finding
+thinkingmu.com,Thinking MU,yes,https://thinkingmu.com/policies/terms-of-service,2026-09-29,"No clause on scraping, crawling, robots, spiders or automated access (English and Spanish keyword check)","User-agent * allows /products/ and /products.json; only -remote, sort_by and filter paths disallowed"
+sepiia.com,Sepiia,yes,https://sepiia.com/policies/terms-of-service,2026-09-29,"No scraping/crawling/robots clause; only a general IP clause (no reproduction/exploitation of content without authorisation)","User-agent * allows /products/ and /products.json"
+bravafabrics.com,Brava Fabrics,yes,https://bravafabrics.com/policies/terms-of-service,2026-09-29,"No scraping/crawling/robots clause; general IP clause (unauthorised reproduction/distribution of works is an infringement)","User-agent * allows /products/ and /products.json"
+huitzilli.myshopify.com,huitzilli,yes,https://huitzilli.myshopify.com/policies/terms-of-service,2026-09-29,"Short ToS (order processing only); no clause on scraping, crawling or robots","User-agent * allows /products/ and /products.json"
+organicbasics.com,Organic Basics,yes,https://organicbasics.com/policies/terms-of-service,2026-09-29,"No scraping/crawling/robots/automated-access clause","User-agent * allows /products/ and /products.json"
+paristexasco.com,Paris Texas,no,https://paristexasco.com/policies/terms-of-service,2026-09-29,"EXCLUDED: prohibited uses include '(i) to spam, phish, pharm, pretext, spider, crawl, or scrape'",
+unboundmerino.com,Unbound Merino,no,https://unboundmerino.com/policies/terms-of-service,2026-09-29,"EXCLUDED: prohibited uses include 'spider, crawl, or scrape'",
+cascabelclothing.com,Cascabel,no,,,"EXCLUDED by PM instruction (ToS forbids scraping)",
+camelia.shop,Camelia,no,,,"EXCLUDED by PM instruction (ToS forbids scraping)",
+silbonshop.com,Silbon,no,,,"EXCLUDED by PM instruction (ToS forbids scraping)",

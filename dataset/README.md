@@ -17,3 +17,22 @@ python -m unittest discover -s dataset/tests -v
 ```
 
 Run from the repo root. Generated data goes in `dataset/output/` and page caches in `dataset/.cache/`; both are git-ignored.
+
+## Collector (`collect/`)
+
+Collects shirt (default: T-shirt) records from Shopify stores listed with `use=yes` in [`collect/stores.csv`](collect/stores.csv). Each row records the store's Terms of Service URL and the result of checking it for scraping/crawling/robots clauses; stores whose terms forbid crawling are kept with `use=no`.
+
+```sh
+python dataset/collect/run.py collect --max-products 20 --per-store 4          # T-shirts (default --types tees)
+python dataset/collect/run.py collect --stores huitzilli.myshopify.com --types shirts --max-products 20
+python dataset/collect/run.py collect --max-products 1000 --per-store 400      # same command scales; resumes
+python dataset/collect/run.py report    # validation CSV + stats only
+python dataset/collect/run.py clean     # drop reject, dedupe, strip HTML -> shirts_clean.jsonl
+```
+
+- `fetch.py`: checks robots.txt (wildcard-aware), 1 request/second per host, User-Agent `ProductLens-research/0.1`, backs off on 429 or a bot-verification page and skips the URL after 3 tries (it never tries to get past a challenge). Responses are cached in `dataset/.cache/`.
+- `extract.py`: `/products.json` (paged, 250 per page) + product page HTML -> raw record. Description text comes from the Shopify `body_html` plus product accordions on the page (`<details>`/accordion buttons with a recognised heading); JSON-LD is parsed with `json`; variants come from `products.json`, with GTIN/availability from matching JSON-LD offers.
+- `normalize.py`: deterministic regex/lookup rules (English and Spanish) for materials %, GSM (oz conversion per the spec), fit, sleeve, neckline, collar, pattern, product type, audience, colours and sizes. Every value has an evidence item pointing at an exact substring of the raw record; disagreeing sources go to `conflicts` with the value left `null`.
+- `run.py`: shirt filter on title + product_type (tags only as a fallback), dedupe by canonical URL and SKU, quality status (`high`/`medium`/`low`/`reject` + flags), schema and evidence validation. Rerunning `collect` skips products already in `shirts_raw.jsonl`; `--fresh` starts over.
+
+Outputs in `dataset/output/` (git-ignored): `shirts_raw.jsonl`, `shirts_normalized.jsonl`, `shirts_clean.jsonl`, `shirts_validation_report.csv`, `dataset_stats.json`.
