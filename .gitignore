@@ -1,3 +1,4 @@
 dataset/output/
 dataset/.cache/
 __pycache__/
+.claude/worktrees/
