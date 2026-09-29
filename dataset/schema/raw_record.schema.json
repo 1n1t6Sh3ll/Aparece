@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/1n1t6Sh3ll/powerlens/dataset/schema/raw_record.schema.json",
+  "title": "PowerLens raw shirt product record",
+  "description": "Source text exactly as found on one product page (docs/DATASET_SPEC.md sections 1, 3, 10). Every property is required; a value not found on the page is null, never omitted or guessed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "record_type", "product_id", "source_url", "final_url", "canonical_url",
+    "merchant_name", "merchant_domain", "brand", "scraped_at", "page_language",
+    "raw_product_name", "raw_title", "raw_h1", "raw_meta_title", "raw_meta_description",
+    "raw_full_description", "raw_short_description", "raw_description",
+    "raw_bullet_points", "raw_specifications",
+    "raw_material_text", "raw_fit_text", "raw_size_text", "raw_color_text", "raw_care_text",
+    "raw_features_text", "raw_shipping_text", "raw_return_text",
+    "raw_price_text", "raw_sale_price_text", "raw_availability_text",
+    "raw_rating_text", "raw_review_count_text", "raw_category_text", "raw_breadcrumbs",
+    "raw_variants",
+    "raw_json_ld", "raw_product_schema", "raw_offer_schema", "raw_product_group_schema", "raw_variant_schema",
+    "image_urls", "image_alt_text", "sku", "gtin", "mpn"
+  ],
+  "properties": {
+    "schema_version": { "const": "0.1.0" },
+    "record_type": { "const": "raw" },
+    "product_id": { "$ref": "#/$defs/product_id" },
+    "source_url": { "type": "string", "pattern": "^https?://" },
+    "final_url": { "description": "URL after redirects; used to detect redirects to category/home pages.", "type": "string", "pattern": "^https?://" },
+    "canonical_url": { "$ref": "#/$defs/nullable_url" },
+    "merchant_name": { "type": "string", "minLength": 1 },
+    "merchant_domain": { "description": "Registrable host of the store, lowercase, no www. Used for the benchmark/training split.", "type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$" },
+    "brand": { "$ref": "#/$defs/text" },
+    "scraped_at": { "description": "RFC 3339 timestamp; the pattern enforces it without optional format libraries.", "type": "string", "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$" },
+    "page_language": { "$ref": "#/$defs/text" },
+
+    "raw_product_name": { "$ref": "#/$defs/text" },
+    "raw_title": { "description": "HTML <title>.", "$ref": "#/$defs/text" },
+    "raw_h1": { "$ref": "#/$defs/text" },
+    "raw_meta_title": { "$ref": "#/$defs/text" },
+    "raw_meta_description": { "$ref": "#/$defs/text" },
+    "raw_full_description": { "description": "Complete visible main product description, not shortened.", "$ref": "#/$defs/text" },
+    "raw_short_description": { "$ref": "#/$defs/text" },
+    "raw_description": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sections", "combined_text"],
+      "properties": {
+        "sections": {
+          "description": "Every product-specific description section in page order. Site-wide modals (size charts, generic certificate pop-ups) are not product sections.",
+          "type": ["array", "null"],
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["heading", "section_type", "text"],
+            "properties": {
+              "heading": { "description": "Heading exactly as shown, or null if the section has none.", "$ref": "#/$defs/text" },
+              "section_type": { "enum": ["overview", "details", "fabric", "fit", "features", "care", "sustainability", "shipping", "returns", "size_guide", "other"] },
+              "text": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "combined_text": { "description": "All sections joined in page order: heading line (if any) then text, sections separated by a blank line.", "$ref": "#/$defs/text" }
+      }
+    },
+    "raw_bullet_points": { "$ref": "#/$defs/text_list" },
+    "raw_specifications": {
+      "type": ["array", "null"],
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value"],
+        "properties": { "name": { "$ref": "#/$defs/text" }, "value": { "type": "string" } }
+      }
+    },
+    "raw_material_text": { "$ref": "#/$defs/text" },
+    "raw_fit_text": { "$ref": "#/$defs/text" },
+    "raw_size_text": { "$ref": "#/$defs/text" },
+    "raw_color_text": { "$ref": "#/$defs/text" },
+    "raw_care_text": { "$ref": "#/$defs/text" },
+    "raw_features_text": { "$ref": "#/$defs/text" },
+    "raw_shipping_text": { "$ref": "#/$defs/text" },
+    "raw_return_text": { "$ref": "#/$defs/text" },
+    "raw_price_text": { "$ref": "#/$defs/text" },
+    "raw_sale_price_text": { "$ref": "#/$defs/text" },
+    "raw_availability_text": { "$ref": "#/$defs/text" },
+    "raw_rating_text": { "$ref": "#/$defs/text" },
+    "raw_review_count_text": { "$ref": "#/$defs/text" },
+    "raw_category_text": { "$ref": "#/$defs/text" },
+    "raw_breadcrumbs": { "$ref": "#/$defs/text_list" },
+
+    "raw_variants": {
+      "description": "Variant data as found (selector, JSON-LD, or embedded product JSON).",
+      "type": ["array", "null"],
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["merchant_variant_id", "raw_name", "raw_options", "raw_price_text", "raw_availability_text", "sku", "gtin", "mpn", "url", "image_url"],
+        "properties": {
+          "merchant_variant_id": { "$ref": "#/$defs/text" },
+          "raw_name": { "$ref": "#/$defs/text" },
+          "raw_options": {
+            "description": "Option name -> value exactly as shown, e.g. {\"Size\": \"M\"}.",
+            "type": ["object", "null"],
+            "additionalProperties": { "type": "string" }
+          },
+          "raw_price_text": { "$ref": "#/$defs/text" },
+          "raw_availability_text": { "$ref": "#/$defs/text" },
+          "sku": { "$ref": "#/$defs/text" },
+          "gtin": { "$ref": "#/$defs/text" },
+          "mpn": { "$ref": "#/$defs/text" },
+          "url": { "$ref": "#/$defs/nullable_url" },
+          "image_url": { "$ref": "#/$defs/nullable_url" }
+        }
+      }
+    },
+
+    "raw_json_ld": { "description": "Every JSON-LD block on the page, parsed, in page order.", "type": ["array", "null"], "minItems": 1, "items": { "type": ["object", "array"] } },
+    "raw_product_schema": { "description": "Top-level JSON-LD node of @type Product, if any.", "type": ["object", "null"] },
+    "raw_offer_schema": { "description": "All Offer nodes found (top-level product or variants).", "type": ["array", "null"], "minItems": 1, "items": { "type": "object" } },
+    "raw_product_group_schema": { "description": "JSON-LD node of @type ProductGroup, if any.", "type": ["object", "null"] },
+    "raw_variant_schema": { "description": "hasVariant nodes of the ProductGroup, if any.", "type": ["array", "null"], "minItems": 1, "items": { "type": "object" } },
+
+    "image_urls": { "type": ["array", "null"], "minItems": 1, "items": { "type": "string", "pattern": "^https?://" } },
+    "image_alt_text": { "description": "Same order and length as image_urls; null entry when an image has no alt.", "type": ["array", "null"], "items": { "type": ["string", "null"] } },
+    "sku": { "description": "Product-level SKU if the page shows one.", "$ref": "#/$defs/text" },
+    "gtin": { "$ref": "#/$defs/text" },
+    "mpn": { "$ref": "#/$defs/text" }
+  },
+  "$defs": {
+    "product_id": { "type": "string", "pattern": "^p_[0-9a-f]{16}$" },
+    "text": { "type": ["string", "null"], "minLength": 1 },
+    "text_list": { "type": ["array", "null"], "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "nullable_url": { "type": ["string", "null"], "pattern": "^https?://" }
+  }
+}
