@@ -64,7 +64,7 @@ def is_shirt(p, tees_only=False):
 def read_jsonl(path):
     if not path.exists():
         return []
-    return [json.loads(ln) for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    return [json.loads(ln) for ln in path.read_text(encoding="utf-8").split("\n") if ln.strip()]  # not splitlines(): U+2028 etc. occur inside values
 
 
 def load_stores(domains=None):
@@ -188,8 +188,15 @@ def report(args):
 
     stats = {
         "records": len(norms),
-        "by_store": dict(Counter(n["source"]["merchant_domain"] for n in norms)),
+        "domains": len({n["source"]["merchant_domain"] for n in norms}),
+        "by_store": dict(Counter(n["source"]["merchant_domain"] for n in norms).most_common()),
+        "by_tld": dict(Counter(n["source"]["merchant_domain"].rsplit(".", 1)[-1] for n in norms).most_common()),
+        "by_language": dict(Counter(str(n["source"]["language"]) for n in norms).most_common()),
+        "by_product_type": dict(Counter(str(n["identity"]["product_type"]) for n in norms).most_common()),
+        "by_primary_material": dict(Counter(str(n["materials"]["primary_material"]) for n in norms).most_common()),
+        "by_fit": dict(Counter(str(n["fit_and_style"]["fit"]) for n in norms).most_common()),
         "quality": dict(Counter(n["quality_status"] for n in norms)),
+        "rejects": sum(n["quality_status"] == "reject" for n in norms),
         "all_valid": all(r["raw_valid"] and r["normalized_valid"] and r["evidence_valid"] for r in rows),
         "invalid_records": sum(1 for r in rows if not (r["raw_valid"] and r["normalized_valid"] and r["evidence_valid"])),
         "records_with_conflicts": sum(1 for n in norms if n["conflicts"]),
@@ -209,6 +216,7 @@ def report(args):
         },
         "quality_flags": dict(Counter(f for n in norms for f in n["quality_flags"]).most_common()),
     }
+    stats["missing_rate"] = {k: round(1 - v, 3) for k, v in stats["fill_rate"].items()}
     (OUT / "dataset_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     print(json.dumps({k: stats[k] for k in ("records", "by_store", "quality", "all_valid", "invalid_records")}))
 
@@ -221,17 +229,22 @@ def plain(text):
 
 
 def clean(args):
-    """Drop reject records, dedupe (product_id, SKU set, brand+name), strip HTML in content."""
-    out, seen = [], set()
+    """Drop reject records, dedupe (product_id, SKU/GTIN, brand+name), strip HTML in content.
+    Dropped duplicates are linked to the kept record in dataset_stats.json ("duplicates")."""
+    out, seen, dupes = [], {}, []
     for n in read_jsonl(NORM_FILE):
         if n["quality_status"] == "reject":
             continue
         dom = n["source"]["merchant_domain"]
         keys = {("id", n["product_id"]), ("name", dom, (n["identity"]["brand"] or "").lower(), (n["identity"]["product_name"] or "").lower())}
         keys |= {("sku", dom, i["sku"]) for i in n["variants"]["items"] if i["sku"]}
-        if keys & seen:
+        keys |= {("sku", dom, n["commerce"]["sku"])} if n["commerce"]["sku"] else set()
+        keys |= {("gtin", g) for g in [n["commerce"]["gtin"]] + [i["gtin"] for i in n["variants"]["items"]] if g}
+        hit = next((k for k in keys if k in seen), None)
+        if hit:
+            dupes.append({"product_id": n["product_id"], "url": n["source"]["url"], "kept": seen[hit], "reason": hit[0]})
             continue
-        seen |= keys
+        seen.update(dict.fromkeys(keys, n["product_id"]))
         c = n["content"]
         for k in ("title", "full_description", "short_description", "meta_title", "meta_description", "h1"):
             c[k] = plain(c[k])
@@ -239,6 +252,13 @@ def clean(args):
         out.append(n)
     with open(OUT / "shirts_clean.jsonl", "w", encoding="utf-8") as f:
         f.writelines(json.dumps(n, ensure_ascii=False) + "\n" for n in out)
+    stats_file = OUT / "dataset_stats.json"
+    if stats_file.exists():
+        stats = json.loads(stats_file.read_text(encoding="utf-8"))
+        stats["clean_records"] = len(out)
+        stats["duplicates_dropped"] = dict(Counter(d["reason"] for d in dupes))
+        stats["duplicates"] = dupes
+        stats_file.write_text(json.dumps(stats, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"clean: {len(out)} records -> {OUT / 'shirts_clean.jsonl'}")
 
 

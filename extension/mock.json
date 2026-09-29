@@ -1,0 +1,890 @@
+{
+ "product_id": "p_7df6497269eb4b70",
+ "language": "en",
+ "raw": {
+  "product_id": "p_7df6497269eb4b70"
+ },
+ "normalized": {
+  "schema_version": "0.1.0",
+  "record_type": "normalized",
+  "product_id": "p_7df6497269eb4b70",
+  "source": {
+   "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "canonical_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "merchant": "Thinking MU",
+   "merchant_domain": "thinkingmu.com",
+   "scraped_at": "2026-09-29T22:36:35Z",
+   "language": "en"
+  },
+  "identity": {
+   "brand": "Thinking MU",
+   "product_name": "White hemp Jules shirt",
+   "product_type": "short_sleeve_shirt",
+   "subcategory": null,
+   "audience": "men"
+  },
+  "content": {
+   "title": "Sustainable Shirt White Hemp Jules Man | Thinking Mu",
+   "full_description": "Jules white hemp shirt\nâ†’ V-neckline with shirt collar\nâ†’ Short sleeves\nâ†’ Regular fit\nâ†’ Front closure with buttons\nâ†’ Fabric: hemp mixed with tencel, weight 135 gsm (Lightweight fabric)\nâ†’ Length of garment: Regular\nRef: MSH00210\nMeasurements in size M: 72 cm total length, 49 cm back width and 24 cm sleeve length.\nHemp is an exceptional plant that provides one of the lightest and most breathable sustainable fibers. Main features:\nLESS WATER: It needs 95% less water than cotton and produces 2.5 times more fiber.\nLESS C02: Its cultivation in the field helps the CO2 absorption process.\nLESS PESTICIDES: It does not require the use of chemical pesticides or fertilizers for its cultivation.\nLESS TIME: It is a renewable fiber that grows quickly and vigorously in a wide variety of climates.\nLESS WASTE: The plant produces 250% more fiber than cotton and 600% more than flax using the same area of land.\nLESS CROP: The area required for cultivation is almost half that of cotton.\nLESS SOIL EROSION: Prevents soil erosion caused by logging.\nThe model is 176cm tall and wears a size M.",
+   "short_description": null,
+   "bullet_points": [
+    "V-neckline with shirt collar",
+    "Short sleeves",
+    "Regular fit",
+    "Front closure with buttons",
+    "Fabric: hemp mixed with tencel, weight 135 gsm (Lightweight fabric)",
+    "Length of garment: Regular"
+   ],
+   "meta_title": "Sustainable Shirt White Hemp Jules Man | Thinking Mu",
+   "meta_description": "Discover the Shirt White Hemp Jules by Thinking MU, made with hemp and certified by GOTS, OCS y GRS. Man sustainable fashion with Mediterranean inspiration.",
+   "h1": "White hemp Jules shirt"
+  },
+  "materials": {
+   "primary_material": "hemp",
+   "material_percentages": {
+    "hemp": 55,
+    "other": 45
+   },
+   "fabric_type": null,
+   "fabric_weight_gsm": 135,
+   "fabric_weight_raw": "135 gsm",
+   "stretch": null,
+   "texture": null
+  },
+  "fit_and_style": {
+   "fit": "regular",
+   "neckline": "v_neck",
+   "collar_type": "shirt collar",
+   "sleeve_length": "short",
+   "shirt_length": "regular",
+   "pattern": null,
+   "style": null
+  },
+  "variants": {
+   "product_group_id": "14828248170822",
+   "colors": [
+    {
+     "original_color_name": "Snow White",
+     "normalized": "white"
+    }
+   ],
+   "sizes": [
+    {
+     "raw_size": "XS",
+     "normalized_size": "XS"
+    },
+    {
+     "raw_size": "S",
+     "normalized_size": "S"
+    },
+    {
+     "raw_size": "M",
+     "normalized_size": "M"
+    },
+    {
+     "raw_size": "L",
+     "normalized_size": "L"
+    },
+    {
+     "raw_size": "XL",
+     "normalized_size": "XL"
+    },
+    {
+     "raw_size": "XXL",
+     "normalized_size": "XXL"
+    }
+   ],
+   "variant_count": 6,
+   "items": [
+    {
+     "variant_id": "v_0f12d902379f969d",
+     "merchant_variant_id": "53853668835654",
+     "color": "Snow White",
+     "size": "XS",
+     "sku": "8435512906724",
+     "gtin": "8435512906724",
+     "mpn": null,
+     "price": 99.9,
+     "currency": "EUR",
+     "availability": "out_of_stock"
+    },
+    {
+     "variant_id": "v_d98758aad8e51942",
+     "merchant_variant_id": "53853668868422",
+     "color": "Snow White",
+     "size": "S",
+     "sku": "8435512901828",
+     "gtin": "8435512901828",
+     "mpn": null,
+     "price": 99.9,
+     "currency": "EUR",
+     "availability": "out_of_stock"
+    },
+    {
+     "variant_id": "v_de4bce113f17771d",
+     "merchant_variant_id": "53853668901190",
+     "color": "Snow White",
+     "size": "M",
+     "sku": "8435512901835",
+     "gtin": "8435512901835",
+     "mpn": null,
+     "price": 99.9,
+     "currency": "EUR",
+     "availability": "out_of_stock"
+    },
+    {
+     "variant_id": "v_0cce17323b5370a7",
+     "merchant_variant_id": "53853668933958",
+     "color": "Snow White",
+     "size": "L",
+     "sku": "8435512901842",
+     "gtin": "8435512901842",
+     "mpn": null,
+     "price": 99.9,
+     "currency": "EUR",
+     "availability": "out_of_stock"
+    },
+    {
+     "variant_id": "v_c8175a1f07f345c5",
+     "merchant_variant_id": "53853668966726",
+     "color": "Snow White",
+     "size": "XL",
+     "sku": "8435512901859",
+     "gtin": "8435512901859",
+     "mpn": null,
+     "price": 99.9,
+     "currency": "EUR",
+     "availability": "out_of_stock"
+    },
+    {
+     "variant_id": "v_9b0626a4195bafe4",
+     "merchant_variant_id": "53853668999494",
+     "color": "Snow White",
+     "size": "XXL",
+     "sku": "8435512901866",
+     "gtin": "8435512901866",
+     "mpn": null,
+     "price": 99.9,
+     "currency": "EUR",
+     "availability": "out_of_stock"
+    }
+   ]
+  },
+  "features": [
+   "Front closure with buttons"
+  ],
+  "care": [
+   "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION",
+   "DO NOT BLEACH",
+   "DO NOT TUMBLE DRY",
+   "IRON AT LOW TEMPERATURE",
+   "DOES NOT ALLOW DRY CLEANING"
+  ],
+  "commerce": {
+   "price": 99.9,
+   "sale_price": null,
+   "currency": "EUR",
+   "availability": "out_of_stock",
+   "rating": null,
+   "review_count": null,
+   "sku": null,
+   "gtin": null,
+   "mpn": null
+  },
+  "structured_data": {
+   "product_schema_present": true,
+   "offer_schema_present": true,
+   "product_group_present": true,
+   "raw_json_ld": [
+    {
+     "@context": "http://schema.org",
+     "@type": "Organization",
+     "name": "Thinking MU",
+     "logo": "https://thinkingmu.com/cdn/shop/files/logo.svg?v=1756332168&width=500",
+     "sameAs": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+     ],
+     "url": "https://thinkingmu.com"
+    },
+    {
+     "@context": "https://schema.org",
+     "@type": "BreadcrumbList",
+     "itemListElement": [
+      {
+       "@type": "ListItem",
+       "position": 1,
+       "name": "Thinking MU",
+       "item": "https://thinkingmu.com/en"
+      },
+      {
+       "@type": "ListItem",
+       "position": 2,
+       "name": "White hemp Jules shirt",
+       "item": "https://thinkingmu.com/en/products/white-hemp-jules-shirt"
+      }
+     ]
+    },
+    {
+     "@context": "http://schema.org/",
+     "@id": "/en/products/white-hemp-jules-shirt#product",
+     "@type": "ProductGroup",
+     "brand": {
+      "@type": "Brand",
+      "name": "Thinking MU"
+     },
+     "category": "Shirts",
+     "description": "Jules white hemp shirt\nâ†’ V-neckline with shirt collarâ†’ Short sleevesâ†’ Regular fitâ†’ Front closure with buttonsâ†’ Fabric: hemp mixed with tencel, weight 135 gsm (Lightweight fabric)â†’ Length of garment: RegularRef: MSH00210Measurements in size M: 72 cm total length, 49 cm back width and 24 cm sleeve length.Hemp is an exceptional plant that provides one of the lightest and most breathable sustainable fibers. Main features:\n \n \n LESS WATER: It needs 95% less water than cotton and produces 2.5 times more fiber.\n \n \n LESS C02: Its cultivation in the field helps the CO2 absorption process.\n \n \n LESS PESTICIDES: It does not require the use of chemical pesticides or fertilizers for its cultivation.\n \n \n LESS TIME: It is a renewable fiber that grows quickly and vigorously in a wide variety of climates. \n \n \n LESS WASTE: The plant produces 250% more fiber than cotton and 600% more than flax using the same area of land. \n \n \n LESS CROP: The area required for cultivation is almost half that of cotton.\n \n \n LESS SOIL EROSION: Prevents soil erosion caused by logging.\n \n ",
+     "hasVariant": [
+      {
+       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668835654#variant",
+       "@type": "Product",
+       "gtin": "8435512906724",
+       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
+       "name": "White hemp Jules shirt - XS",
+       "offers": {
+        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668835654#offer",
+        "@type": "Offer",
+        "availability": "http://schema.org/OutOfStock",
+        "price": "99.90",
+        "priceCurrency": "EUR",
+        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668835654"
+       },
+       "sku": "8435512906724"
+      },
+      {
+       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668868422#variant",
+       "@type": "Product",
+       "gtin": "8435512901828",
+       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
+       "name": "White hemp Jules shirt - S",
+       "offers": {
+        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668868422#offer",
+        "@type": "Offer",
+        "availability": "http://schema.org/OutOfStock",
+        "price": "99.90",
+        "priceCurrency": "EUR",
+        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668868422"
+       },
+       "sku": "8435512901828"
+      },
+      {
+       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668901190#variant",
+       "@type": "Product",
+       "gtin": "8435512901835",
+       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
+       "name": "White hemp Jules shirt - M",
+       "offers": {
+        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668901190#offer",
+        "@type": "Offer",
+        "availability": "http://schema.org/OutOfStock",
+        "price": "99.90",
+        "priceCurrency": "EUR",
+        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668901190"
+       },
+       "sku": "8435512901835"
+      },
+      {
+       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668933958#variant",
+       "@type": "Product",
+       "gtin": "8435512901842",
+       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
+       "name": "White hemp Jules shirt - L",
+       "offers": {
+        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668933958#offer",
+        "@type": "Offer",
+        "availability": "http://schema.org/OutOfStock",
+        "price": "99.90",
+        "priceCurrency": "EUR",
+        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668933958"
+       },
+       "sku": "8435512901842"
+      },
+      {
+       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668966726#variant",
+       "@type": "Product",
+       "gtin": "8435512901859",
+       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
+       "name": "White hemp Jules shirt - XL",
+       "offers": {
+        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668966726#offer",
+        "@type": "Offer",
+        "availability": "http://schema.org/OutOfStock",
+        "price": "99.90",
+        "priceCurrency": "EUR",
+        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668966726"
+       },
+       "sku": "8435512901859"
+      },
+      {
+       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668999494#variant",
+       "@type": "Product",
+       "gtin": "8435512901866",
+       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
+       "name": "White hemp Jules shirt - XXL",
+       "offers": {
+        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668999494#offer",
+        "@type": "Offer",
+        "availability": "http://schema.org/OutOfStock",
+        "price": "99.90",
+        "priceCurrency": "EUR",
+        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668999494"
+       },
+       "sku": "8435512901866"
+      }
+     ],
+     "name": "White hemp Jules shirt",
+     "productGroupID": "14828248170822",
+     "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt"
+    }
+   ]
+  },
+  "evidence": [
+   {
+    "field": "identity.brand",
+    "value": "Thinking MU",
+    "source_text": "Thinking MU",
+    "source_location": "raw_product_group_schema.brand.name",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "identity.product_name",
+    "value": "White hemp Jules shirt",
+    "source_text": "White hemp Jules shirt",
+    "source_location": "raw_product_name",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "identity.product_type",
+    "value": "short_sleeve_shirt",
+    "source_text": "Shirts",
+    "source_location": "raw_category_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 0.8,
+    "note": "Merchant category is Shirts; see the next item for the sleeve length."
+   },
+   {
+    "field": "identity.product_type",
+    "value": "short_sleeve_shirt",
+    "source_text": "â†’ Short sleeves",
+    "source_location": "raw_bullet_points[1]",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 0.8,
+    "note": "Collared, button-front, short sleeves. The product_type list mixes style and sleeve axes; 'button_down' is not used because a buttoned-down collar is not stated."
+   },
+   {
+    "field": "identity.audience",
+    "value": "men",
+    "source_text": "Jules Man",
+    "source_location": "raw_meta_title",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 0.9,
+    "note": "Meta title and meta description label the product 'Man'."
+   },
+   {
+    "field": "materials.primary_material",
+    "value": "hemp",
+    "source_text": "55% Hemp + 45% Tencel",
+    "source_location": "raw_material_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 1.0,
+    "note": "Largest stated percentage."
+   },
+   {
+    "field": "materials.material_percentages",
+    "value": {
+     "hemp": 55,
+     "other": 45
+    },
+    "source_text": "55% Hemp + 45% Tencel",
+    "source_location": "raw_material_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 0.95,
+    "note": "TENCEL is a trademark used for both lyocell and modal fibres; the fibre is not named, so it is mapped to other."
+   },
+   {
+    "field": "materials.fabric_weight_raw",
+    "value": "135 gsm",
+    "source_text": "weight 135 gsm",
+    "source_location": "raw_material_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "materials.fabric_weight_gsm",
+    "value": 135,
+    "source_text": "weight 135 gsm",
+    "source_location": "raw_material_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": "Stated in GSM; no conversion."
+   },
+   {
+    "field": "fit_and_style.fit",
+    "value": "regular",
+    "source_text": "Regular fit",
+    "source_location": "raw_fit_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "fit_and_style.neckline",
+    "value": "v_neck",
+    "source_text": "V-neckline with shirt collar",
+    "source_location": "raw_bullet_points[0]",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 0.9,
+    "note": "Stated as V-neckline; it is a collared shirt with a V opening."
+   },
+   {
+    "field": "fit_and_style.collar_type",
+    "value": "shirt collar",
+    "source_text": "shirt collar",
+    "source_location": "raw_bullet_points[0]",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "fit_and_style.sleeve_length",
+    "value": "short",
+    "source_text": "Short sleeves",
+    "source_location": "raw_bullet_points[1]",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "fit_and_style.shirt_length",
+    "value": "regular",
+    "source_text": "Length of garment: Regular",
+    "source_location": "raw_bullet_points[5]",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "variants.colors",
+    "value": [
+     {
+      "original_color_name": "Snow White",
+      "normalized": "white"
+     }
+    ],
+    "source_text": "Snow White",
+    "source_location": "raw_color_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 0.95,
+    "note": "Selected colour swatch name; the product name also says white."
+   },
+   {
+    "field": "variants.sizes",
+    "value": [
+     "XS",
+     "S",
+     "M",
+     "L",
+     "XL",
+     "XXL"
+    ],
+    "source_text": "XS\nS\nM\nL\nXL\nXXL",
+    "source_location": "raw_size_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": "Letter sizes kept as shown."
+   },
+   {
+    "field": "variants.product_group_id",
+    "value": "14828248170822",
+    "source_text": "14828248170822",
+    "source_location": "raw_product_group_schema.productGroupID",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "variants.items",
+    "value": 6,
+    "source_text": "http://schema.org/OutOfStock",
+    "source_location": "raw_variants",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": "Each item is copied from the raw_variants entry with the same merchant_variant_id; all six offers are OutOfStock."
+   },
+   {
+    "field": "variants.variant_count",
+    "value": 6,
+    "source_text": "XS\nS\nM\nL\nXL\nXXL",
+    "source_location": "raw_size_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 1.0,
+    "note": "Six size options, one variant each; raw_variants also has six entries."
+   },
+   {
+    "field": "features",
+    "value": [
+     "Front closure with buttons"
+    ],
+    "source_text": "â†’ Front closure with buttons",
+    "source_location": "raw_bullet_points[3]",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "care",
+    "value": [
+     "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION",
+     "DO NOT BLEACH",
+     "DO NOT TUMBLE DRY",
+     "IRON AT LOW TEMPERATURE",
+     "DOES NOT ALLOW DRY CLEANING"
+    ],
+    "source_text": "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION\nDO NOT BLEACH\nDO NOT TUMBLE DRY\nIRON AT LOW TEMPERATURE\nDOES NOT ALLOW DRY CLEANING",
+    "source_location": "raw_care_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "commerce.price",
+    "value": 99.9,
+    "source_text": "99,90 â‚¬",
+    "source_location": "raw_price_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 1.0,
+    "note": "Decimal comma."
+   },
+   {
+    "field": "commerce.currency",
+    "value": "EUR",
+    "source_text": "EUR",
+    "source_location": "raw_offer_schema[0].priceCurrency",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "direct",
+    "confidence": 1.0,
+    "note": null
+   },
+   {
+    "field": "commerce.availability",
+    "value": "out_of_stock",
+    "source_text": "Sold out",
+    "source_location": "raw_availability_text",
+    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+    "method": "rule",
+    "confidence": 1.0,
+    "note": null
+   }
+  ],
+  "conflicts": [],
+  "quality_status": "high",
+  "quality_flags": [
+   "all_variants_out_of_stock",
+   "no_rating_on_page",
+   "meta_description_certifications_not_backed_by_composition"
+  ],
+  "human_reviewed": false
+ },
+ "evidence": [
+  {
+   "field": "identity.brand",
+   "value": "Thinking MU",
+   "source_text": "Thinking MU",
+   "source_location": "raw_product_group_schema.brand.name",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "identity.product_name",
+   "value": "White hemp Jules shirt",
+   "source_text": "White hemp Jules shirt",
+   "source_location": "raw_product_name",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "identity.product_type",
+   "value": "short_sleeve_shirt",
+   "source_text": "Shirts",
+   "source_location": "raw_category_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 0.8,
+   "note": "Merchant category is Shirts; see the next item for the sleeve length."
+  },
+  {
+   "field": "identity.product_type",
+   "value": "short_sleeve_shirt",
+   "source_text": "â†’ Short sleeves",
+   "source_location": "raw_bullet_points[1]",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 0.8,
+   "note": "Collared, button-front, short sleeves. The product_type list mixes style and sleeve axes; 'button_down' is not used because a buttoned-down collar is not stated."
+  },
+  {
+   "field": "identity.audience",
+   "value": "men",
+   "source_text": "Jules Man",
+   "source_location": "raw_meta_title",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 0.9,
+   "note": "Meta title and meta description label the product 'Man'."
+  },
+  {
+   "field": "materials.primary_material",
+   "value": "hemp",
+   "source_text": "55% Hemp + 45% Tencel",
+   "source_location": "raw_material_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": "Largest stated percentage."
+  },
+  {
+   "field": "materials.material_percentages",
+   "value": {
+    "hemp": 55,
+    "other": 45
+   },
+   "source_text": "55% Hemp + 45% Tencel",
+   "source_location": "raw_material_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 0.95,
+   "note": "TENCEL is a trademark used for both lyocell and modal fibres; the fibre is not named, so it is mapped to other."
+  },
+  {
+   "field": "materials.fabric_weight_raw",
+   "value": "135 gsm",
+   "source_text": "weight 135 gsm",
+   "source_location": "raw_material_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "materials.fabric_weight_gsm",
+   "value": 135,
+   "source_text": "weight 135 gsm",
+   "source_location": "raw_material_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": "Stated in GSM; no conversion."
+  },
+  {
+   "field": "fit_and_style.fit",
+   "value": "regular",
+   "source_text": "Regular fit",
+   "source_location": "raw_fit_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "fit_and_style.neckline",
+   "value": "v_neck",
+   "source_text": "V-neckline with shirt collar",
+   "source_location": "raw_bullet_points[0]",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 0.9,
+   "note": "Stated as V-neckline; it is a collared shirt with a V opening."
+  },
+  {
+   "field": "fit_and_style.collar_type",
+   "value": "shirt collar",
+   "source_text": "shirt collar",
+   "source_location": "raw_bullet_points[0]",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "fit_and_style.sleeve_length",
+   "value": "short",
+   "source_text": "Short sleeves",
+   "source_location": "raw_bullet_points[1]",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "fit_and_style.shirt_length",
+   "value": "regular",
+   "source_text": "Length of garment: Regular",
+   "source_location": "raw_bullet_points[5]",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "variants.colors",
+   "value": [
+    {
+     "original_color_name": "Snow White",
+     "normalized": "white"
+    }
+   ],
+   "source_text": "Snow White",
+   "source_location": "raw_color_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 0.95,
+   "note": "Selected colour swatch name; the product name also says white."
+  },
+  {
+   "field": "variants.sizes",
+   "value": [
+    "XS",
+    "S",
+    "M",
+    "L",
+    "XL",
+    "XXL"
+   ],
+   "source_text": "XS\nS\nM\nL\nXL\nXXL",
+   "source_location": "raw_size_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": "Letter sizes kept as shown."
+  },
+  {
+   "field": "variants.product_group_id",
+   "value": "14828248170822",
+   "source_text": "14828248170822",
+   "source_location": "raw_product_group_schema.productGroupID",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "variants.items",
+   "value": 6,
+   "source_text": "http://schema.org/OutOfStock",
+   "source_location": "raw_variants",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": "Each item is copied from the raw_variants entry with the same merchant_variant_id; all six offers are OutOfStock."
+  },
+  {
+   "field": "variants.variant_count",
+   "value": 6,
+   "source_text": "XS\nS\nM\nL\nXL\nXXL",
+   "source_location": "raw_size_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": "Six size options, one variant each; raw_variants also has six entries."
+  },
+  {
+   "field": "features",
+   "value": [
+    "Front closure with buttons"
+   ],
+   "source_text": "â†’ Front closure with buttons",
+   "source_location": "raw_bullet_points[3]",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": [
+    "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION",
+    "DO NOT BLEACH",
+    "DO NOT TUMBLE DRY",
+    "IRON AT LOW TEMPERATURE",
+    "DOES NOT ALLOW DRY CLEANING"
+   ],
+   "source_text": "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION\nDO NOT BLEACH\nDO NOT TUMBLE DRY\nIRON AT LOW TEMPERATURE\nDOES NOT ALLOW DRY CLEANING",
+   "source_location": "raw_care_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "commerce.price",
+   "value": 99.9,
+   "source_text": "99,90 â‚¬",
+   "source_location": "raw_price_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": "Decimal comma."
+  },
+  {
+   "field": "commerce.currency",
+   "value": "EUR",
+   "source_text": "EUR",
+   "source_location": "raw_offer_schema[0].priceCurrency",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "commerce.availability",
+   "value": "out_of_stock",
+   "source_text": "Sold out",
+   "source_location": "raw_availability_text",
+   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": null
+  }
+ ],
+ "conflicts": [],
+ "quality_status": "high"
+}
