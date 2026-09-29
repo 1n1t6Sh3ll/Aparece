@@ -26,7 +26,7 @@ FRACS = {"train": 0.8, "val": 0.1, "test": 0.1}
 QUALITY_RANK = {"high": 3, "medium": 2, "low": 1}
 RAW_KEEP = ["product_id", "source_url", "canonical_url", "merchant_domain", "brand", "sku", "gtin", "mpn",
             "raw_title", "raw_product_name", "raw_category_text", "raw_full_description",
-            "raw_short_description", "raw_bullet_points", "raw_specifications", "raw_material_text",
+            "raw_short_description", "raw_description", "raw_bullet_points", "raw_specifications", "raw_material_text",
             "raw_fit_text", "raw_color_text", "raw_size_text", "raw_care_text", "raw_features_text",
             "provenance"]
 
