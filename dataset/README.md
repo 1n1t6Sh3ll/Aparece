@@ -47,3 +47,11 @@ python dataset/collect/amazon_source.py --target 5000 --per-brand 50
 ```
 
 Streams the ~18 GB file over HTTP (never stored), keeps T-shirts (title match, tops/shirts categories, other garments excluded), caps records per store, and stops at `--target` non-reject records. Raw values are copied as-is: title, features -> bullet points, description, details -> specifications (plus fabric/care sections), price, store -> brand, categories -> breadcrumbs, images, parent_asin -> sku; fields Amazon lacks are null. The full original line is kept in `shirts_raw.jsonl` under `provenance.original`. Normalization reuses `normalize.py`; `parent_asin` is the variant group, and clean dedupes by parent_asin and brand+name. The metadata has no currency or sizes, so records are at most `medium`. `scraped_at` is the run time, not the 2023 crawl date. Outputs in `dataset/output/amazon/`: `shirts_raw.jsonl`, `shirts_normalized.jsonl`, `shirts_clean.jsonl`, `dataset_stats.json`.
+
+## Ground truth splits (`build/make_ground_truth.py`)
+
+```sh
+python dataset/build/make_ground_truth.py --input wdc=dataset/output --input amazon=dataset/output/amazon --input shopify=dataset/output/shopify
+```
+
+Each `--input SOURCE=DIR` holds `shirts_clean.jsonl` + `shirts_raw.jsonl`. The script drops `reject`, schema-invalid and obvious non-shirt titles (tea "Tee", candles, trousers...); dedupes across sources (canonical URL, GTIN, brand+SKU, brand+name); and splits ~80/10/10 by group (domain for WDC/Shopify, brand for Amazon; no group in two splits), stratified by source, product type and language (`en`/`es`/`other`, detected when missing). Gold = the `train/common.py` FIELDS whose evidence `source_text` all occurs in the named raw field; anything else is null. Seeded (`--seed`, default 14). Outputs in `dataset/output/final/`: `train.jsonl`, `val.jsonl`, `test_gold.jsonl` (rows carry `gold`, `language`, provenance and chat `messages` usable by `train/train.py` and `train/eval.py`), `human_review.csv` (200 diverse test records, empty `correct:` columns), `stats.json`.
