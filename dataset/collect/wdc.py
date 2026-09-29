@@ -37,6 +37,17 @@ TEE = re.compile(r"\b(t-?shirts?|tee-?shirts?|tees?|camisetas?|playeras?|remeras
 NOT_TEE = re.compile(r"\b(polos?|camisas?|button[- ]?(down|up)|henleys?|golf|transfers?|vinyl|svg|png|mock-?ups?|templates?|"
                      r"stickers?|mugs?|tazas?|posters?|totes?|bags?|bolsas?|patterns?|quilts?|books?|ebooks?|prints? only|"
                      r"digital|download|dtf|sublima\w*|plotter|ball|batting|conjuntos?|kits?|sets?|bundles?|tee time|tee box|decals?|cards?|necklaces?|pins?)\b", re.I)
+TEE_STRONG = re.compile(r"\b(t-?shirts?|tee-?shirts?|tshirts?|camisetas?|playeras?|remeras?)\b", re.I)
+NOT_PRODUCT = re.compile(r"\b(sweat\w*|sudaderas?|hoodies?|kapuzen\w*|lunch ?box(es)?|fiambreras?|lancheiras?|candles?|velas?|"
+                         r"kerzen?|mugs?|tazas?|tassen?|canecas?|yogi ?tea|tea ?towels?)\b", re.I)
+TEA = re.compile(r"\b(teas?|yogi\w*|chai|matcha|mate|rooibos|infusions?|infusi[oó]n|kr[aä]uter\w*|tee ?beutel\w*|teebeutel|"
+                 r"aufguss|loose ?leaf|gr[uü]ne[rn]? tee|schwarze[rn]? tee|bio-?tee|detox|herbal|caffeine|koffein|"
+                 r"pvc|fittings?|junction|pipes?|\d+ ?mm|sch\. \w+|schedule \d+)\b", re.I)  # tea and plumbing tees
+GERMAN_NAME = re.compile(r"\b(bio|von|zum|f[uü]r|mit|und|der|die|das)\b", re.I)  # 'Tee' in a German name = tea
+APPAREL = re.compile(r"\b(shirts?|cotton|baumwolle|algod[oó]n|algod[aã]o|sleeves?|manga|unisex|(wo)?men[’']?s|boys?|girls?|ladies|kids|herren|damen|"
+                     r"sizes?|gr[oö]ß?e|fit|crew|neck|graphic|apparel|clothing|wear|jersey|xs|xl|xxl|\dx|tops?|s/s|l/s|ss|ls|"
+                     r"pocket\w*|youth|baby|toddler|ringer|raglan|crop\w*|oversized?|heavy\w*|boxy|vintage|logo|print\w*|tie-?dye|"
+                     r"v-?neck|organic|white|black|navy|grey|gray|blue|red|green|pink|cream|charcoal|sage|heather|olive|stripe\w*|colou?rs?|merch\w*|tie ?d[iy]e|small|medium|large|polera|bluza)\b", re.I)
 QUAD = re.compile(r'^(<[^>]*>|_:\S+)\s+<([^>]*)>\s+(<[^>]*>|_:\S+|"(?:[^"\\]|\\.)*"(?:@[\w-]+|\^\^<[^>]*>)?)\s+<([^>]*)>\s*\.\s*$')
 ESC = re.compile(r'\\(?:u([0-9A-Fa-f]{4})|U([0-9A-Fa-f]{8})|(.))')
 ESC_CHARS = {"t": "\t", "n": "\n", "r": "\r", "b": "\b", "f": "\f", '"': '"', "'": "'", "\\": "\\"}
@@ -146,14 +157,29 @@ def detect_language(text):
     return "en" if en > es else "es" if es > en else "other"
 
 
-def is_tee(name, category):
+def is_tee(name, category, description=None):
+    """T-shirt by name/category. 'T-shirt', 'camiseta', 'playera', 'remera' count directly; a bare
+    'tee' (German for tea) counts only in the name, with an apparel word and no tea/other-product word."""
     text = f"{name or ''} | {category or ''}"
-    return bool(TEE.search(text)) and not NOT_SHIRT.search(text) and not NOT_TEE.search(name or "")
+    if NOT_SHIRT.search(text) or NOT_TEE.search(name or "") or NOT_PRODUCT.search(text):
+        return False
+    if TEE_STRONG.search(text):
+        return True
+    return bool(re.search(r"\btees?\b", name or "", re.I)) and not TEA.search(f"{text} {description or ''}") \
+        and not GERMAN_NAME.search(name or "") and not re.search(r"\b\d+ ?(g|gr|ml)\b", name or "", re.I) and bool(APPAREL.search(f"{text} {description or ''}"))
 
 
-def is_shirt_any(name, category):
+def raw_matches(raw, match):
+    """Apply a name/category filter with the description, URL, size and colour text as apparel context."""
+    context = " ".join(filter(None, (raw["raw_full_description"], re.sub(r"[-_/]", " ", raw["source_url"]),
+                                     raw["raw_size_text"], raw["raw_color_text"])))
+    return match(raw["raw_product_name"], raw["raw_category_text"], context)
+
+
+def is_shirt_any(name, category, description=None):
     text = f"{name or ''} | {category or ''}"
-    return bool(SHIRT.search(text)) and not NOT_SHIRT.search(text) and not NOT_TEE.search(name or "")
+    return bool(SHIRT.search(text)) and not NOT_SHIRT.search(text) and not NOT_TEE.search(name or "") \
+        and not NOT_PRODUCT.search(text) and not TEA.search(text)
 
 
 def build_raw_wdc(tree, page_url):
@@ -319,11 +345,8 @@ def process_part(part, local_dir, per_domain, types):
                     continue
                 nodes = page_nodes(quads)
                 for s in products(nodes):
-                    tree = to_tree(nodes, s)
-                    if not match(first(tree, "name"), first(tree, "category")):
-                        continue
-                    raw = build_raw_wdc(tree, page_url)
-                    if raw["product_id"] in seen or per_dom[dom] >= per_domain:
+                    raw = build_raw_wdc(to_tree(nodes, s), page_url)
+                    if not raw_matches(raw, match) or raw["product_id"] in seen or per_dom[dom] >= per_domain:
                         continue
                     seen.add(raw["product_id"])
                     per_dom[dom] += 1
@@ -355,8 +378,13 @@ def collect(args):
 
 
 def renormalize(args):
-    """Re-run normalization on the existing raw file (no download), then report and clean."""
-    raws = read_jsonl(RAW_FILE)
+    """Re-apply the shirt filter and normalization to the existing raw file (no download), then report and clean."""
+    all_raws = read_jsonl(RAW_FILE)
+    match = is_tee if args.types == "tees" else is_shirt_any
+    raws = [r for r in all_raws if raw_matches(r, match)]
+    print(f"filter: kept {len(raws)} of {len(all_raws)} raw records, removed {len(all_raws) - len(raws)}")
+    with open(RAW_FILE, "w", encoding="utf-8") as fr:
+        fr.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in raws)
     with open(NORM_FILE, "w", encoding="utf-8") as fn:
         fn.writelines(json.dumps(build_normalized_wdc(r), ensure_ascii=False) + "\n" for r in raws)
     report(args)

@@ -81,6 +81,31 @@ class Records(unittest.TestCase):
         self.assertFalse(is_tee("Golf Tees 50 pack", None))
         self.assertFalse(is_tee("T-shirt SVG download", None))
         self.assertFalse(is_tee("Hoodie", "T-Shirts"))
+
+    def test_non_tshirt_leaks_rejected(self):
+        self.assertFalse(is_tee("Yogitea Entgiftung", "Tee"))  # German 'Tee' = tea
+        self.assertFalse(is_tee("Detox Tee - Don Duarte 30g", None))
+        self.assertFalse(is_tee("Grüner Tee Bio", None, "Aufguss mit 80 Grad"))
+        self.assertFalse(is_tee("Fiambrera Camiseta Fútbol", None))
+        self.assertFalse(is_tee("Camiseta Candle", None))
+        self.assertFalse(is_tee("Sweatshirt Tee Logo", None))
+        self.assertFalse(is_tee("Sweat T-Shirt", None))
+        self.assertFalse(is_tee("Lunch Box T-Shirt Print", None))
+        self.assertFalse(is_tee("Classic Tee", None, "A tin of loose leaf tea"))
+        self.assertFalse(is_tee("Classic Tee", None, "Lovely gift"))  # bare 'tee' needs an apparel word
+
+    def test_real_tshirts_kept(self):
+        self.assertTrue(is_tee("Classic Tee", None, "100% cotton, unisex fit"))
+        self.assertTrue(is_tee("Munds Park - Unisex Organic Cotton T-shirt", None))
+        self.assertTrue(is_tee("REMERA MANGA CORTA ALGODON", None))
+        self.assertTrue(is_tee("Heavyweight Tee 240gsm", None, "Boxy fit"))
+        self.assertTrue(is_tee("Logo", "T-Shirts"))
+        self.assertTrue(is_tee("Revenge Bart Tee", None, "https://shop.example.com/products/revenge-bart-tee S M L XL"))
+
+    def test_plumbing_and_german_tea_rejected(self):
+        self.assertFalse(is_tee("ProPress Pipe Reducing Tee, 2 x 2 x 1/2 in", None, "fitting"))
+        self.assertFalse(is_tee("Schwarzer Tee Ceylon", None, "Tee aus Sri Lanka, 100 g"))
+        self.assertFalse(is_tee("Rooibos Tee Orange Bio", None, "Kräutertee"))
         self.assertEqual(detect_language("Camiseta de algodón con manga corta para hombre"), "es")
         self.assertEqual(detect_language("Soft cotton tee made for you and your friends"), "en")
         self.assertEqual(decode("Caf&amp;amp;e \\u00e9"), "Caf&e é")
