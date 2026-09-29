@@ -1,13 +1,14 @@
 """Fetch one product page for the API: http(s) only, public IPs only (SSRF guard), robots.txt, timeout, size cap."""
 import ipaddress
 import socket
+import time
 from urllib.parse import urljoin, urlsplit
 
 import requests
 
 from fetch import USER_AGENT, robots_allows
 
-TIMEOUT = 10  # seconds per request
+TIMEOUT = 10  # total seconds for robots.txt + page + redirects
 MAX_BYTES = 3_000_000
 MAX_REDIRECTS = 3
 
@@ -34,21 +35,33 @@ def check_url(url):
     return p
 
 
-def get(url):
-    """GET with manual redirects (each hop re-checked). Returns (final_url, status, text)."""
+def remaining(deadline):
+    left = deadline - time.monotonic()
+    if left <= 0:
+        raise FetchError(504, "fetch deadline exceeded")
+    return left
+
+
+def get(url, deadline=None):
+    """GET with manual redirects (each hop re-checked) under one total deadline. Returns (final_url, status, text)."""
+    deadline = deadline or time.monotonic() + TIMEOUT
     for _ in range(MAX_REDIRECTS + 1):
         check_url(url)
         try:
-            r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT, stream=True, allow_redirects=False)
+            r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=remaining(deadline), stream=True,
+                             allow_redirects=False)
         except requests.RequestException as e:
             raise FetchError(502, f"fetch failed: {type(e).__name__}")
         with r:
             if r.is_redirect:
+                if not r.headers.get("location"):
+                    raise FetchError(400, "redirect without Location header")
                 url = urljoin(url, r.headers["location"])
                 continue
             body = b""
             for chunk in r.iter_content(65536):
                 body += chunk
+                remaining(deadline)
                 if len(body) > MAX_BYTES:
                     raise FetchError(413, "page larger than size limit")
             return url, r.status_code, body.decode(r.encoding or "utf-8", errors="replace")
@@ -58,10 +71,11 @@ def get(url):
 def fetch_page(url):
     """robots.txt check, then the page. Returns (final_url, html)."""
     p = check_url(url)
-    _, status, robots = get(f"{p.scheme}://{p.netloc}/robots.txt")
+    deadline = time.monotonic() + TIMEOUT
+    _, status, robots = get(f"{p.scheme}://{p.netloc}/robots.txt", deadline)
     if status == 200 and not robots_allows(robots, p.path + (f"?{p.query}" if p.query else "")):
         raise FetchError(403, "robots.txt disallows this URL")
-    final, status, html = get(url)
+    final, status, html = get(url, deadline)
     if status != 200:
         raise FetchError(502, f"upstream HTTP {status}")
     return final, html

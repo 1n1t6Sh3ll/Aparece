@@ -1,3 +1,4 @@
+import itertools
 import os
 import sys
 import unittest
@@ -53,14 +54,14 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(r.status_code, 400, url)
 
     def test_robots_disallow(self):
-        def fake_get(url):
+        def fake_get(url, deadline=None):
             return url, 200, "User-agent: *\nDisallow: /products/"
         with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS), mock.patch.object(safe_fetch, "get", fake_get):
             r = client.post("/v1/extract", json={"url": "https://shop.example.com/products/heavy-tee"})
         self.assertEqual(r.status_code, 403)
 
     def test_url_fetch(self):
-        def fake_get(url):
+        def fake_get(url, deadline=None):
             return (url, 404, "") if url.endswith("/robots.txt") else (url, 200, FIXTURE)
         with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS), mock.patch.object(safe_fetch, "get", fake_get):
             r = client.post("/v1/extract", json={"url": "https://shop.example.com/products/heavy-tee"})
@@ -81,6 +82,24 @@ class ApiTest(unittest.TestCase):
         with mock.patch.object(safe_fetch.socket, "getaddrinfo", side_effect=lambda h, *a, **k: [(2, 1, 6, "", (
                 "127.0.0.1" if h == "127.0.0.1" else "93.184.216.34", 80))]), \
                 mock.patch.object(safe_fetch.requests, "get", return_value=hop):
+            with self.assertRaises(safe_fetch.FetchError) as e:
+                safe_fetch.get("https://shop.example.com/p")
+        self.assertEqual(e.exception.status, 400)
+
+    def test_total_deadline(self):
+        slow = mock.MagicMock(is_redirect=False, status_code=200)
+        slow.__enter__.return_value = slow
+        slow.iter_content.return_value = iter([b"x"] * 10)
+        clock = itertools.count(0, 5)  # each monotonic() call advances 5 s; deadline is 10 s total
+        with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS),                 mock.patch.object(safe_fetch.requests, "get", return_value=slow),                 mock.patch.object(safe_fetch.time, "monotonic", lambda: next(clock)):
+            with self.assertRaises(safe_fetch.FetchError) as e:
+                safe_fetch.get("https://shop.example.com/p")
+        self.assertEqual(e.exception.status, 504)
+
+    def test_redirect_without_location(self):
+        hop = mock.MagicMock(is_redirect=True, headers={})
+        hop.__enter__.return_value = hop
+        with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS),                 mock.patch.object(safe_fetch.requests, "get", return_value=hop):
             with self.assertRaises(safe_fetch.FetchError) as e:
                 safe_fetch.get("https://shop.example.com/p")
         self.assertEqual(e.exception.status, 400)
