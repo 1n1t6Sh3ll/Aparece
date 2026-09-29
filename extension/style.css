@@ -1,0 +1,15 @@
+body { font: 13px/1.4 system-ui, sans-serif; margin: 0; padding: 12px; width: 360px; color: #1a1a1a; background: #fff; }
+h1 { font-size: 15px; margin: 0 0 8px; }
+h2 { font-size: 13px; margin: 14px 0 6px; }
+button { padding: 6px 12px; cursor: pointer; }
+input { width: 100%; box-sizing: border-box; padding: 5px; }
+.muted { color: #666; }
+.error { color: #b00020; background: #fdecee; padding: 8px; border-radius: 4px; white-space: pre-wrap; }
+dl { margin: 0; }
+dt { font-weight: 600; margin-top: 6px; }
+dd { margin: 0; }
+details summary { cursor: pointer; }
+details .ev { color: #444; background: #f4f4f4; padding: 4px 6px; margin: 4px 0; border-left: 3px solid #999; white-space: pre-wrap; }
+.badge { display: inline-block; padding: 1px 6px; border-radius: 8px; background: #eee; }
+.q-high { background: #d9f2dd; } .q-medium { background: #fff1c2; } .q-low, .q-reject { background: #fbd5d5; }
+ul.missing { margin: 0; padding-left: 18px; color: #666; }

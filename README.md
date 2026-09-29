@@ -11,8 +11,11 @@ Evidence-driven view of how products are represented in search and AI answers. V
 FastAPI service in `api/` (reuses `dataset/collect` extract + normalize). OpenAPI docs at `/docs`.
 - `GET /v1/health`
 - `POST /v1/extract` with one of `url`, `html`, `text` (+ optional `language`) -> `{product_id, language, raw, normalized, evidence, conflicts, quality_status}`.
-URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s timeout, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default); `qwen` returns 501 until implemented.
+URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s total deadline, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default); `qwen` returns 501 until implemented.
 Run: `docker compose up --build` (port 8000 on localhost) or `pip install -r api/requirements.txt && uvicorn main:app --app-dir api`. Tests: `python -m unittest discover -s api/tests`.
+
+## Chrome extension
+`extension/` is a no-build MV3 popup that audits the current product page via `POST /v1/extract`. See `extension/README.md` to load it unpacked or preview it with mock data.
 
 ## Checks
 CI (`ci / check`) runs `python -m unittest discover -s dataset/tests`, compiles `train/`, and runs `api/tests`.
