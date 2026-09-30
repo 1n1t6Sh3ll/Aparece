@@ -331,7 +331,6 @@
   "ob.brand": "Descripción de la marca",
   "ob.markets": "Mercados objetivo",
   "ob.languages": "Idiomas",
-  "ob.commaHint": "Separa con comas.",
   "ob.price": "Posicionamiento de precio",
   "ob.price.none": "Sin especificar",
   "ob.price.budget": "Económico",
@@ -732,5 +731,12 @@
   "sug.rw.hallucination": "Alucinación",
   "sug.rw.coverage": "Cobertura",
   "sug.rwMax": "máx. {n}",
-  "sug.rewardNote": "La recompensa puntúa solo el texto sugerido: 1 punto por un título y una descripción válidos, más la fundamentación (proporción de frases respaldadas por datos de tu página), menos 2 por cada frase sin respaldo, más la cobertura (proporción de tus datos verificados que menciona, hasta 2). La precisión de los datos es la proporción de afirmaciones respaldadas por datos verificados: tu texto actual → la sugerencia."
+  "sug.rewardNote": "La recompensa puntúa solo el texto sugerido: 1 punto por un título y una descripción válidos, más la fundamentación (proporción de frases respaldadas por datos de tu página), menos 2 por cada frase sin respaldo, más la cobertura (proporción de tus datos verificados que menciona, hasta 2). La precisión de los datos es la proporción de afirmaciones respaldadas por datos verificados: tu texto actual → la sugerencia.",
+  "ob.whyCompany": "Estas respuestas guían tus auditorías: el enlace de tu tienda rellena los campos de enlaces de producto, tu primer mercado e idioma fijan la moneda y el idioma del borrador, y cada enlace de la competencia se audita con un clic en Mis productos.",
+  "ob.websiteHint": "La página de inicio de tu tienda. Los campos de enlaces de producto empiezan con su dirección /products/.",
+  "ob.sellsHint": "Tu categoría, p. ej. camisetas de algodón orgánico para hombre.",
+  "ob.marketsHint": "Códigos de país separados por comas (p. ej. US, ES, MX). El primero fija la moneda del borrador; los códigos desconocidos usan USD.",
+  "ob.languagesHint": "en o es, separados por comas. El primero es el idioma del borrador.",
+  "ob.competitorsHint": "Un enlace por línea. Puedes auditar cada uno desde Mis productos.",
+  "pr.auditCompetitor": "Auditar competidor"
 }

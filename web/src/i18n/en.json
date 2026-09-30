@@ -331,7 +331,6 @@
   "ob.brand": "Brand description",
   "ob.markets": "Target markets",
   "ob.languages": "Languages",
-  "ob.commaHint": "Separate with commas.",
   "ob.price": "Price positioning",
   "ob.price.none": "Not specified",
   "ob.price.budget": "Budget",
@@ -732,5 +731,12 @@
   "sug.rw.hallucination": "Hallucination",
   "sug.rw.coverage": "Coverage",
   "sug.rwMax": "best {n}",
-  "sug.rewardNote": "The reward scores the suggested text only: 1 point for a valid title and description, plus grounding (share of sentences backed by facts on your page), minus 2 for each unsupported sentence, plus coverage (share of your verified facts it states, up to 2). Fact accuracy is the share of claims backed by verified facts: your current text → the suggestion."
+  "sug.rewardNote": "The reward scores the suggested text only: 1 point for a valid title and description, plus grounding (share of sentences backed by facts on your page), minus 2 for each unsupported sentence, plus coverage (share of your verified facts it states, up to 2). Fact accuracy is the share of claims backed by verified facts: your current text → the suggestion.",
+  "ob.whyCompany": "These answers shape your audits: your store link prefills the product-link fields, your first market and language set the draft currency and language, and each competitor link becomes a one-click audit in My products.",
+  "ob.websiteHint": "Your store's home page. Product-link fields start with its /products/ address.",
+  "ob.sellsHint": "Your category, e.g. men's organic cotton T-shirts.",
+  "ob.marketsHint": "Country codes, comma-separated (e.g. US, ES, MX). The first one sets the draft currency; unknown codes use USD.",
+  "ob.languagesHint": "en or es, comma-separated. The first one is the draft language.",
+  "ob.competitorsHint": "One link per line. You can audit each one from My products.",
+  "pr.auditCompetitor": "Audit competitor"
 }
