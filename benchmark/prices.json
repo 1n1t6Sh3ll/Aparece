@@ -37,6 +37,18 @@
       "source": "https://openai.com/api/pricing/",
       "verified": true
     },
+    "gpt-4.1-mini": {
+      "input": 0.4,
+      "output": 1.6,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "verified": true
+    },
+    "gpt-4.1-nano": {
+      "input": 0.1,
+      "output": 0.4,
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "verified": true
+    },
     "gpt-4o-mini": {
       "input": 0.15,
       "output": 0.6,

@@ -11,6 +11,7 @@ type Doc = {
   genT: string; genIntro: string; gens: [string, string][];
   formT: string; formIntro: string; formulas: [string, string, string][];
   modelsT: string; models: string; modelRows: [string, string][]; modelsNote: string;
+  visT: string; vis: string[];
   resultsT: string; results: string[];
   neverT: string; never: string[];
   runT: string; run: string; more: string;
@@ -22,7 +23,7 @@ const EN: Doc = {
   ideaT: "The idea",
   idea: [
     "Shoppers now ask AI assistants what to buy. The assistant answers from what it can read and trust on product pages. If a small shop's page doesn't state its facts clearly (material, weight, fit, care) in text and markup machines can read, it doesn't get recommended.",
-    "We measured it: in 384 real shopping questions to gpt-4o-mini and Claude Haiku (English and Spanish), none of the 103 small shops we tested was named once. Everlane (78 answers), Uniqlo (74) and Patagonia (59) were.",
+    "We measured it: in 768 real shopping answers from four AI models (English and Spanish), none of the 103 small shops we tested was named once. Uniqlo (174 answers), Patagonia (133) and Everlane (131) were.",
     "Aparece shows a shop owner what machines can and cannot read on each product page, compares it with similar shirts, and suggests fixes built only from facts the page already proves. It never invents claims.",
   ],
   helpsT: "Who it helps",
@@ -82,10 +83,17 @@ const EN: Doc = {
   models: "A small language model was fine-tuned to read product pages into the same fact format. It only fills fields the rules left empty, and its output is labelled \"predicted\", never \"verified\". On 200 test products from 63 stores:",
   modelRows: [["Aparece Qwen2.5-0.5B, fine-tuned", "85.8% of facts correct"], ["GPT-4.1 (prompt only)", "27.2%"], ["Qwen2.5-0.5B, untuned", "4.7%"]],
   modelsNote: "Exact-match scoring on our own label format, which favours the fine-tuned model. Weights are on GitHub (release weights-v1).",
+  visT: "How AI visibility is measured",
+  vis: [
+    "We asked each AI model the same 192 real shopping questions about t-shirts, in English and Spanish, once each, with one plain instruction: name the brand and product, most recommended first. Every model got the same wording.",
+    "Each answer is then checked by fixed rules against the 103 small shops in our catalog. A shop counts as named when its product link or alias appears, or its brand and product name appear on the same line.",
+    "Mention rate is the share of a model's answers that name one of these shops. 0% means none did; it says nothing about whether a shop is good. The brands named instead are counted from the bold item names at the start of each recommended line (a heuristic count).",
+    "Limits: one run, one day, t-shirts only, English and Spanish only. It shows what these models said, not why they said it, and not what a shopper would see elsewhere.",
+  ],
   resultsT: "Measured results",
   results: [
     "AI comparison (5 products, EN/ES): Aparece best on title, tags and description with no unsupported claims; AI-visibility a statistical tie.",
-    "AI visibility (384 answers, 2 models): 0% mention rate for the small shops tested; big brands named instead.",
+    "AI visibility (768 answers, 4 models): 0% mention rate for the small shops tested; big brands named instead.",
     "Live comparison example (Rivera Laredo tee): Aparece 0 flagged sentences; Claude Haiku 1; gpt-4o-mini 7; the shop's original 8. Most AI flags are wording the page doesn't back up (\"classic\", \"comfort\", \"designed\"). Cost $0.0023.",
   ],
   neverT: "What Aparece will not do",
@@ -106,7 +114,7 @@ const ES: Doc = {
   ideaT: "La idea",
   idea: [
     "Hoy la gente pregunta a asistentes de IA qué comprar. El asistente responde con lo que puede leer y verificar en las fichas de producto. Si la ficha de una tienda pequeña no deja claros sus datos (material, gramaje, corte, cuidados) en texto y marcado legibles por máquinas, no la recomienda.",
-    "Lo medimos: en 384 preguntas de compra reales a gpt-4o-mini y Claude Haiku (en inglés y español), ninguna de las 103 tiendas pequeñas analizadas apareció ni una vez. Sí aparecieron Everlane (78 respuestas), Uniqlo (74) y Patagonia (59).",
+    "Lo medimos: en 768 respuestas de compra reales de cuatro modelos de IA (en inglés y español), ninguna de las 103 tiendas pequeñas analizadas apareció ni una vez. Sí aparecieron Uniqlo (174 respuestas), Patagonia (133) y Everlane (131).",
     "Aparece muestra al dueño de la tienda qué pueden y qué no pueden leer las máquinas en cada ficha, la compara con camisetas similares y propone arreglos basados solo en datos que la página ya demuestra. Nunca inventa afirmaciones.",
   ],
   helpsT: "A quién ayuda",
@@ -166,10 +174,17 @@ const ES: Doc = {
   models: "Se ajustó un modelo de lenguaje pequeño para leer fichas de producto en el mismo formato de datos. Solo rellena campos que las reglas dejaron vacíos, y su resultado se marca como \"previsto\", nunca como \"verificado\". Con 200 productos de prueba de 63 tiendas:",
   modelRows: [["Aparece Qwen2.5-0.5B, ajustado", "85,8 % de datos correctos"], ["GPT-4.1 (solo instrucciones)", "27,2 %"], ["Qwen2.5-0.5B sin ajustar", "4,7 %"]],
   modelsNote: "Puntuación de coincidencia exacta con nuestro propio formato de etiquetas, lo que favorece al modelo ajustado. Los pesos están en GitHub (versión weights-v1).",
+  visT: "Cómo se mide la visibilidad en IA",
+  vis: [
+    "Hicimos a cada modelo de IA las mismas 192 preguntas de compra reales sobre camisetas, en inglés y español, una vez cada una, con una sola instrucción: nombrar la marca y el producto, primero el más recomendado. Todos los modelos recibieron el mismo texto.",
+    "Después, reglas fijas comprueban cada respuesta contra las 103 tiendas pequeñas de nuestro catálogo. Una tienda cuenta como nombrada si aparece el enlace de su producto o un alias, o si su marca y el nombre del producto aparecen en la misma línea.",
+    "La tasa de menciones es el porcentaje de respuestas de un modelo que nombran alguna de estas tiendas. 0 % significa que ninguna lo hizo; no dice nada sobre si una tienda es buena. Las marcas nombradas en su lugar se cuentan a partir de los nombres en negrita al inicio de cada línea recomendada (un recuento heurístico).",
+    "Límites: una ejecución, un día, solo camisetas, solo inglés y español. Muestra lo que dijeron estos modelos, no por qué, ni lo que vería un comprador en otros sitios.",
+  ],
   resultsT: "Resultados medidos",
   results: [
     "Comparación con IA (5 productos, EN/ES): Aparece gana en título, etiquetas y descripción sin afirmaciones sin respaldo; en visibilidad, empate estadístico.",
-    "Visibilidad en IA (384 respuestas, 2 modelos): 0 % de menciones para las tiendas pequeñas analizadas; se nombraron grandes marcas.",
+    "Visibilidad en IA (768 respuestas, 4 modelos): 0 % de menciones para las tiendas pequeñas analizadas; se nombraron grandes marcas.",
     "Ejemplo en directo (camiseta Rivera Laredo): Aparece 0 frases marcadas; Claude Haiku 1; gpt-4o-mini 7; el texto original de la tienda 8. La mayoría de las marcas a la IA son palabras que la página no respalda (\"clásico\", \"comodidad\", \"diseñado\"). Coste 0,0023 $.",
   ],
   neverT: "Lo que Aparece no hará",
@@ -259,6 +274,10 @@ export default function DocsPage() {
           {d.modelRows.map(([m, v]) => <li key={m} className="flex justify-between gap-3 py-2"><span>{m}</span><span className="font-semibold tabular-nums">{v}</span></li>)}
         </ul>
         <p className="text-xs muted">{d.modelsNote}</p>
+      </Section>
+
+      <Section icon={<Radar className={ic} aria-hidden />} title={d.visT}>
+        {d.vis.map((p) => <p key={p}>{p}</p>)}
       </Section>
 
       <Section icon={<Radar className={ic} aria-hidden />} title={d.resultsT}>
