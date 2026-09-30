@@ -20,6 +20,7 @@ from normalize import build_normalized  # noqa: E402
 import safe_fetch  # noqa: E402
 import dashboard_api  # noqa: E402
 import monitor_api  # noqa: E402
+import audit_api  # noqa: E402
 
 VERSION = "0.1.0"
 app = FastAPI(title="ProductLens API", version=VERSION)
@@ -27,6 +28,7 @@ app.add_middleware(CORSMiddleware, allow_origin_regex=r"^chrome-extension://[a-p
                    allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 app.include_router(dashboard_api.router)
 app.include_router(monitor_api.router)
+app.include_router(audit_api.router)
 app.mount("/dashboard", StaticFiles(directory=Path(__file__).resolve().parents[1] / "dashboard", html=True), name="dashboard")
 
 
