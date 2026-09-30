@@ -32,7 +32,7 @@ export function Landing() {
   return (
     <div className="min-h-screen bg-[var(--surface)]">
       <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]">
-        <nav className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4" aria-label="Main">
+        <nav className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4" aria-label={t("nav.menu")}>
           <a href="#/" className="mr-auto flex items-center gap-2 font-bold tracking-tight">
             <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-white"><Aperture className="size-5" aria-hidden /></span>ProductLens
           </a>

@@ -26,6 +26,10 @@ PAIRS_LOG = Path(__file__).resolve().parent / "data" / "pairs.jsonl"  # OPTIMIZE
 _pairs_lock = threading.Lock()
 MIN_FACTS = 2  # localized fact sentences needed to write any copy
 LANG_NAME = {"en": "English", "es": "Spanish"}
+STYLE = {"es": "Write like a Spanish online clothing shop, in neutral Spanish understood in Spain and Latin America: "
+               "retail terms such as 'camiseta', 'manga corta', 'cuello redondo', 'corte regular', 'composición'; no "
+               "word-for-word translation from English. Start with the garment, e.g. 'Camiseta para hombre de manga "
+               "corta y cuello redondo.'\n"}
 SYSTEM = ("You write factual e-commerce product copy. Use ONLY the facts given; they are verified. Do not add "
           "materials, features, certifications, origins, performance, sustainability or health claims, reviews, "
           "awards or numbers that are not in the facts. No marketing superlatives. Do not translate or reuse any "
@@ -43,7 +47,7 @@ def _prompt(truth, lang, rejected, variant=None):
     if variant:
         note += f"This is candidate {variant[0]} of {variant[1]}: vary wording and sentence order, facts only.\n"
     return (f"Write a product title (max 90 characters) and a 2-5 sentence description in {LANG_NAME[lang]} "
-            f"from these verified facts only.\n{note}" + json.dumps(data, ensure_ascii=False))
+            f"from these verified facts only.\n{STYLE.get(lang, '')}{note}" + json.dumps(data, ensure_ascii=False))
 
 
 def _reports(cand, truth):

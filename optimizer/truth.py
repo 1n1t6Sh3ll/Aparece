@@ -101,19 +101,24 @@ PHRASES = {
            "colors": "Colors: {}.", "sizes": "Sizes: {}.", "price": "Price: {}.", "sale": "Sale price: {}.",
            "availability": {"in_stock": "In stock.", "out_of_stock": "Out of stock."},
            "origin": "Made in {}.", "cert": "Certification: {}.", "care": "Care: {}"},
-    "es": {"material": "Material: {}.", "gsm": "Gramaje: {} gsm.", "stretch": "Tejido elástico.",
+    "es": {"material": "Composición: {}.", "gsm": "Gramaje: {} g/m².", "stretch": "Tejido elástico.",
            "fit": {"oversized": "Corte oversize.", "slim": "Corte entallado.", "relaxed": "Corte holgado.",
-                   "athletic": "Athletic fit.", "tailored": "Tailored fit.", "regular": "Corte regular."},
+                   "athletic": "Corte athletic fit.", "tailored": "Corte tailored fit.", "regular": "Corte regular."},
            "sleeve": {"short": "Manga corta.", "long": "Manga larga.", "sleeveless": "Sin mangas.",
                       "three_quarter": "Manga 3/4."},
-           "neckline": {"crew": "Cuello redondo.", "v_neck": "Cuello en V.", "scoop": "Scoop neck.",
+           "neckline": {"crew": "Cuello redondo.", "v_neck": "Cuello en V.", "scoop": "Escote redondo.",
                         "henley": "Cuello henley."},
-           "pattern": {"striped": "De rayas.", "plaid": "De cuadros.", "graphic": "Estampado gráfico.",
-                       "printed": "Estampado.", "solid": "Liso."},
+           "pattern": {"striped": "Diseño de rayas.", "plaid": "Diseño de cuadros.", "graphic": "Estampado gráfico.",
+                       "printed": "Diseño estampado.", "solid": "Color liso."},
            "audience": {"men": "Para hombre.", "women": "Para mujer.", "unisex": "Unisex.", "kids": "Para niños."},
-           "colors": "Colores: {}.", "sizes": "Tallas: {}.", "price": "Precio: {}.", "sale": "Precio rebajado: {}.",
-           "availability": {"in_stock": "Disponible.", "out_of_stock": "Agotado."},
-           "origin": "Hecho en {}.", "cert": "Certificación: {}.", "care": "Cuidado: {}"},
+           "colors": "Disponible en {}.", "sizes": "Tallas: {}.", "price": "Precio: {}.", "sale": "Precio rebajado: {}.",
+           "availability": {"in_stock": "En stock.", "out_of_stock": "Agotado."},
+           "origin": "Hecho en {}.", "cert": "Certificación: {}.", "care": "Cuidados: {}",
+           # Spanish listings open with the garment: "Camiseta para hombre de manga corta y cuello redondo."
+           "and": " y ", "decimal": ",", "symbol": {"EUR": "€"}, "noun_default": "Prenda",
+           "noun": {"t_shirt": "Camiseta", "henley": "Camiseta", "polo": "Polo", "overshirt": "Sobrecamisa",
+                    "short_sleeve_shirt": "Camisa", "long_sleeve_shirt": "Camisa", "oxford": "Camisa",
+                    "flannel": "Camisa", "work_shirt": "Camisa"}},
 }
 
 
@@ -121,12 +126,41 @@ def _num(v):
     return f"{v:g}" if isinstance(v, (int, float)) else str(v)
 
 
+def _join(items, lang):
+    """'a, b, c' in EN; 'a, b y c' in ES."""
+    items = [x for x in items if x]
+    sep = PHRASES.get(lang, {}).get("and", ", ")
+    return ", ".join(items[:-1]) + sep + items[-1] if len(items) > 1 else "".join(items)
+
+
+def _money(value, cur, lang):
+    """'25.00 EUR' in EN; '25,00 €' in ES (other currencies keep their code)."""
+    P = PHRASES.get(lang, {})
+    amount = f"{value:.2f}".replace(".", P.get("decimal", "."))
+    return f"{amount} {P.get('symbol', {}).get(cur, cur)}"
+
+
+def _lead(truth, lang):
+    """ES opening sentence from verified facts only: garment + audience + sleeve + neckline,
+    e.g. 'Camiseta para hombre de manga corta y cuello redondo.' None when there is nothing to say."""
+    P, f = PHRASES[lang], truth["facts"]
+    low = lambda table, key: (lambda x: x and x[0].lower() + x[1:].rstrip("."))(P[table].get(f.get(key)))  # noqa: E731
+    aud, sleeve, neck = (low(t, k) for t, k in (("audience", "identity.audience"), ("sleeve", "fit_and_style.sleeve_length"),
+                                                 ("neckline", "fit_and_style.neckline")))
+    if not (aud or sleeve or neck):
+        return None
+    sleeve = sleeve and (sleeve if sleeve.startswith("sin ") else "de " + sleeve)
+    neck = neck and ("y " if sleeve and sleeve.startswith("de ") else "con ") + neck
+    noun = P["noun"].get(f.get("identity.product_type"), P["noun_default"])
+    return " ".join(x for x in (noun, aud, sleeve, neck) if x) + "."
+
+
 def _material(truth, lang):
     f = truth["facts"]
     name = lambda m: MATERIAL.get(lang, {}).get(m, m.replace("_", " "))  # noqa: E731
     pct = f.get("materials.material_percentages")
     if isinstance(pct, dict) and pct:
-        return ", ".join(f"{_num(p)}% {name(m)}" for m, p in sorted(pct.items(), key=lambda x: -x[1]))
+        return _join([f"{_num(p)}% {name(m)}" for m, p in sorted(pct.items(), key=lambda x: -x[1])], lang)
     return name(f["materials.primary_material"]) if f.get("materials.primary_material") else None
 
 
@@ -139,11 +173,14 @@ def color_names(truth, lang):
 
 
 def fact_sentences(truth, lang):
-    """Localized, deterministic sentences, one fact each. This is the only content an LLM may rephrase."""
+    """Localized, deterministic sentences, one fact each (ES opens with one garment sentence that joins audience,
+    sleeve and neckline, as Spanish shop listings do). This is the only content an LLM may rephrase."""
     P, f, out = PHRASES[lang], truth["facts"], []
-    one = lambda table, key: P[table].get(f.get(key)) if f.get(key) else None  # noqa: E731
+    lead = _lead(truth, lang) if "noun" in P else None
+    one = lambda table, key: P[table].get(f.get(key)) if f.get(key) and not (  # noqa: E731
+        lead and table in ("audience", "sleeve", "neckline")) else None
     mat = _material(truth, lang)
-    out += [P["material"].format(mat) if mat else None,
+    out += [lead, P["material"].format(mat) if mat else None,
             P["gsm"].format(_num(f["materials.fabric_weight_gsm"])) if f.get("materials.fabric_weight_gsm") else None,
             P["stretch"] if f.get("materials.stretch") is True else None,
             one("fit", "fit_and_style.fit"), one("sleeve", "fit_and_style.sleeve_length"),
@@ -151,13 +188,13 @@ def fact_sentences(truth, lang):
             one("audience", "identity.audience")]
     colors = color_names(truth, lang)
     sizes = [s.get("normalized_size") or s.get("raw_size") for s in f.get("variants.sizes") or []]
-    out += [P["colors"].format(", ".join(colors)) if colors else None,
-            P["sizes"].format(", ".join(s for s in sizes if s)) if any(sizes) else None]
+    out += [P["colors"].format(_join(colors, lang)) if colors else None,
+            P["sizes"].format(_join(sizes, lang)) if any(sizes) else None]
     cur = f.get("commerce.currency")
     if cur and f.get("commerce.price") is not None:
-        out.append(P["price"].format(f"{f['commerce.price']:.2f} {cur}"))
+        out.append(P["price"].format(_money(f["commerce.price"], cur, lang)))
     if cur and f.get("commerce.sale_price") is not None:
-        out.append(P["sale"].format(f"{f['commerce.sale_price']:.2f} {cur}"))
+        out.append(P["sale"].format(_money(f["commerce.sale_price"], cur, lang)))
     out.append(one("availability", "commerce.availability"))
     out += [P["origin"].format(COUNTRY.get(lang, {}).get(o, o.title())) for o in truth["origins"]]
     out += [P["cert"].format(t) for t in truth["certs"].values()]

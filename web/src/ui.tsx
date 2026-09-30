@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
-import { store } from "./lib";
+import { store, useI18n } from "./lib";
 
 /* ---------- theme ---------- */
 export type Theme = "light" | "dark";
@@ -24,6 +24,7 @@ const ToastCtx = createContext<(kind: Toast["kind"], text: string, action?: Toas
 export const useToast = () => useContext(ToastCtx);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [items, setItems] = useState<Toast[]>([]);
   const n = useRef(0);
   const push = useCallback((kind: Toast["kind"], text: string, action?: Toast["action"]) => {
@@ -43,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div key={i.id} className="card rise pointer-events-auto flex w-full max-w-sm items-start gap-3 p-3 text-sm shadow-lg">
               <I className={`mt-0.5 size-4 shrink-0 ${tone[i.kind]}`} aria-hidden />
               <p className="flex-1">{i.text} {i.action && <a className="font-semibold text-[var(--accent)] underline-offset-2 hover:underline" href={i.action.href}>{i.action.label}</a>}</p>
-              <button className="muted hover:text-[var(--text)]" onClick={() => setItems((x) => x.filter((y) => y.id !== i.id))} aria-label="Dismiss"><X className="size-4" aria-hidden /></button>
+              <button className="muted hover:text-[var(--text)]" onClick={() => setItems((x) => x.filter((y) => y.id !== i.id))} aria-label={t("kb.close")}><X className="size-4" aria-hidden /></button>
             </div>
           );
         })}

@@ -43,7 +43,9 @@ const STR: Record<string, Record<string, string>> = { en: {
   "candidates": "All candidates",
   "noTags": "no tags",
   "caveats": "Caveats",
-  "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats."
+  "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats.",
+  "pass": "passed",
+  "fail": "failed"
 }, es: {
   "cta": "Comparar con modelos de IA",
   "title": "Comparación IA: título, etiquetas, descripción",
@@ -84,8 +86,38 @@ const STR: Record<string, Record<string, string>> = { en: {
   "candidates": "Todos los candidatos",
   "noTags": "sin etiquetas",
   "caveats": "Advertencias",
-  "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val x {r} repeticiones."
+  "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val × {r} repeticiones.",
+  "pass": "supera la revisión",
+  "fail": "no supera la revisión"
 } };
+
+// Caveats come in English from benchmark/shootout/report.py. Known ones are translated here; anything else is shown
+// as is with the "original text in English" marker.
+const CAVEATS_ES: [RegExp, string][] = [
+  [/^Simulated context: (\d+) product pages chosen by us, not a real search index or live assistant\.$/,
+    "Contexto simulado: $1 fichas de producto elegidas por nosotros, no un índice de búsqueda real ni un asistente de IA en funcionamiento."],
+  [/^Small n: (\d+) products x (\d+) prompts x (\d+) repeats; CIs are cluster bootstrap over \(product, prompt\)\.$/,
+    "Muestra pequeña: $1 productos × $2 preguntas × $3 repeticiones; los intervalos de confianza se calculan con bootstrap por grupos (producto, pregunta)."],
+  [/^SAMPLE: the judges were MOCK models \(deterministic fakes\), not OpenAI or Anthropic; the visibility numbers are placeholders and mean nothing\. Only the audits are real\.$/,
+    "EJEMPLO: los jueces eran modelos simulados (respuestas fijas), no de OpenAI ni de Anthropic; las cifras de visibilidad son de relleno y no significan nada. Solo las auditorías son reales."],
+  [/^Judges are from the same model families as the AI generators \(OpenAI, Anthropic\); self-preference is possible\.$/,
+    "Los jueces son de las mismas familias de modelos que los generadores de IA (OpenAI, Anthropic), así que pueden favorecer sus propios textos."],
+  [/^Winner chosen on judges other than the held-out one \((.+)\); nothing was tuned on these results\.$/,
+    "El ganador se eligió con los jueces que no son el reservado ($1); no se ajustó nada con estos resultados."],
+  [/^Guardrail is a strict allowlist: harmless paraphrases can be flagged, which disqualifies that part\.$/,
+    "El filtro solo admite palabras respaldadas por los datos: puede marcar paráfrasis inofensivas, y eso descalifica esa parte."],
+  [/^Title and tag winners are deterministic audit scores, not measured visibility\.$/,
+    "Los ganadores de título y etiquetas salen de puntuaciones de auditoría fijas, no de visibilidad medida."],
+  [/^The merchant original is judged against the same Product Truth; the dataset has no merchant tags\.$/,
+    "El texto original del comercio se evalúa con los mismos datos verificados; nuestra base de datos no incluye etiquetas del comercio."],
+];
+
+/** [text, isOriginalEnglish] for a report caveat in the UI language. */
+function caveatText(c: string, lang: string): [string, boolean] {
+  if (lang !== "es") return [c, lang !== "en"];
+  for (const [re, es] of CAVEATS_ES) if (re.test(c)) return [c.replace(re, es), false];
+  return [c, true];
+}
 
 function useStr() {
   const { lang } = useI18n();
@@ -134,9 +166,11 @@ type Report = {
 const PARTS: Part[] = ["title", "tags", "description"];
 const pct = (v: number | null | undefined) => (v == null ? "–" : `${Math.round(v * 100)}%`);
 const ci = (v: CI | undefined) => (v ? `${v.value.toFixed(2)} [${v.lo.toFixed(2)}–${v.hi.toFixed(2)}]` : "–");
-const Pass = ({ ok }: { ok: boolean }) => ok
-  ? <Check className="size-4 shrink-0 text-emerald-600" aria-label="pass" />
-  : <X className="size-4 shrink-0 text-rose-600" aria-label="fail" />;
+function Pass({ ok }: { ok: boolean }) {
+  const t = useStr();
+  return ok ? <Check className="size-4 shrink-0 text-emerald-600" aria-label={t("pass")} />
+    : <X className="size-4 shrink-0 text-rose-600" aria-label={t("fail")} />;
+}
 
 export default function AiComparison({ productId }: { productId?: string }) {
   const { t: tShared, lang } = useI18n();
@@ -164,6 +198,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
   if (productId && !inSet) return wrap(  // never show another (demo) product's numbers for a real product
     <div className="card mt-6 p-6"><p className="font-semibold">{t("notInSetTitle")}</p><p className="mt-1 text-sm muted">{t("notInSet")}</p>
       <a className="btn-outline mt-4" href="#/compare">{t("seeSet")}</a></div>);
+  const caveats = (data.caveats || []).map((c) => caveatText(c, lang));
   const cur = products.find((p) => p.product_id === (sel || (inSet ? productId : products[0].product_id)))!;
 
   return wrap(
@@ -267,8 +302,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
       <section className="card mt-6 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-stone-400" aria-hidden />{t("caveats")}</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
-          {(data.caveats || []).map((c) => <li key={c} lang="en">{c}</li>)}
-          {lang !== "en" && (data.caveats || []).length > 0 && <li className="list-none muted">{tShared("mod.origEn")}</li>}
+          {caveats.map(([c, en]) => <li key={c} lang={en ? "en" : undefined}>{c}{en && <span className="muted"> ({tShared("mod.origEn")})</span>}</li>)}
           {data.setup && <li>{t("setup", { p: data.setup.products, j: data.setup.judges.join(", "), h: data.setup.holdout_judge || "–", q: data.setup.prompts_per_product, r: data.setup.repeats })}</li>}
         </ul>
       </section>

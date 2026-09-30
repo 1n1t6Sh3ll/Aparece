@@ -79,7 +79,8 @@ class OptimizerTest(unittest.TestCase):
             self.assertEqual(out["accuracy_after"]["accuracy"], 1.0)
             self.assertGreaterEqual(out["accuracy_after"]["accuracy"], out["accuracy_before"]["accuracy"])
             self.assertIn("Northwind Everyday Tee", out["title"])
-        self.assertIn("Tallas: S, M, L.", out["description"])
+        self.assertIn("Tallas: S, M y L.", out["description"])
+        self.assertIn("Precio: 25,00 €.", out["description"])
         self.assertIn("Hecho en Portugal.", out["description"])
         self.assertIn("Corte regular.", out["description"])
 
@@ -213,12 +214,31 @@ class OptimizerTest(unittest.TestCase):
 
     def test_all_stripped_uses_template(self):
         bad = json.dumps({"title": "", "description": "Good for your health. Free shipping."})
-        for lang, first in (("en", "Material: 60% cotton"), ("es", "Material: 60% algodón")):
+        for lang, first in (("en", "Material: 60% cotton"), ("es", "Prenda para hombre de manga corta.")):
             out = fix.generate(RECORD, lang, None, backend=lambda s, u: bad)
             self.assertTrue(out["used_fallback"])
             self.assertTrue(out["title"])
             self.assertTrue(out["description"].startswith(first), out["description"])
             self.assertEqual(guard.accuracy(guard.check_text(out["description"], product_truth(RECORD)))["accuracy"], 1.0)
+
+    def test_spanish_template_reads_like_a_shop_listing(self):
+        rec = copy.deepcopy(RECORD)
+        rec["identity"]["product_type"] = "t_shirt"
+        rec["fit_and_style"].update(neckline="scoop", fit="athletic")
+        rec["variants"]["colors"] = [{"original_color_name": c, "normalized": c} for c in ("black", "white", "navy")]
+        rec["evidence"] += [ev("identity.product_type", "t_shirt", "tee"), ev("fit_and_style.neckline", "scoop", "scoop neck")]
+        out = fix.generate(rec, "es", None, backend="stub")
+        self.assertEqual(out["removed_sentences"], [], out)
+        self.assertEqual(out["accuracy_after"]["accuracy"], 1.0)
+        d = out["description"]
+        self.assertTrue(d.startswith("Camiseta para hombre de manga corta y escote redondo."), d)
+        for s in ("Composición: 60% algodón y 40% poliéster.", "Gramaje: 180 g/m².", "Corte athletic fit.",
+                  "Disponible en negro, blanco y marino.", "En stock."):
+            self.assertIn(s, d)
+        for english in ("Athletic fit.", "Scoop neck", "gsm", "EUR"):
+            self.assertNotIn(english, d)
+        for s in ("Camiseta para mujer de manga corta.", "Precio: 30,00 €.", "Disponible en rojo."):
+            self.assertTrue(guard.check_text(s, product_truth(rec))[0]["problems"], s)  # still bound to the facts
 
     def test_not_enough_verified_facts(self):
         thin = dict(RECORD, evidence=[ev("identity.brand", "Northwind", "Northwind")])
