@@ -738,5 +738,6 @@
   "ob.marketsHint": "Country codes, comma-separated (e.g. US, ES, MX). The first one sets the draft currency; unknown codes use USD.",
   "ob.languagesHint": "en or es, comma-separated. The first one is the draft language.",
   "ob.competitorsHint": "One link per line. You can audit each one from My products.",
-  "pr.auditCompetitor": "Audit competitor"
+  "pr.auditCompetitor": "Audit competitor",
+  "res.ccArchived": "Loaded from the Common Crawl public archive (captured {date}) because {store} doesn't allow direct fetching."
 }

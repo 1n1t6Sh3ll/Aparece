@@ -738,5 +738,6 @@
   "ob.marketsHint": "Códigos de país separados por comas (p. ej. US, ES, MX). El primero fija la moneda del borrador; los códigos desconocidos usan USD.",
   "ob.languagesHint": "en o es, separados por comas. El primero es el idioma del borrador.",
   "ob.competitorsHint": "Un enlace por línea. Puedes auditar cada uno desde Mis productos.",
-  "pr.auditCompetitor": "Auditar competidor"
+  "pr.auditCompetitor": "Auditar competidor",
+  "res.ccArchived": "Cargado desde el archivo público de Common Crawl (capturado el {date}) porque {store} no permite la lectura directa."
 }
