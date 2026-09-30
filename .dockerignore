@@ -8,6 +8,8 @@
 !benchmark/
 !monitor/
 !governance/
+!optimizer/
+!experiments/
 !train/common.py
 !web/
 web/node_modules/
@@ -16,6 +18,7 @@ monitor/data/*
 !monitor/data/.gitignore
 governance/data/*
 !governance/data/.gitignore
+experiments/data/*
 api/tests/
 **/tests/
 **/__pycache__

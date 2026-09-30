@@ -21,7 +21,10 @@ PY=train/.venv/Scripts/python.exe
 $PY train/build_examples.py             # dataset/output/shirts_clean.jsonl (else shirts_normalized.jsonl) + shirts_raw.jsonl
 $PY train/build_examples.py --raw dataset/output/<raw>.jsonl --val 0.1 --test 0.1
 $PY train/build_examples.py --examples  # smoke test: the one dataset/examples pair, copied into every split
+$PY train/build_examples.py --final dataset/output/final_v2_2k_fixed --max_chars 1800 --out train/data_fixed
 ```
+
+`--final DIR` reads a ground-truth dir (`train.jsonl`, `val.jsonl`, `test_gold.jsonl`, each record with `raw` + `gold`; missing files are skipped) and keeps its splits. `--min_values N` keeps only train rows with N+ stated attributes (plus `--sparse_frac` of the rest). Product text is HTML-unescaped.
 
 Writes `train/data/{train,val,test}.jsonl` with chat `messages`. Raw and normalized records are joined on `product_id`. Splits use a hash of `merchant_domain`, so no store appears in two splits (asserted). Prints record and domain counts.
 
@@ -30,7 +33,10 @@ Writes `train/data/{train,val,test}.jsonl` with chat `messages`. Raw and normali
 ```sh
 $PY train/train.py --max_steps 5 --grad_accum 1   # smoke test
 $PY train/train.py --epochs 3                      # real run; --help lists lr, lora_r, max_len, batch
+$PY train/train.py --model Qwen/Qwen2.5-0.5B-Instruct --data train/data_fixed --out train/runs/team20fixed --epochs 2 --batch 4 --grad_accum 4 --max_len 1024 --val_limit 200
 ```
+
+Rows longer than `--max_len` tokens are dropped (not truncated). `--save_steps N` checkpoints and logs val loss every N steps.
 
 Saves the LoRA adapter to `train/runs/qlora` and prints `train_time_s` and `peak_vram_gb`.
 
@@ -39,9 +45,26 @@ Saves the LoRA adapter to `train/runs/qlora` and prints `train_time_s` and `peak
 ```sh
 $PY train/eval.py                         # base zero-shot vs. base + adapter on train/data/test.jsonl
 $PY train/eval.py --limit 50 --skip_base
+$PY train/eval.py --model Qwen/Qwen2.5-0.5B-Instruct --adapter train/runs/team20fixed --data train/data_fixed/test.jsonl --out train/runs/team20fixed/eval.json
 ```
 
+`--stratified N` samples N rows by language + source; `--ids FILE` restricts to listed product_ids; `--out` writes the JSON. Results are broken down overall, for the original 13 fields vs. the 7 fields added in final_v2, and by language, source and cross_tld_split. Generation is batched (`--batch`).
+
 Prints, for an all-null baseline, the base model and the fine-tuned model (greedy decoding): JSON validity rate, per-field exact match, mean field exact match, accuracy on non-null gold fields and accuracy on null gold fields. A key missing from the output counts as a miss.
+
+## 4. Compare with API models
+
+```sh
+DATA=dataset/output/final_v2_2k_fixed/test_gold.jsonl
+M="openai:gpt-4.1 anthropic:claude-sonnet-5-5 openai:gpt-4o-mini anthropic:claude-haiku-4-5-20251001"
+$PY train/api_eval.py --data $DATA --models $M --max-usd 5 --dry-run          # calls + upper-bound cost, no spend
+$PY train/api_eval.py --data $DATA --models $M --max-usd 5 --comparison train/runs/comparison.json
+$PY train/api_eval.py --data $DATA --models $M --report-only --comparison train/runs/comparison.json  # re-score, read-only; safe mid-run
+```
+
+Sends each record's stored system + user prompt (what `eval.py` gives Qwen; rebuilt with `common.messages` only if absent) at temperature 0, except `claude-sonnet-5-5`, which rejects `temperature`; it runs with thinking off (`between_tools`). Scores with `eval.py`'s `parse`/`summarize`, plus `by_language` and `by_source`. Needs `anthropic` and `openai`; keys come from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` only.
+
+Raw responses (model version, timestamp, usage, latency, cost) go to `train/runs/api_compare/{model}_responses.jsonl`; results to `{model}_eval.json` in `eval.py`'s schema.  Metrics cover only rows with a stored response (`answered`/`total`, `partial: true` mid-run); models with none are left out of `comparison.json`. Reruns resume and only re-call rows whose prompt changed. Cost is actual usage × `benchmark/prices.json`; a call is skipped when its upper-bound estimate would push the total across `--out-dir` over `--max-usd`. `--sample N` takes a stratified (language × source) subset.
 
 ## Reward (`reward.py`)
 
