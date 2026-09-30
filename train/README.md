@@ -56,3 +56,29 @@ $PY train/api_eval.py --data $DATA --models $M --report-only --comparison train/
 Sends each record's stored system + user prompt (what `eval.py` gives Qwen; rebuilt with `common.messages` only if absent) at temperature 0, except `claude-sonnet-5-5`, which rejects `temperature`; it runs with thinking off (`between_tools`). Scores with `eval.py`'s `parse`/`summarize`, plus `by_language` and `by_source`. Needs `anthropic` and `openai`; keys come from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` only.
 
 Raw responses (model version, timestamp, usage, latency, cost) go to `train/runs/api_compare/{model}_responses.jsonl`; results to `{model}_eval.json` in `eval.py`'s schema.  Metrics cover only rows with a stored response (`answered`/`total`, `partial: true` mid-run); models with none are left out of `comparison.json`. Reruns resume and only re-call rows whose prompt changed. Cost is actual usage × `benchmark/prices.json`; a call is skipped when its upper-bound estimate would push the total across `--out-dir` over `--max-usd`. `--sample N` takes a stratified (language × source) subset.
+
+## Reward (`reward.py`)
+
+Deterministic, CPU-only score of one model output against its input text (`common.prompt_text`), with optional gold. No model or network calls.
+
+| Part | Rule |
+|---|---|
+| format | +1 if the output is one JSON object and every value passes the field's schema in `dataset/schema/normalized_record.schema.json` (enums, types, percent ranges); otherwise −10 and scoring stops |
+| grounding | each non-null value must be supported by the input: re-derived with the `dataset/collect/normalize.py` rules (lookup tables, `parse_composition`, `parse_weight`, colour table), or matched verbatim/by alias (free text, sizes, care, features). Unsupported = hallucination, −2 per field |
+| correctness (gold given) | +1 per exact match on a non-null gold field; −0.5 for filling a field gold has as null only when the value is also unsupported. A supported value that gold lacks is neutral, since gold may be incomplete |
+
+`"unknown"` and empty lists/objects count as null; missing keys count as null and are listed in `errors`. `reward()` returns `total`, a per-field breakdown (`value`, `grounding`, `unsupported`, `correctness`) and the `hallucinated` field list.
+
+```sh
+python train/reward.py PRED.jsonl train/data/test.jsonl --rows rewards.jsonl
+python -m unittest discover -s train/tests -v
+```
+
+`PRED.jsonl` rows need `product_id` plus the output as `text` (the `api_eval.py` `*_responses.jsonl` format), `output` or `prediction`. `eval.py` does not save predictions yet, so write them in one of those forms first. Data rows are `build_examples.py` output (input = user message, gold = assistant message) or rows with `raw`. A data row with no prediction counts as a format failure. The summary gives mean reward, format rate, and hallucination rate and counts per field.
+
+Known limits: grounding is lexical, so a value can be supported by an unrelated mention (for example `"other"` or a size letter that appears elsewhere in the text), and paraphrased care or feature lines count as unsupported. Colour and size lists are compared with order, the same way `eval.py` compares them.
+
+### Use in best-of-N and DPO (not implemented)
+
+- **Best-of-N / rejection sampling:** sample N outputs per training input, score each with `reward(text, input_text, gold)`, keep the highest (ties: the first sample, so the choice is reproducible). Drop the input if the best output is not `format_ok` or has hallucinations. The kept outputs can be used as extra SFT data or as the output at inference time.
+- **DPO pairs:** from the same N samples, pair chosen = highest reward and rejected = lowest, and keep the pair only when the gap is large (for example ≥ 2, one hallucination) and the chosen output has no hallucinations. Without gold, grounding still ranks outputs, which makes pairs for unlabeled pages possible, but the only reward for filling a field is avoiding a penalty, so check for a drift toward all-null outputs. Keep the domain split from `build_examples.py` so no test store is used.
