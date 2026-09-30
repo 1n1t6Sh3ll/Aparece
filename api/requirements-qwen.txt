@@ -1,0 +1,6 @@
+-r requirements.txt
+# MODEL_BACKEND=qwen. torch: install separately (CUDA index, see train/README.md); CPU torch works too (fp32, slow).
+transformers
+peft
+bitsandbytes
+accelerate
