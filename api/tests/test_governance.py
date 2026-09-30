@@ -136,6 +136,20 @@ class TenantScopeTest(GovernanceTest):
         self.assertEqual(client.get("/v1/approvals", headers={"X-Manage-Token": self.tok_b}).json()["pending"], [])
         self.assertEqual(client.get("/v1/approvals").status_code, 401)
 
+    def test_approval_cannot_be_consumed_across_tenants(self):
+        body = {"record_id": str(self.a), "field": "material", "value": "cotton", "actor": "ops"}
+        r = client.post("/v1/predictions/confirm", json=body, headers={"X-Manage-Token": self.tok_a})
+        aid = r.json()["detail"]["approval_id"]
+        self.assertEqual(self.approve(aid, approver="merchant@a", role=policy.MERCHANT).status_code, 200)
+        for headers in ({}, {"X-Manage-Token": self.tok_b}):  # same request, not a's tenant
+            r = client.post("/v1/predictions/confirm", json={**body, "approval_id": aid}, headers=headers)
+            self.assertEqual(r.status_code, 403)
+        with self.assertRaises(policy.ApprovalRequired):
+            policy.require("confirm_model_prediction", "ops", target=f"{self.a}#material",
+                           details={"value": "cotton"}, approval_id=aid, owner=self.b)
+        r = client.post("/v1/predictions/confirm", json={**body, "approval_id": aid}, headers={"X-Manage-Token": self.tok_a})
+        self.assertEqual((r.status_code, r.json()["approved_by"]), (200, "merchant@a"))
+
     def test_chat_cannot_write_into_another_tenant(self):
         msg = {"product_id": str(self.b), "message": "price trend"}
         for headers in ({}, {"X-Manage-Token": "bogus"}, {"X-Manage-Token": self.tok_a}):

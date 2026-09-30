@@ -69,7 +69,7 @@ def require(action, actor, target=None, details=None, approval_id=None, owner=No
     if mode == "auto":
         audit.log(actor, action, target, mode, "allowed", dhash, owner=owner)
         return {"action": action, "mode": mode, "approved_by": None}
-    approver = audit.consume(approval_id, action, target, dhash, actor) if approval_id else None
+    approver = audit.consume(approval_id, action, target, dhash, actor, owner) if approval_id else None
     if approver:
         return {"action": action, "mode": mode, "approved_by": approver, "approval_id": approval_id}
     raise ApprovalRequired(action, audit.request(action, target, actor, dhash, owner), rule["owner"])

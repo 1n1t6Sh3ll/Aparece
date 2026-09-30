@@ -121,11 +121,11 @@ def decide(aid, approver, approve):
         return row
 
 
-def consume(aid, action, target, dhash, actor):
+def consume(aid, action, target, dhash, actor, owner=None):
     """approved -> used, only if it matches exactly. Returns approver or None. Logs the executed action."""
     with connect() as db:
         cur = db.execute("UPDATE approvals SET status='used' WHERE id=? AND action=? AND target IS ? AND details_hash=? "
-                         "AND status='approved'", (aid, action, target, dhash))
+                         "AND owner_pid IS ? AND status='approved'", (aid, action, target, dhash, owner))
         if not cur.rowcount:
             return None
         row = db.execute("SELECT approved_by, owner_pid FROM approvals WHERE id=?", (aid,)).fetchone()
