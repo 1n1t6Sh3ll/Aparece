@@ -11,8 +11,10 @@ from fastapi.testclient import TestClient  # noqa: E402
 import main  # noqa: E402
 
 FIX = Path(__file__).parent / "fixtures"
-ENV = {"PRODUCTLENS_DATA": str(FIX / "dashboard_records.jsonl"), "PRODUCTLENS_EVAL": str(FIX / "dashboard_eval.json")}
-MISSING = {"PRODUCTLENS_DATA": str(FIX / "nope.jsonl"), "PRODUCTLENS_EVAL": str(FIX / "nope.json")}
+ENV = {"PRODUCTLENS_DATA": str(FIX / "dashboard_records.jsonl"), "PRODUCTLENS_EVAL": str(FIX / "dashboard_eval.json"),
+       "PRODUCTLENS_SIGNALS": str(FIX / "dashboard_signals.jsonl"),
+       "PRODUCTLENS_VISIBILITY": str(FIX / "dashboard_visibility.json")}
+MISSING = {k: str(FIX / "nope") for k in ENV}
 client = TestClient(main.app)
 
 
@@ -58,6 +60,62 @@ class DashboardApiTest(unittest.TestCase):
             self.assertEqual(client.get("/v1/products").json(), {"results": []})
             self.assertEqual(client.get("/v1/stats").json()["total"], 0)
             self.assertEqual(client.get("/v1/eval").json(), {"available": False, "results": {}})
+
+    def test_signals(self):
+        body = client.get("/v1/products/p_target/signals").json()
+        self.assertTrue(body["available"])
+        self.assertFalse(body["currency_assumed"])
+        self.assertEqual(body["signal"]["peer"]["percentile"], 29.2)
+        self.assertTrue(client.get("/v1/products/p_heavy/signals").json()["currency_assumed"])
+        self.assertEqual(client.get("/v1/products/p_slim/signals").json(), {"available": False, "signal": None})
+        self.assertEqual(client.get("/v1/products/missing/signals").status_code, 404)
+
+    def test_competitors_reuse_peers(self):
+        body = client.get("/v1/products/p_target/competitors").json()
+        peers = {p["product_id"]: p for p in body["peers"]}
+        self.assertEqual(sorted(peers), ["p_boxy", "p_heavy", "p_linen", "p_slim"])
+        self.assertEqual(peers["p_heavy"]["price_diff_pct"], 12.0)  # 28 vs 25 EUR
+        self.assertEqual(peers["p_boxy"]["peer_percentile"], 8.3)
+        self.assertGreater(peers["p_heavy"]["completeness_pct"], body["target"]["completeness_pct"])
+        self.assertEqual(client.get("/v1/products/missing/competitors").status_code, 404)
+
+    def test_visibility(self):
+        body = client.get("/v1/visibility").json()
+        self.assertTrue(body["available"])
+        self.assertEqual(body["report"]["models"]["mock:mock-1"]["sites"]["shop.example.com"]["top3_rate"], 0.5)
+
+    def test_languages(self):
+        langs = client.get("/v1/languages").json()["languages"]
+        self.assertEqual(langs["en"]["products"], 6)
+        self.assertEqual(langs["de"]["visibility"], {})
+        self.assertEqual(langs["es"]["products"], 0)
+        self.assertEqual(langs["es"]["visibility"]["mock:mock-1"]["any_catalog_mention_rate"], 0.62)
+
+    def test_new_routes_empty_when_missing(self):
+        with mock.patch.dict(os.environ, MISSING):
+            self.assertEqual(client.get("/v1/visibility").json(), {"available": False, "report": {}})
+            self.assertEqual(client.get("/v1/languages").json(), {"languages": {}, "visibility_available": False})
+        with mock.patch.dict(os.environ, {"PRODUCTLENS_SIGNALS": str(FIX / "nope"),
+                                          "PRODUCTLENS_VISIBILITY": str(FIX / "heavy_tee.html")}):
+            self.assertFalse(client.get("/v1/products/p_target/signals").json()["available"])
+            self.assertFalse(client.get("/v1/visibility").json()["available"])  # malformed JSON
+
+    def test_ground_truth_rows_regression(self):
+        """dataset/output/final rows (string `source`, `gold` dotted keys) used to 500 in summary()."""
+        with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(FIX / "dashboard_groundtruth.jsonl")}):
+            rows = client.get("/v1/products").json()["results"]
+            self.assertEqual([r["product_id"] for r in rows],
+                             ["p_0000ebebddf4ef1d", "p_0009c51440229682", "p_000e804b82232833", "p_badfields"])
+            self.assertEqual(rows[0]["brand"], "Lord of the Rings")  # HTML entities decoded
+            self.assertEqual(rows[0]["product_type"], "t_shirt")
+            self.assertEqual(rows[0]["merchant"], "merchoid.com")
+            s = client.get("/v1/stats").json()
+            self.assertEqual(s["total"], 4)
+            self.assertEqual(s["by_language"]["en"], 3)
+            for path in ("", "/gaps", "/competitors", "/signals"):
+                self.assertEqual(client.get(f"/v1/products/p_0000ebebddf4ef1d{path}").status_code, 200, path)
+                self.assertEqual(client.get(f"/v1/products/p_badfields{path}").status_code, 200, path)
+            self.assertEqual(client.get("/v1/languages").status_code, 200)
 
     def test_dashboard_served(self):
         r = client.get("/dashboard/")
