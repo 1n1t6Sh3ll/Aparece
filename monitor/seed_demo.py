@@ -3,24 +3,27 @@
     python -m monitor.seed_demo --data dataset/output/final/train.jsonl [--signals signals.jsonl] [--db PATH]
     python -m monitor.seed_demo --reset [--db PATH]
 
-Writes to monitor/data/demo.db by default (never the real MONITOR_DB). Each product gets ONE snapshot
-built from its dataset record (source "dataset" + the dataset crawl date). No change events are
-created; history grows only from real re-crawls. Re-running adds nothing new. --reset deletes the demo
-DB file, and only a file named demo.db whose merchants are all demo merchants.
+Writes to monitor/data/demo.db by default (never the real MONITOR_DB). The dataset only chooses which
+real product URLs to enroll; each product's first snapshot comes from a live crawl (safe_fetch:
+robots.txt + SSRF guard, MONITOR_DELAY seconds apart). Products whose crawl fails are skipped. No change
+events are invented; history grows only from later real crawls. Re-running adds nothing new.
+--reset deletes the demo DB file, and only a file named demo.db whose merchants are all demo.
 """
 import argparse
 import json
 import os
 import sqlite3
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-for p in (ROOT, ROOT / "api"):
+for p in (ROOT, ROOT / "api", ROOT / "dataset" / "collect"):  # same paths as monitor/crawl.py
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-from monitor import changes, store  # noqa: E402
+import safe_fetch  # noqa: E402
+from monitor import crawl, store  # noqa: E402
 
 DEMO_DB = Path(__file__).resolve().parent / "data" / "demo.db"
 PER_MERCHANT = 4
@@ -48,7 +51,7 @@ def load_signals(path):
 
 
 def pick(data_path, prices):
-    """Per bucket: up to PER_MERCHANT records spread across the price range (low to high)."""
+    """Per bucket: records spread across the price range (low to high), then spares in price order."""
     import dashboard_api  # api/: the same ground-truth/normalized adapter the dashboard uses
     buckets = {b: [] for _, _, b in MERCHANTS}
     with open(data_path, encoding="utf-8") as f:
@@ -74,14 +77,16 @@ def pick(data_path, prices):
         priced = [r for r in recs if r["commerce"].get("price")] or recs
         n = len(priced)
         idx = sorted({round(i * (n - 1) / max(PER_MERCHANT - 1, 1)) for i in range(PER_MERCHANT)}) if n else []
-        out[b] = [priced[i] for i in idx]
+        out[b] = [priced[i] for i in idx] + [r for i, r in enumerate(priced) if i not in idx]
     return out
 
 
-def seed(data_path, signals_path=None):
+def seed(data_path, signals_path=None, log=print):
+    """Enroll up to PER_MERCHANT live-crawlable products per demo merchant. Returns [(merchant, id, record)]."""
     plans = store.PLANS
     picked = pick(data_path, load_signals(signals_path))
-    summary = []
+    delay = float(os.environ.get("MONITOR_DELAY", "2"))
+    summary, fetched = [], 0
     for i, (name, email, bucket) in enumerate(MERCHANTS):
         plan = plans[i % len(plans)]
         with store.connect() as db:
@@ -89,14 +94,29 @@ def seed(data_path, signals_path=None):
                                 "WHERE m.email = ?", (email,)).fetchone()[0]
         if seeded:  # already seeded (maybe from other inputs): never add more
             continue
+        done = 0
         for rec in picked[bucket]:
-            p, _ = store.enroll(rec["source"]["url"], email, plan)
-            if store.last_snapshot(p["id"]) is None:
-                store.add_snapshot(p["id"], {
-                    "content": changes.content(rec, "", None), "product_id": rec["product_id"],
-                    "quality_status": rec.get("quality_status"), "gaps": None,
-                    "source": "dataset", "crawled_at": rec["source"].get("scraped_at"), "demo": True}, [])
+            if done == PER_MERCHANT:
+                break
+            url = rec["source"]["url"]
+            if fetched:
+                time.sleep(delay)
+            fetched += 1
+            try:
+                final, html = safe_fetch.fetch_page(url)
+            except safe_fetch.FetchError as e:
+                log(f"skip {url}: {e.status} {e.detail}")
+                continue
+            p, _ = store.enroll(url, email, plan)
+            try:
+                sid, _ = crawl.snapshot(p["id"], url, html, final)
+            except Exception as e:  # extraction failed: do not keep the enrollment active
+                store.unenroll(p["id"])
+                log(f"skip {url}: {type(e).__name__}")
+                continue
+            store.log_run("crawl", "ok", f"snapshot {sid}, 0 events (demo seed)", p["id"])
             summary.append((name, p["id"], rec["product_id"]))
+            done += 1
         with store.connect() as db:
             if "demo" not in {c["name"] for c in db.execute("PRAGMA table_info(merchants)")}:
                 db.execute("ALTER TABLE merchants ADD COLUMN demo INTEGER NOT NULL DEFAULT 0")

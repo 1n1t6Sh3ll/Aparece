@@ -12,51 +12,16 @@
   <header class="top">
     <div class="brand">ProductLens <span class="muted">merchant dashboard</span></div>
     <nav aria-label="Views">
-      <a href="#overview" data-view="overview">Overview</a>
       <a href="#product" data-view="product">Product</a>
       <a href="#competitors" data-view="competitors">Competitors</a>
       <a href="#visibility" data-view="visibility">AI visibility</a>
       <a href="#languages" data-view="languages">Languages</a>
-      <a href="#enroll" data-view="enroll">Enroll</a>
-      <a href="#monitored" data-view="monitored">Monitored</a>
       <a href="#dataset" data-view="dataset">Dataset</a>
       <a href="#models" data-view="models">Models</a>
     </nav>
   </header>
 
   <main id="main" tabindex="-1">
-    <section id="view-overview" class="view" aria-labelledby="h-overview" hidden>
-      <h1 id="h-overview">Overview</h1>
-      <div id="overview"></div>
-    </section>
-
-    <section id="view-enroll" class="view" aria-labelledby="h-enroll" hidden>
-      <h1 id="h-enroll">Enroll a product</h1>
-      <form id="enroll-form" class="card form">
-        <label for="enroll-url">Product page URL</label>
-        <input id="enroll-url" name="url" type="url" required maxlength="2048" placeholder="https://shop.example.com/products/tee">
-        <label for="enroll-email">Email (optional)</label>
-        <input id="enroll-email" name="email" type="email" maxlength="254" autocomplete="email">
-        <label for="enroll-plan">Plan</label>
-        <select id="enroll-plan" name="plan"></select>
-        <p class="muted" id="plan-note">Plans are labels only. There is no billing and nothing is charged.</p>
-        <label class="check"><input id="enroll-crawl" name="crawl" type="checkbox" checked> Crawl now (robots.txt is respected)</label>
-        <button type="submit">Enroll</button>
-      </form>
-      <div id="enroll-result" aria-live="polite"></div>
-    </section>
-
-    <section id="view-monitored" class="view" aria-labelledby="h-monitored" hidden>
-      <h1 id="h-monitored">Monitored products</h1>
-      <p id="monitored-status" class="muted" role="status" aria-live="polite"></p>
-      <div id="monitored"></div>
-    </section>
-
-    <section id="view-history" class="view" aria-labelledby="h-history" hidden>
-      <h1 id="h-history">History</h1>
-      <div id="history" aria-live="polite"></div>
-    </section>
-
     <section id="view-product" class="view" aria-labelledby="h-product">
       <h1 id="h-product">Product</h1>
       <form id="search" class="search" role="search">
