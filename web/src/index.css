@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Theme follows [data-theme] on <html> (saved choice, else the OS preference; set in main.tsx). See web/DESIGN.md. */
+/* Theme follows [data-theme] on <html> (saved choice, else dark; set in main.tsx). See web/DESIGN.md. */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme {
