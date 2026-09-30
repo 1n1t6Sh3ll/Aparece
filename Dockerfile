@@ -8,7 +8,9 @@ COPY dataset/collect dataset/collect
 COPY api api
 COPY analysis analysis
 COPY dashboard dashboard
-RUN useradd --create-home --uid 10001 app
+COPY monitor monitor
+COPY benchmark benchmark
+RUN useradd --create-home --uid 10001 app && mkdir -p monitor/data && chown app monitor/data
 USER app
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
