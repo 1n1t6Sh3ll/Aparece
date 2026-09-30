@@ -69,19 +69,16 @@ export function Landing() {
           </div>
           <p className="mt-6 text-sm muted">{t("land.free")}</p>
         </div>
-        <figure className="card overflow-hidden" aria-label={t("land.sheet")}>
-          <figcaption className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5">
-            <span className="eyebrow">{t("land.sheet")}</span><span className="font-mono text-xs muted">7 / 9</span>
+        <figure className="card overflow-hidden" aria-label={t("land.checks")}>
+          <figcaption className="border-b border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5">
+            <span className="eyebrow">{t("land.checks")}</span>
           </figcaption>
-          <table className="w-full text-sm">
-            <tbody className="divide-y divide-[var(--border)]">
-              {["identity.brand", "materials.material_percentages", "materials.fabric_weight_gsm", "fit_and_style.fit", "fit_and_style.neckline", "variants.sizes", "variants.colors", "commerce.price", "commerce.gtin"].map((f, i) => (
-                <tr key={f}><td className="px-4 py-2">{fieldLabel(lang, f)}</td>
-                  <td className="px-4 py-2 text-right text-xs">{i % 4 === 3 ? <span className="text-amber-800 dark:text-amber-300">{t("land.sheet.missing")}</span> : <span className="text-[var(--accent)]">{t("land.sheet.found")}</span>}</td></tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="border-t border-[var(--border)] px-4 py-2.5 text-xs muted">{t("land.sheet.note")}</p>
+          <ul className="divide-y divide-[var(--border)] text-sm">
+            {["identity.brand", "materials.material_percentages", "materials.fabric_weight_gsm", "fit_and_style.fit", "fit_and_style.neckline", "variants.sizes", "variants.colors", "commerce.price", "commerce.gtin"].map((f) => (
+              <li key={f} className="px-4 py-2">{fieldLabel(lang, f)}</li>
+            ))}
+          </ul>
+          <p className="border-t border-[var(--border)] px-4 py-2.5 text-xs muted">{t("land.checks.note")}</p>
         </figure>
       </section>
 

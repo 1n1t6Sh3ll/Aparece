@@ -42,7 +42,7 @@ Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | `monitor/` | Scheduled crawls, snapshots, change events |
 | `webhooks/` | Outgoing merchant webhooks: signed, retried, SSRF-checked deliveries (`/v1/webhooks`, [docs/WEBHOOKS.md](docs/WEBHOOKS.md)) |
 | `extension/` | MV3 Chrome popup |
-| `train/` | Optional Qwen2.5-0.5B / 1.5B QLoRA extractors (GPU; not needed to run the demo; [train/README.md](train/README.md)) |
+| `train/` | Optional Qwen2.5-0.5B / 1.5B QLoRA extractors (GPU; not needed to run the app; [train/README.md](train/README.md)) |
 
 ## Quickstart
 
@@ -60,11 +60,7 @@ Without Docker (Python 3.12+; creates `.venv`, installs `api/requirements.txt`, 
 ./run.sh --skip-tests # start faster
 ```
 
-Demo with bundled fixtures (no downloads, no keys):
-
-```sh
-tools/demo_data.sh   # then open http://127.0.0.1:8000/
-```
+Real data only: the app shows no sample or demo data. Point `PRODUCTLENS_DATA` at the real dataset built by `dataset/build` (20,037 records across `train`/`val`/`test_gold`; the default `dataset/output/final/train.jsonl` holds the 16,025 training records). Model results come from `train/runs/comparison.json`, the AI comparison from a real `benchmark/shootout` run and AI visibility from `benchmark/reports/report.json`; a page whose source is missing or is a sample file shows "Not run yet". Test fixtures under `api/tests/fixtures/` are for tests only.
 
 Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. Never commit `.env`.
 

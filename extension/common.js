@@ -18,7 +18,6 @@ const STR = {
   en: {
     settings: "Settings", audit: "Audit this product", draft: "Audit as draft",
     auditing: "Auditing…", reading: "Reading the page title and description…",
-    mock: "Mock data (mock.json)",
     needPage: "Open a product page (http/https) first.",
     unreachable: (b) => `Cannot reach the API at ${b}. Is it running? Check Settings.`,
     blocked: "This store blocked our fetch. You can audit it as a draft: we read the visible title and description from this tab (only now, in your browser) and send them to the API.",
@@ -38,7 +37,7 @@ const STR = {
     pos: { below: "Below the typical range", within: "Within the typical range", above: "Above the typical range" },
     priceLine: (p, c, a, b, m, n) => `${p} ${c} vs ${a}–${b} ${c} (median ${m}, ${n} comparable listings)`,
     noPrice: "Not enough comparable prices to position yours.",
-    visHead: "AI visibility", visBody: "Available after the benchmark runs.",
+    visHead: "AI visibility", visBody: "Not run yet.",
     compare: "Compare with AI models", report: "Open full report",
     act: {
       missing_attribute: (l) => `Add ${l}, if you can verify it`,
@@ -62,7 +61,6 @@ const STR = {
   es: {
     settings: "Ajustes", audit: "Auditar este producto", draft: "Auditar como borrador",
     auditing: "Auditando…", reading: "Leyendo el título y la descripción de la página…",
-    mock: "Datos de ejemplo (mock.json)",
     needPage: "Abre primero una página de producto (http/https).",
     unreachable: (b) => `No se puede conectar con la API en ${b}. ¿Está en marcha? Revisa los Ajustes.`,
     blocked: "Esta tienda bloqueó nuestra descarga. Puedes auditarla como borrador: leemos el título y la descripción visibles de esta pestaña (solo ahora, en tu navegador) y los enviamos a la API.",
@@ -82,7 +80,7 @@ const STR = {
     pos: { below: "Por debajo del rango habitual", within: "Dentro del rango habitual", above: "Por encima del rango habitual" },
     priceLine: (p, c, a, b, m, n) => `${p} ${c} frente a ${a}–${b} ${c} (mediana ${m}, ${n} anuncios comparables)`,
     noPrice: "No hay suficientes precios comparables para situar el tuyo.",
-    visHead: "Visibilidad en IA", visBody: "Disponible cuando se ejecute el benchmark.",
+    visHead: "Visibilidad en IA", visBody: "Aún no se ha ejecutado.",
     compare: "Comparar con modelos de IA", report: "Abrir informe completo",
     act: {
       missing_attribute: (l) => `Añade ${l}, si puedes verificarlo`,
