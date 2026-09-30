@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { api, errorText, useI18n } from "../lib";
-import { auditDefaults, emptyCompany, papi, token, type Company, type Person, type ProductIn, type Profile } from "../profile";
+import { auditDefaults, CURRENCIES, emptyCompany, papi, token, type Company, type Person, type ProductIn, type Profile } from "../profile";
 import { useSession } from "../session";
 import { useToast } from "../ui";
 
@@ -54,6 +54,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
       if (bad.length) return setErr(t("ob.badUrl", { url: bad[0] }));
       if (edit) return save();
     }
+    if (step === 1 && !urls.trim() && def.prefix) setUrls(def.prefix);  // store URL prefills the product links
     setStep(step + 1);
   }
 
@@ -65,7 +66,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
         await reload(); toast("ok", t("set.saved")); setBusy(false);
         return;
       }
-      const list = lines(urls);
+      const list = lines(urls).filter((u) => u !== def.prefix);  // an untouched prefill is not a product
       const bad = list.find((u) => !URL_RE.test(u));
       if (bad) { setBusy(false); return setErr(t("ob.badUrl", { url: bad })); }
       const products = [...list.map((url) => ({ url })), ...manual.filter((m) => m.title?.trim())];
@@ -151,7 +152,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
         </>}
         {step === 2 && <>
           <Field id="pr-urls" label={t("ob.urls")} hint={t("ob.urlHint")}>
-            <textarea id="pr-urls" rows={4} className="input font-mono text-sm" value={urls} placeholder={def.placeholder || "https://yourstore.com/products/..."} onChange={(e) => setUrls(e.target.value)} />
+            <textarea id="pr-urls" rows={4} className="input font-mono text-sm" value={urls} placeholder="https://yourstore.com/products/..." onChange={(e) => setUrls(e.target.value)} />
           </Field>
           <div>
             <p className="text-sm font-medium">{t("ob.manual")}</p>
@@ -165,7 +166,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
                   <button type="button" className="btn-ghost" onClick={() => setManual(manual.filter((_, j) => j !== i))} aria-label={t("ob.removeProduct")}><Trash2 className="size-4" aria-hidden /></button>
                   <textarea aria-label={t("hero.draftText")} rows={3} className="input sm:col-span-4" placeholder={t("hero.draftTextPh")} value={m.text || ""} onChange={(e) => set("text", e.target.value)} />
                   <input aria-label={t("hero.draftPrice")} inputMode="decimal" className="input sm:col-span-2" placeholder="35.00" value={m.price || ""} onChange={(e) => set("price", e.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} />
-                  <select aria-label={t("hero.draftCurrency")} className="input" value={m.currency} onChange={(e) => set("currency", e.target.value)}>{["EUR", "USD", "GBP", "MXN"].map((c) => <option key={c}>{c}</option>)}</select>
+                  <select aria-label={t("hero.draftCurrency")} className="input" value={m.currency} onChange={(e) => set("currency", e.target.value)}>{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select>
                   <select aria-label={t("hero.draftLang")} className="input" value={m.language} onChange={(e) => set("language", e.target.value)}><option value="en">English</option><option value="es">Español</option></select>
                 </fieldset>
               );

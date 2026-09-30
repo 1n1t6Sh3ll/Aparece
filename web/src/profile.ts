@@ -54,18 +54,20 @@ export function productName(p: Product) {
   return p.audit?.product.title || p.title || p.url || `#${p.id}`;
 }
 
-/** Audit defaults from the company profile: store origin for product links, draft language and currency. */
+/** Market (ISO country code) -> currency. Euro-area countries (2026) use EUR; unknown markets fall back to USD. */
+const EURO = "AT BE BG CY DE EE ES FI FR GR HR IE IT LT LU LV MT NL PT SI SK EU";
+const CURRENCY: Record<string, string> = {
+  ...Object.fromEntries(EURO.split(" ").map((c) => [c, "EUR"])),
+  US: "USD", GB: "GBP", UK: "GBP", MX: "MXN", CA: "CAD", AU: "AUD", CH: "CHF", JP: "JPY", IN: "INR", BR: "BRL", AR: "ARS",
+  CO: "COP", CL: "CLP", PE: "PEN", SE: "SEK", NO: "NOK", DK: "DKK", PL: "PLN", CZ: "CZK", HU: "HUF", RO: "RON",
+};
+export const CURRENCIES = [...new Set(Object.values(CURRENCY))];
+
+/** Audit defaults from the company profile: product-link prefix (store origin), draft language and currency. */
 export function auditDefaults(c: Pick<Company, "website" | "languages" | "markets">, fallbackLang: string) {
   let origin = "";
   try { if (c.website) origin = new URL(c.website).origin; } catch { /* not a full URL */ }
   const l = (c.languages[0] || "").toLowerCase().slice(0, 2);
-  const m = (c.markets[0] || "").trim().toUpperCase();
-  const currency = m === "US" ? "USD" : m === "GB" || m === "UK" ? "GBP" : m === "MX" ? "MXN" : "EUR";
-  return { origin, currency, language: l === "en" || l === "es" ? l : fallbackLang, placeholder: origin ? `${origin}/products/...` : "" };
-}
-
-/** Send a URL to the audit page (it runs on arrival). */
-export function auditUrl(url: string) {
-  sessionStorage.setItem("pl.pendingUrl", url);
-  window.location.hash = "/audit";
+  const currency = CURRENCY[(c.markets[0] || "").trim().toUpperCase()] || "USD";
+  return { currency, language: l === "en" || l === "es" ? l : fallbackLang, prefix: origin ? `${origin}/products/` : "" };
 }

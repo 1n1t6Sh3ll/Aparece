@@ -12,7 +12,7 @@ Why it matters: AI shopping answers are built from whatever facts a page exposes
 | **Agency** running several apparel clients | I want to audit a client's catalogue in one pass, export it and share a read-only report, so that I can show the gaps and the before/after in a client meeting. | Bulk audit (20 URLs, CSV/print), Company switcher, Shareable report, Competitor audits | First client report in under 15 minutes per 20 URLs; re-audit after fixes shows fewer open fixes per product. |
 | **Marketplace seller blocked by Amazon** | I want to audit my listing even though ProductLens never fetches Amazon, so that I can fix the copy before I paste it back. | Blocked store / Amazon message, one-click draft audit, Generate Fix, AI comparison | Draft audit in one click from the blocked message; AI-visibility check shows higher mention/citation rate and claim accuracy after the fix. |
 
-How the company profile feeds the loop: the store link prefills product links in onboarding and My products, the first market and language set draft currency and language, and each competitor link is a one-click audit in My products. Profile data stays merchant-stated and is never shown as verified.
+How the company profile feeds the loop: the store link fills the product-link field with `<store>/products/` in onboarding and My products (an unedited prefill is never saved as a product), the first market sets the draft currency (country code to local currency, euro-area countries to EUR, unknown codes to USD) and the first language sets the draft language, and each competitor link is a one-click "Audit competitor" in My products. Profile data stays merchant-stated and is never shown as verified.
 
 ## QA acceptance stories
 

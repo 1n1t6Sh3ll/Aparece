@@ -5,11 +5,14 @@ import {
 } from "lucide-react";
 import { allManageTokens, api, ApiError, errorText, fieldLabel, money, useI18n } from "../lib";
 import { history, type Monitored } from "../history";
-import { auditDefaults, auditUrl, papi, productName, token, type Product } from "../profile";
+import { auditDefaults, papi, productName, token, type Product } from "../profile";
 import { useSession } from "../session";
 import { Empty, ErrorBox, PageHeader, Stat, Tabs, useTheme, useToast } from "../ui";
 import { ProductsPage as Monitoring } from "./Monitor";
 import { SAMPLES } from "./AuditPage";
+
+/** Send a URL to the audit page (it runs on arrival). */
+const start = (u: string) => { sessionStorage.setItem("pl.pendingUrl", u); window.location.hash = "/audit"; };
 
 /** Logged-out marketing landing (no app shell). */
 export function Landing() {
@@ -19,7 +22,6 @@ export function Landing() {
   const [err, setErr] = useState("");
   const [total, setTotal] = useState<number | null>(null);
   useEffect(() => { api<{ total: number }>("/v1/stats").then((s) => setTotal(s.total || null)).catch(() => undefined); }, []);
-  const start = (u: string) => { sessionStorage.setItem("pl.pendingUrl", u); window.location.hash = "/audit"; };
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!/^https?:\/\/[^\s/]+\.[^\s]+/i.test(url.trim())) return setErr(t("hero.invalidUrl"));
@@ -308,7 +310,9 @@ export function ProductsHub() {
   const toast = useToast();
   const [tab, setTab] = useState<"catalog" | "monitor">(signedIn ? "catalog" : "monitor");
   const { busy, run, running } = useAuditRunner();
+  const prefix = profile ? auditDefaults(profile.company, lang).prefix : "";  // store URL prefills the product-link field
   const [url, setUrl] = useState("");
+  useEffect(() => { if (prefix) setUrl((u) => u || prefix); }, [prefix]);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<SortK>("score");
   const [msg, setMsg] = useState("");
@@ -331,10 +335,10 @@ export function ProductsHub() {
 
   async function add(e: FormEvent) {
     e.preventDefault();
-    if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url.trim())) return setMsg(t("hero.invalidUrl"));
+    if (url.trim() === prefix || !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url.trim())) return setMsg(t("hero.invalidUrl"));
     try {
       const p = await papi<Product>("/v1/profile/products", { method: "POST", body: JSON.stringify({ url: url.trim() }) });
-      setUrl(""); setMsg(""); await reload();
+      setUrl(prefix); setMsg(""); await reload();
       toast("info", t("pr.added"));
       run([p]);
     } catch (x) { setMsg(errorText(x, t).msg); }
@@ -346,7 +350,6 @@ export function ProductsHub() {
     toast("ok", t("pr.removed"));
   }
   const pending = rows.filter((p) => !p.audit);
-  const def = profile ? auditDefaults(profile.company, lang) : null;
   const rivals = profile?.company.competitors ?? [];
   const th = (k: SortK, label: string, cls = "") => (
     <th scope="col" className={`px-4 py-2 font-medium ${cls}`} aria-sort={sort === k ? "ascending" : undefined}>
@@ -371,7 +374,7 @@ export function ProductsHub() {
               <input id="pr-q" className="input py-1.5 pl-8" placeholder={t("table.search")} value={q} onChange={(e) => setQ(e.target.value)} /></div>
             <form onSubmit={add} className="flex flex-1 gap-2">
               <label htmlFor="add-url" className="sr-only">{t("hero.urlLabel")}</label>
-              <input id="add-url" data-focus-key type="url" className="input py-1.5" value={url} placeholder={def?.placeholder || t("hero.placeholder")} onChange={(e) => setUrl(e.target.value)} />
+              <input id="add-url" data-focus-key type="url" className="input py-1.5" value={url} placeholder={t("hero.placeholder")} onChange={(e) => setUrl(e.target.value)} />
               <button className="btn-outline shrink-0"><Plus className="size-4" aria-hidden /> {t("home.add")}</button>
             </form>
             {pending.length > 0 && <button className="btn-primary" disabled={running} onClick={() => run(pending)}><Play className="size-4" aria-hidden /> {t("home.auditAll", { n: pending.length })}</button>}
@@ -380,7 +383,7 @@ export function ProductsHub() {
           {rivals.length > 0 && (
             <p className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--border)] px-4 py-2 text-xs">
               <span className="muted">{t("pr.auditCompetitor")}:</span>
-              {rivals.slice(0, 5).map((u) => <button key={u} className="max-w-[14rem] truncate underline decoration-[var(--border)] underline-offset-4 hover:decoration-[var(--accent)]" onClick={() => auditUrl(u)}>{u.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</button>)}
+              {rivals.slice(0, 5).map((u) => <button key={u} className="max-w-[14rem] truncate underline decoration-[var(--border)] underline-offset-4 hover:decoration-[var(--accent)]" onClick={() => start(u)}>{u.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</button>)}
             </p>
           )}
           {rows.length ? (

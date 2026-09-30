@@ -331,7 +331,6 @@
   "ob.brand": "Descripción de la marca",
   "ob.markets": "Mercados objetivo",
   "ob.languages": "Idiomas",
-  "ob.commaHint": "Separa con comas.",
   "ob.price": "Posicionamiento de precio",
   "ob.price.none": "Sin especificar",
   "ob.price.budget": "Económico",
@@ -721,11 +720,11 @@
   "pd.enterToken": "Clave de gestión",
   "pd.useToken": "Abrir historial",
   "nav.closeMenu": "Cerrar menú",
-  "ob.whyCompany": "Estas respuestas guían tus auditorías: el enlace de tu tienda rellena los enlaces de producto, tu primer mercado e idioma fijan los valores del borrador y los enlaces de la competencia se auditan con un clic para comparar.",
-  "ob.websiteHint": "La página de inicio de tu tienda. Los nuevos enlaces de producto parten de ella.",
+  "ob.whyCompany": "Estas respuestas guían tus auditorías: el enlace de tu tienda rellena los campos de enlaces de producto, tu primer mercado e idioma fijan la moneda y el idioma del borrador, y cada enlace de la competencia se audita con un clic en Mis productos.",
+  "ob.websiteHint": "La página de inicio de tu tienda. Los campos de enlaces de producto empiezan con su dirección /products/.",
   "ob.sellsHint": "Tu categoría, p. ej. camisetas de algodón orgánico para hombre.",
-  "ob.marketsHint": "Códigos de país separados por comas. El primero fija la moneda del borrador.",
+  "ob.marketsHint": "Códigos de país separados por comas (p. ej. US, ES, MX). El primero fija la moneda del borrador; los códigos desconocidos usan USD.",
   "ob.languagesHint": "en o es, separados por comas. El primero es el idioma del borrador.",
   "ob.competitorsHint": "Un enlace por línea. Puedes auditar cada uno desde Mis productos.",
-  "pr.auditCompetitor": "Auditar a un competidor"
+  "pr.auditCompetitor": "Auditar competidor"
 }
