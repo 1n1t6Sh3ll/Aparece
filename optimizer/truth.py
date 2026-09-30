@@ -170,17 +170,18 @@ TITLE_MAX = 90  # same limit as train/reward.py copy_reward
 
 
 def fallback_title(truth, lang):
-    """Deterministic title <= TITLE_MAX: brand + product name (brand not repeated) + material, shortened as needed.
-    A name that is still too long is cut at a word boundary; the guard accepts that as a run of the verified name."""
+    """Deterministic title <= TITLE_MAX: brand + product name (brand not repeated) + material, else shorter exact
+    identity, else the material or first fact. Names are never cut: only the exact verified name counts as identity."""
     f = truth["facts"]
     brand, name = (str(f.get(k) or "").strip() for k in ("identity.brand", "identity.product_name"))
     head = name if brand and name.lower().startswith(brand.lower()) else " ".join(x for x in (brand, name) if x)
     mat = _material(truth, lang)
-    for cand in (f"{head} - {mat}" if head and mat else "", head, name, brand, mat or ""):
+    facts = fact_sentences(truth, lang)
+    for cand in (f"{head} - {mat}" if head and mat else "", head, name, brand, mat or "",
+                 facts[0].rstrip(".") if facts else ""):
         if cand and len(cand) <= TITLE_MAX:
             return cand
-    cut = (name or head)[:TITLE_MAX + 1].rsplit(" ", 1)[0]
-    return cut.rstrip(" -:|,") or (name or head)[:TITLE_MAX]
+    return ""
 
 
 # ---- schema.org JSON-LD (deterministic, verified facts only) --------------------------------

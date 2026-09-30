@@ -203,6 +203,10 @@ class OptimizerTest(unittest.TestCase):
         truth = product_truth(rec)
         for s in ("Organic cotton tee.", "Eco tee.", "Camiseta de algodón orgánico."):
             self.assertTrue(guard.check_text(s, truth)[0]["problems"], s)
+        for t in ("Organic Eco Cotton Tee", "Northwind Organic cotton", "Organic Eco - cotton", "Eco Tee"):
+            self.assertTrue(guard.check_title(t, truth)[0]["problems"], t)  # name words recombined: not identity
+        for t in ("Organic Eco Tee", "Northwind Organic Eco Tee - 60% cotton, 40% polyester", "organic eco tee by Northwind"):
+            self.assertEqual(guard.check_title(t, truth)[0]["problems"], [], t)  # exact brand / exact name
         self.assertEqual(guard.check_text("The Organic Eco Tee has short sleeves.", truth)[0]["problems"], [])
         out = fix.generate(rec, "en", None, backend="stub")
         self.assertEqual(out["removed_sentences"], [])
@@ -287,9 +291,9 @@ class OptimizerTest(unittest.TestCase):
         truth = product_truth(self._lotr())
         verbatim = "Lord of the Rings Lord Of The Rings: Gold Foil Logo T-Shirt - Merchoid"
         self.assertEqual(guard.check_title(verbatim, truth)[0]["problems"], [])
-        self.assertEqual(guard.check_title("Gold Foil Logo T-Shirt by Lord of the Rings - 60% cotton, 40% polyester",
-                                           truth)[0]["problems"], [])
-        for bad in ("Gold Foil Logo T-Shirt - organic cotton", "Gold Foil Logo T-Shirt - gold cotton",
+        self.assertEqual(guard.check_title("Lord Of The Rings: Gold Foil Logo T-Shirt - Merchoid - 60% cotton, "
+                                           "40% polyester", truth)[0]["problems"], [])
+        for bad in ("Gold Foil Logo T-Shirt - cotton", "Lord of the Rings Gold T-Shirt",
                     "Lord of the Rings T-Shirt - 100% cotton"):
             self.assertTrue(guard.check_title(bad, truth)[0]["problems"], bad)
         self.assertTrue(guard.check_text("Gold foil logo.", truth)[0]["problems"])  # never attribute evidence
