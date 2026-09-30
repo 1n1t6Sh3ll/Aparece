@@ -1,0 +1,48 @@
+{"id": "INTENT_001_en", "text": "What's the best plain white t-shirt for men that isn't see-through?", "language": "en", "market": "US", "canonical_intent": "INTENT_001", "split": "hidden"}
+{"id": "INTENT_001_es", "text": "¿Cuál es la mejor camiseta blanca básica de hombre que no transparente?", "language": "es", "market": "ES", "canonical_intent": "INTENT_001", "split": "hidden"}
+{"id": "INTENT_004_en", "text": "Where can I buy a decent V-neck t-shirt for men that isn't cut too low?", "language": "en", "market": "GB", "canonical_intent": "INTENT_004", "split": "hidden"}
+{"id": "INTENT_004_es", "text": "¿Dónde puedo comprar una camiseta de cuello de pico para hombre que no sea demasiado escotada?", "language": "es", "market": "ES", "canonical_intent": "INTENT_004", "split": "hidden"}
+{"id": "INTENT_005_en", "text": "What's the best t-shirt to wear under a dress shirt so it doesn't show through?", "language": "en", "market": "US", "canonical_intent": "INTENT_005", "split": "hidden"}
+{"id": "INTENT_005_es", "text": "¿Qué camiseta es buena para usar debajo de la camisa de vestir sin que se note?", "language": "es", "market": "MX", "canonical_intent": "INTENT_005", "split": "hidden"}
+{"id": "INTENT_008_en", "text": "What are good plain t-shirts for tall guys that are actually long enough?", "language": "en", "market": "US", "canonical_intent": "INTENT_008", "split": "hidden"}
+{"id": "INTENT_008_es", "text": "¿Qué playeras lisas hay para hombres altos que sí sean lo suficientemente largas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_008", "split": "hidden"}
+{"id": "INTENT_010_en", "text": "What's a good pocket tee that looks put together and not sloppy?", "language": "en", "market": "US", "canonical_intent": "INTENT_010", "split": "hidden"}
+{"id": "INTENT_010_es", "text": "¿Me recomiendas una playera con bolsillo que se vea arreglada y no fodonga?", "language": "es", "market": "MX", "canonical_intent": "INTENT_010", "split": "hidden"}
+{"id": "INTENT_013_en", "text": "Is a luxury basic t-shirt over $70 actually worth it? Which ones are the best?", "language": "en", "market": "US", "canonical_intent": "INTENT_013", "split": "hidden"}
+{"id": "INTENT_013_es", "text": "¿Merece la pena gastarse más de 70 euros en una camiseta básica de lujo? ¿Cuáles son las mejores?", "language": "es", "market": "ES", "canonical_intent": "INTENT_013", "split": "hidden"}
+{"id": "INTENT_019_en", "text": "What's the best heavyweight t-shirt under $30?", "language": "en", "market": "US", "canonical_intent": "INTENT_019", "split": "hidden"}
+{"id": "INTENT_019_es", "text": "¿Cuál es la mejor playera de algodón pesado por menos de 600 pesos?", "language": "es", "market": "MX", "canonical_intent": "INTENT_019", "split": "hidden"}
+{"id": "INTENT_028_en", "text": "My teenage son wants oversized graphic tees. What's cool right now that isn't too expensive?", "language": "en", "market": "US", "canonical_intent": "INTENT_028", "split": "hidden"}
+{"id": "INTENT_028_es", "text": "Busco playeras oversize estampadas para mi hijo adolescente, algo que esté de moda y no muy caro.", "language": "es", "market": "MX", "canonical_intent": "INTENT_028", "split": "hidden"}
+{"id": "INTENT_031_en", "text": "Which oversized tees are made from organic cotton?", "language": "en", "market": "US", "canonical_intent": "INTENT_031", "split": "hidden"}
+{"id": "INTENT_031_es", "text": "¿Qué playeras oversize están hechas de algodón orgánico?", "language": "es", "market": "MX", "canonical_intent": "INTENT_031", "split": "hidden"}
+{"id": "INTENT_039_en", "text": "I want a minimalist graphic tee for men, something subtle I can wear to a casual office.", "language": "en", "market": "US", "canonical_intent": "INTENT_039", "split": "hidden"}
+{"id": "INTENT_039_es", "text": "Busco una playera con un estampado minimalista para hombre, algo discreto para ir a la oficina casual.", "language": "es", "market": "MX", "canonical_intent": "INTENT_039", "split": "hidden"}
+{"id": "INTENT_042_en", "text": "I'd like a funny graphic tee as a birthday present for my dad, under £30. Any ideas?", "language": "en", "market": "GB", "canonical_intent": "INTENT_042", "split": "hidden"}
+{"id": "INTENT_042_es", "text": "Quiero regalarle a mi padre una camiseta con un estampado gracioso por su cumpleaños, por menos de 30 euros. ¿Qué me recomiendas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_042", "split": "hidden"}
+{"id": "INTENT_043_en", "text": "Are there screen-printed graphic tees made with water-based inks? Which would you recommend?", "language": "en", "market": "US", "canonical_intent": "INTENT_043", "split": "hidden"}
+{"id": "INTENT_043_es", "text": "¿Hay playeras serigrafiadas con tintas a base de agua? ¿Cuáles me recomiendas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_043", "split": "hidden"}
+{"id": "INTENT_048_en", "text": "What's the best men's polo shirt for the office that isn't too preppy?", "language": "en", "market": "US", "canonical_intent": "INTENT_048", "split": "hidden"}
+{"id": "INTENT_048_es", "text": "¿Cuál es el mejor polo de hombre para ir a la oficina que no sea demasiado pijo?", "language": "es", "market": "ES", "canonical_intent": "INTENT_048", "split": "hidden"}
+{"id": "INTENT_061_en", "text": "Which long-sleeve shirts with UPF sun protection are good for fishing or hiking?", "language": "en", "market": "US", "canonical_intent": "INTENT_061", "split": "hidden"}
+{"id": "INTENT_061_es", "text": "¿Qué playeras de manga larga con protección UV son buenas para pescar o ir de excursión?", "language": "es", "market": "MX", "canonical_intent": "INTENT_061", "split": "hidden"}
+{"id": "INTENT_064_en", "text": "Is there a decent heavyweight long-sleeve tee under $45?", "language": "en", "market": "US", "canonical_intent": "INTENT_064", "split": "hidden"}
+{"id": "INTENT_064_es", "text": "¿Alguna camiseta gruesa de manga larga por menos de 45 euros?", "language": "es", "market": "ES", "canonical_intent": "INTENT_064", "split": "hidden"}
+{"id": "INTENT_066_en", "text": "What are the best running shirts that don't chafe on long runs?", "language": "en", "market": "US", "canonical_intent": "INTENT_066", "split": "hidden"}
+{"id": "INTENT_066_es", "text": "¿Cuáles son las mejores camisetas para correr que no rocen en tiradas largas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_066", "split": "hidden"}
+{"id": "INTENT_067_en", "text": "Which gym t-shirts don't hold onto smells even after hard workouts?", "language": "en", "market": "GB", "canonical_intent": "INTENT_067", "split": "hidden"}
+{"id": "INTENT_067_es", "text": "¿Qué camisetas de gimnasio no cogen olor aunque sudes muchísimo?", "language": "es", "market": "ES", "canonical_intent": "INTENT_067", "split": "hidden"}
+{"id": "INTENT_070_en", "text": "I need a women's workout top that doesn't go see-through when I bend over.", "language": "en", "market": "GB", "canonical_intent": "INTENT_070", "split": "hidden"}
+{"id": "INTENT_070_es", "text": "Busco una playera para hacer ejercicio de mujer que no se transparente al agacharme.", "language": "es", "market": "MX", "canonical_intent": "INTENT_070", "split": "hidden"}
+{"id": "INTENT_077_en", "text": "Which training tees survive intense functional workouts without being compression fit?", "language": "en", "market": "US", "canonical_intent": "INTENT_077", "split": "hidden"}
+{"id": "INTENT_077_es", "text": "¿Qué playeras aguantan entrenamientos funcionales intensos sin romperse y sin ser de compresión?", "language": "es", "market": "MX", "canonical_intent": "INTENT_077", "split": "hidden"}
+{"id": "INTENT_089_en", "text": "Are merino t-shirts itchy? Which ones are softest for sensitive skin?", "language": "en", "market": "US", "canonical_intent": "INTENT_089", "split": "hidden"}
+{"id": "INTENT_089_es", "text": "¿Las camisetas de merino pican? ¿Cuáles son las más suaves para piel sensible?", "language": "es", "market": "ES", "canonical_intent": "INTENT_089", "split": "hidden"}
+{"id": "INTENT_090_en", "text": "Which t-shirts made from recycled cotton or recycled polyester still feel nice to wear?", "language": "en", "market": "GB", "canonical_intent": "INTENT_090", "split": "hidden"}
+{"id": "INTENT_090_es", "text": "¿Qué playeras hechas de algodón o poliéster reciclado se sienten bien al usarlas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_090", "split": "hidden"}
+{"id": "INTENT_093_en", "text": "Which organic cotton t-shirts are suitable for a baby with eczema?", "language": "en", "market": "GB", "canonical_intent": "INTENT_093", "split": "hidden"}
+{"id": "INTENT_093_es", "text": "¿Qué camisetas de algodón orgánico van bien para un bebé con dermatitis atópica?", "language": "es", "market": "ES", "canonical_intent": "INTENT_093", "split": "hidden"}
+{"id": "INTENT_097_en", "text": "Are bamboo t-shirts actually sustainable, and which ones are good?", "language": "en", "market": "US", "canonical_intent": "INTENT_097", "split": "hidden"}
+{"id": "INTENT_097_es", "text": "¿Las playeras de bambú de verdad son sustentables? ¿Cuáles valen la pena?", "language": "es", "market": "MX", "canonical_intent": "INTENT_097", "split": "hidden"}
+{"id": "INTENT_119_en", "text": "Which maternity t-shirts are soft and stretch as the bump grows?", "language": "en", "market": "US", "canonical_intent": "INTENT_119", "split": "hidden"}
+{"id": "INTENT_119_es", "text": "¿Qué playeras de maternidad son suavecitas y se adaptan a la pancita conforme crece?", "language": "es", "market": "MX", "canonical_intent": "INTENT_119", "split": "hidden"}

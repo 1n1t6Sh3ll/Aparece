@@ -1,0 +1,192 @@
+{"id": "INTENT_002_en", "text": "Can you recommend a good everyday black t-shirt for women that won't fade after a few washes?", "language": "en", "market": "GB", "canonical_intent": "INTENT_002", "split": "val"}
+{"id": "INTENT_002_es", "text": "¿Qué playera negra básica para mujer me recomiendas que no se destiña con las lavadas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_002", "split": "val"}
+{"id": "INTENT_003_en", "text": "I need a pack of basic crew neck tees for everyday wear, ideally under $50 for the lot. Any suggestions?", "language": "en", "market": "US", "canonical_intent": "INTENT_003", "split": "val"}
+{"id": "INTENT_003_es", "text": "Busco un paquete de playeras básicas de cuello redondo para diario, que no pase de 800 pesos. ¿Cuáles me recomiendas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_003", "split": "val"}
+{"id": "INTENT_006_en", "text": "Which basic tees keep their neckline and don't go wavy after washing?", "language": "en", "market": "GB", "canonical_intent": "INTENT_006", "split": "dev"}
+{"id": "INTENT_006_es", "text": "¿Qué camisetas básicas mantienen bien el cuello y no se dan de sí después de lavarlas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_006", "split": "dev"}
+{"id": "INTENT_007_en", "text": "I'm looking for a soft, simple women's tee with a slightly fitted cut. What would you recommend?", "language": "en", "market": "US", "canonical_intent": "INTENT_007", "split": "val"}
+{"id": "INTENT_007_es", "text": "Busco una camiseta básica de mujer, suave y un poco entallada. ¿Qué me recomiendas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_007", "split": "val"}
+{"id": "INTENT_009_en", "text": "Can you recommend a basic t-shirt for a bigger bloke, 3XL or larger, that still looks sharp?", "language": "en", "market": "GB", "canonical_intent": "INTENT_009", "split": "dev"}
+{"id": "INTENT_009_es", "text": "Recomiéndame camisetas básicas de hombre en tallas grandes, 3XL o más, que sienten bien.", "language": "es", "market": "ES", "canonical_intent": "INTENT_009", "split": "dev"}
+{"id": "INTENT_011_en", "text": "I'm on a tight budget, around $10 a shirt. Which plain t-shirts hold up to everyday wear?", "language": "en", "market": "US", "canonical_intent": "INTENT_011", "split": "val"}
+{"id": "INTENT_011_es", "text": "Tengo poco presupuesto, como 200 pesos por playera. ¿Cuáles lisas aguantan bien el uso diario?", "language": "es", "market": "MX", "canonical_intent": "INTENT_011", "split": "val"}
+{"id": "INTENT_012_en", "text": "What's a nice mid-range plain tee, around £25 to £40, that's actually worth the money?", "language": "en", "market": "GB", "canonical_intent": "INTENT_012", "split": "dev"}
+{"id": "INTENT_012_es", "text": "¿Qué camiseta lisa de gama media, entre 25 y 40 euros, merece la pena de verdad?", "language": "es", "market": "ES", "canonical_intent": "INTENT_012", "split": "dev"}
+{"id": "INTENT_014_en", "text": "Which undershirts are best at hiding sweat stains?", "language": "en", "market": "US", "canonical_intent": "INTENT_014", "split": "dev"}
+{"id": "INTENT_014_es", "text": "¿Qué camisetas interiores para hombre disimulan mejor el sudor?", "language": "es", "market": "MX", "canonical_intent": "INTENT_014", "split": "dev"}
+{"id": "INTENT_015_en", "text": "I want a plain tee in a colour other than black or white, something like olive or navy that looks rich. Any ideas?", "language": "en", "market": "GB", "canonical_intent": "INTENT_015", "split": "val"}
+{"id": "INTENT_015_es", "text": "Busco una camiseta lisa en algún color que no sea blanco ni negro, tipo verde oliva o azul marino, que tenga buen tono. ¿Alguna recomendación?", "language": "es", "market": "ES", "canonical_intent": "INTENT_015", "split": "val"}
+{"id": "INTENT_016_en", "text": "What are the best heavyweight t-shirts that feel thick and structured?", "language": "en", "market": "US", "canonical_intent": "INTENT_016", "split": "val"}
+{"id": "INTENT_016_es", "text": "¿Cuáles son las mejores playeras de algodón grueso que se sientan pesadas y con estructura?", "language": "es", "market": "MX", "canonical_intent": "INTENT_016", "split": "val"}
+{"id": "INTENT_017_en", "text": "I'm after a heavyweight tee, 250gsm or more, that doesn't shrink. Recommendations?", "language": "en", "market": "GB", "canonical_intent": "INTENT_017", "split": "val"}
+{"id": "INTENT_017_es", "text": "Busco una camiseta de gramaje alto, de 250 g/m² o más, que no encoja. ¿Qué me recomiendas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_017", "split": "val"}
+{"id": "INTENT_018_en", "text": "Which heavyweight tees have a boxy fit but aren't super long?", "language": "en", "market": "US", "canonical_intent": "INTENT_018", "split": "dev"}
+{"id": "INTENT_018_es", "text": "¿Qué camisetas gruesas tienen corte boxy pero sin ser demasiado largas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_018", "split": "dev"}
+{"id": "INTENT_020_en", "text": "Which thick cotton t-shirts are made in Europe rather than Asia?", "language": "en", "market": "GB", "canonical_intent": "INTENT_020", "split": "dev"}
+{"id": "INTENT_020_es", "text": "¿Qué camisetas de algodón grueso están fabricadas en Europa y no en Asia?", "language": "es", "market": "ES", "canonical_intent": "INTENT_020", "split": "dev"}
+{"id": "INTENT_021_en", "text": "I need a heavy cotton tee to layer under a flannel shirt in the fall. What are my options?", "language": "en", "market": "US", "canonical_intent": "INTENT_021", "split": "val"}
+{"id": "INTENT_021_es", "text": "Busco una playera de algodón grueso para usar debajo de una camisa de franela en otoño. ¿Qué opciones hay?", "language": "es", "market": "MX", "canonical_intent": "INTENT_021", "split": "val"}
+{"id": "INTENT_022_en", "text": "Which heavyweight white tee stays bright and doesn't turn yellow over time?", "language": "en", "market": "US", "canonical_intent": "INTENT_022", "split": "dev"}
+{"id": "INTENT_022_es", "text": "¿Qué camiseta blanca gruesa se mantiene blanca y no amarillea con el tiempo?", "language": "es", "market": "ES", "canonical_intent": "INTENT_022", "split": "dev"}
+{"id": "INTENT_023_en", "text": "Can you recommend heavyweight t-shirts cut for women, not just men's sizes?", "language": "en", "market": "GB", "canonical_intent": "INTENT_023", "split": "dev"}
+{"id": "INTENT_023_es", "text": "Recomiéndame playeras gruesas para mujer, que no sean solo tallas de hombre.", "language": "es", "market": "MX", "canonical_intent": "INTENT_023", "split": "dev"}
+{"id": "INTENT_024_en", "text": "What are the most durable t-shirts for construction or other physical work?", "language": "en", "market": "US", "canonical_intent": "INTENT_024", "split": "dev"}
+{"id": "INTENT_024_es", "text": "¿Cuáles son las playeras más resistentes para trabajar en obra o en chambas pesadas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_024", "split": "dev"}
+{"id": "INTENT_025_en", "text": "I want a garment-dyed heavyweight tee with a vintage washed look. What's good?", "language": "en", "market": "US", "canonical_intent": "INTENT_025", "split": "dev"}
+{"id": "INTENT_025_es", "text": "Quiero una camiseta gruesa teñida en prenda, con aspecto lavado vintage. ¿Qué me recomiendas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_025", "split": "dev"}
+{"id": "INTENT_026_en", "text": "What are the best oversized t-shirts for women that don't look sloppy?", "language": "en", "market": "US", "canonical_intent": "INTENT_026", "split": "val"}
+{"id": "INTENT_026_es", "text": "¿Cuáles son las mejores playeras oversize para mujer que no se vean aguadas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_026", "split": "val"}
+{"id": "INTENT_027_en", "text": "Where can I get a good oversized tee with dropped shoulders for a streetwear look?", "language": "en", "market": "GB", "canonical_intent": "INTENT_027", "split": "dev"}
+{"id": "INTENT_027_es", "text": "¿Dónde puedo comprar una camiseta oversize con hombro caído para un look streetwear?", "language": "es", "market": "ES", "canonical_intent": "INTENT_027", "split": "dev"}
+{"id": "INTENT_029_en", "text": "Is it better to size up in a regular tee or buy a proper oversized fit? Which oversized tees are good?", "language": "en", "market": "GB", "canonical_intent": "INTENT_029", "split": "dev"}
+{"id": "INTENT_029_es", "text": "¿Es mejor pedir una talla más o comprar una camiseta oversize de verdad? ¿Cuáles están bien?", "language": "es", "market": "ES", "canonical_intent": "INTENT_029", "split": "dev"}
+{"id": "INTENT_030_en", "text": "I want an oversized t-shirt to wear as a dress or with bike shorts. Any recommendations?", "language": "en", "market": "US", "canonical_intent": "INTENT_030", "split": "val"}
+{"id": "INTENT_030_es", "text": "Busco una camiseta oversize para llevar como vestido o con mallas de ciclista. ¿Alguna idea?", "language": "es", "market": "ES", "canonical_intent": "INTENT_030", "split": "val"}
+{"id": "INTENT_032_en", "text": "Oversized tee for a plus-size woman, size 20 to 24, that's genuinely roomy?", "language": "en", "market": "GB", "canonical_intent": "INTENT_032", "split": "dev"}
+{"id": "INTENT_032_es", "text": "Busco una playera oversize para mujer de talla grande (XL a 3XL) que sí quede holgada.", "language": "es", "market": "MX", "canonical_intent": "INTENT_032", "split": "dev"}
+{"id": "INTENT_033_en", "text": "What's a good cropped, heavyweight oversized tee under $40?", "language": "en", "market": "US", "canonical_intent": "INTENT_033", "split": "dev"}
+{"id": "INTENT_033_es", "text": "¿Qué camiseta oversize gruesa y cortita, tipo crop, hay por menos de 40 euros?", "language": "es", "market": "ES", "canonical_intent": "INTENT_033", "split": "dev"}
+{"id": "INTENT_034_en", "text": "What are the best unisex oversized t-shirts that work for both men and women?", "language": "en", "market": "US", "canonical_intent": "INTENT_034", "split": "dev"}
+{"id": "INTENT_034_es", "text": "¿Cuáles son las mejores playeras oversize unisex que les queden bien a hombres y mujeres?", "language": "es", "market": "MX", "canonical_intent": "INTENT_034", "split": "dev"}
+{"id": "INTENT_035_en", "text": "I want a really soft oversized tee for lounging around at home. Which one should I get?", "language": "en", "market": "GB", "canonical_intent": "INTENT_035", "split": "dev"}
+{"id": "INTENT_035_es", "text": "Busco una camiseta oversize suavecita para estar por casa. ¿Cuál me recomiendas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_035", "split": "dev"}
+{"id": "INTENT_036_en", "text": "Where can I buy graphic tees designed by independent artists instead of big retailers?", "language": "en", "market": "US", "canonical_intent": "INTENT_036", "split": "dev"}
+{"id": "INTENT_036_es", "text": "¿Dónde puedo comprar camisetas con ilustraciones de artistas independientes en vez de en grandes cadenas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_036", "split": "dev"}
+{"id": "INTENT_037_en", "text": "Where can I find vintage-style band graphic tees that feel soft and worn-in?", "language": "en", "market": "US", "canonical_intent": "INTENT_037", "split": "val"}
+{"id": "INTENT_037_es", "text": "¿Dónde venden playeras estampadas estilo vintage, tipo de banda, que se sientan suavecitas y gastadas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_037", "split": "val"}
+{"id": "INTENT_038_en", "text": "Which graphic t-shirts have prints that don't crack or peel after washing?", "language": "en", "market": "GB", "canonical_intent": "INTENT_038", "split": "dev"}
+{"id": "INTENT_038_es", "text": "¿Qué camisetas estampadas tienen un estampado que no se agriete ni se despegue al lavarlas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_038", "split": "dev"}
+{"id": "INTENT_040_en", "text": "Where can I find nature or outdoors themed graphic tees printed on sustainable fabric?", "language": "en", "market": "US", "canonical_intent": "INTENT_040", "split": "dev"}
+{"id": "INTENT_040_es", "text": "¿Dónde encuentro camisetas con estampados de naturaleza o montaña hechas con tejidos sostenibles?", "language": "es", "market": "ES", "canonical_intent": "INTENT_040", "split": "dev"}
+{"id": "INTENT_041_en", "text": "Which Mexican brands make graphic t-shirts with designs inspired by Mexican culture?", "language": "en", "market": "US", "canonical_intent": "INTENT_041", "split": "dev"}
+{"id": "INTENT_041_es", "text": "¿Qué marcas mexicanas hacen playeras con diseños inspirados en la cultura mexicana?", "language": "es", "market": "MX", "canonical_intent": "INTENT_041", "split": "dev"}
+{"id": "INTENT_044_en", "text": "I'm looking for fun graphic t-shirts for kids that are made from organic cotton.", "language": "en", "market": "US", "canonical_intent": "INTENT_044", "split": "dev"}
+{"id": "INTENT_044_es", "text": "Busco camisetas estampadas para niños que sean divertidas y de algodón orgánico.", "language": "es", "market": "ES", "canonical_intent": "INTENT_044", "split": "dev"}
+{"id": "INTENT_045_en", "text": "I want a tee with a small embroidered chest detail that looks premium, not like cheap merch.", "language": "en", "market": "GB", "canonical_intent": "INTENT_045", "split": "dev"}
+{"id": "INTENT_045_es", "text": "Busco una playera con un bordado pequeño en el pecho que se vea fina y no como de promocional.", "language": "es", "market": "MX", "canonical_intent": "INTENT_045", "split": "dev"}
+{"id": "INTENT_046_en", "text": "Which small brands sell women's graphic tees with feminist or empowering messages?", "language": "en", "market": "US", "canonical_intent": "INTENT_046", "split": "val"}
+{"id": "INTENT_046_es", "text": "¿Qué marcas pequeñas venden camisetas de mujer con mensajes feministas o empoderadores?", "language": "es", "market": "ES", "canonical_intent": "INTENT_046", "split": "val"}
+{"id": "INTENT_047_en", "text": "Where can I buy retro 90s-style graphic tees that actually fit well?", "language": "en", "market": "US", "canonical_intent": "INTENT_047", "split": "dev"}
+{"id": "INTENT_047_es", "text": "¿Dónde compro playeras estampadas estilo noventero que queden bien?", "language": "es", "market": "MX", "canonical_intent": "INTENT_047", "split": "dev"}
+{"id": "INTENT_049_en", "text": "Can you recommend a golf polo that wicks sweat and looks smart off the course too?", "language": "en", "market": "GB", "canonical_intent": "INTENT_049", "split": "dev"}
+{"id": "INTENT_049_es", "text": "Recomiéndame un polo de golf que transpire bien y que también quede bien fuera del campo.", "language": "es", "market": "ES", "canonical_intent": "INTENT_049", "split": "dev"}
+{"id": "INTENT_050_en", "text": "Which piqué polo shirts keep their collar from curling?", "language": "en", "market": "US", "canonical_intent": "INTENT_050", "split": "dev"}
+{"id": "INTENT_050_es", "text": "¿Qué playeras polo de piqué mantienen el cuello firme sin que se enrosque?", "language": "es", "market": "MX", "canonical_intent": "INTENT_050", "split": "dev"}
+{"id": "INTENT_051_en", "text": "What are some fitted, flattering polo shirts for women?", "language": "en", "market": "US", "canonical_intent": "INTENT_051", "split": "dev"}
+{"id": "INTENT_051_es", "text": "¿Qué playeras polo para mujer son entalladas y favorecedoras?", "language": "es", "market": "MX", "canonical_intent": "INTENT_051", "split": "dev"}
+{"id": "INTENT_052_en", "text": "What knitted polo shirt would you suggest for a summer wedding?", "language": "en", "market": "GB", "canonical_intent": "INTENT_052", "split": "dev"}
+{"id": "INTENT_052_es", "text": "Busco un polo de punto para una boda de verano. ¿Qué me sugieres?", "language": "es", "market": "ES", "canonical_intent": "INTENT_052", "split": "dev"}
+{"id": "INTENT_053_en", "text": "Are there any organic cotton polo shirts under $60?", "language": "en", "market": "US", "canonical_intent": "INTENT_053", "split": "dev"}
+{"id": "INTENT_053_es", "text": "¿Hay playeras polo de algodón orgánico por menos de 1,200 pesos?", "language": "es", "market": "MX", "canonical_intent": "INTENT_053", "split": "dev"}
+{"id": "INTENT_054_en", "text": "I need durable, affordable polo shirts for my restaurant staff uniform. What do you recommend?", "language": "en", "market": "US", "canonical_intent": "INTENT_054", "split": "dev"}
+{"id": "INTENT_054_es", "text": "Necesito playeras polo para el uniforme del personal de mi restaurante, que sean resistentes y económicas. ¿Qué me recomiendas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_054", "split": "dev"}
+{"id": "INTENT_055_en", "text": "Which long-sleeve polo shirts look smart-casual for autumn?", "language": "en", "market": "GB", "canonical_intent": "INTENT_055", "split": "dev"}
+{"id": "INTENT_055_es", "text": "¿Qué polos de manga larga para otoño quedan arreglados pero informales?", "language": "es", "market": "ES", "canonical_intent": "INTENT_055", "split": "dev"}
+{"id": "INTENT_056_en", "text": "Which merino wool polo shirts are worth it for travel?", "language": "en", "market": "US", "canonical_intent": "INTENT_056", "split": "val"}
+{"id": "INTENT_056_es", "text": "¿Qué polos de lana merino para viajar merecen la pena?", "language": "es", "market": "ES", "canonical_intent": "INTENT_056", "split": "val"}
+{"id": "INTENT_057_en", "text": "Where can I find big and tall polo shirts that don't look boxy?", "language": "en", "market": "US", "canonical_intent": "INTENT_057", "split": "val"}
+{"id": "INTENT_057_es", "text": "¿Qué playeras polo hay en tallas extra grandes que no se vean cuadradas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_057", "split": "val"}
+{"id": "INTENT_058_en", "text": "What are the best long-sleeve t-shirts for layering in winter?", "language": "en", "market": "US", "canonical_intent": "INTENT_058", "split": "val"}
+{"id": "INTENT_058_es", "text": "¿Cuáles son las mejores playeras de manga larga para usar en capas en invierno?", "language": "es", "market": "MX", "canonical_intent": "INTENT_058", "split": "val"}
+{"id": "INTENT_059_en", "text": "I'm after a long-sleeve top with thumbholes for chilly walks. Any suggestions?", "language": "en", "market": "GB", "canonical_intent": "INTENT_059", "split": "dev"}
+{"id": "INTENT_059_es", "text": "Busco una camiseta de manga larga con agujero para el pulgar para salir a caminar cuando hace fresco.", "language": "es", "market": "ES", "canonical_intent": "INTENT_059", "split": "dev"}
+{"id": "INTENT_060_en", "text": "I need a women's long-sleeve tee for fall that isn't too thin. Which one would you recommend?", "language": "en", "market": "US", "canonical_intent": "INTENT_060", "split": "dev"}
+{"id": "INTENT_060_es", "text": "Camiseta de manga larga de mujer para otoño que no sea demasiado fina, ¿cuál me recomiendas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_060", "split": "dev"}
+{"id": "INTENT_062_en", "text": "Where can I get a good quality long-sleeve Breton striped top?", "language": "en", "market": "GB", "canonical_intent": "INTENT_062", "split": "dev"}
+{"id": "INTENT_062_es", "text": "¿Dónde compro una camiseta marinera de rayas de manga larga de buena calidad?", "language": "es", "market": "ES", "canonical_intent": "INTENT_062", "split": "dev"}
+{"id": "INTENT_063_en", "text": "What long-sleeve tee or henley looks good on its own for a casual date?", "language": "en", "market": "US", "canonical_intent": "INTENT_063", "split": "val"}
+{"id": "INTENT_063_es", "text": "¿Qué playera de manga larga o henley se ve bien sola para una cita casual?", "language": "es", "market": "MX", "canonical_intent": "INTENT_063", "split": "val"}
+{"id": "INTENT_065_en", "text": "I need long-sleeve tees my kids can wear under their school uniform in winter.", "language": "en", "market": "US", "canonical_intent": "INTENT_065", "split": "dev"}
+{"id": "INTENT_065_es", "text": "Busco playeras de manga larga para que mis hijos las usen debajo del uniforme en invierno.", "language": "es", "market": "MX", "canonical_intent": "INTENT_065", "split": "dev"}
+{"id": "INTENT_068_en", "text": "Which moisture-wicking tees are best for hot, humid weather?", "language": "en", "market": "US", "canonical_intent": "INTENT_068", "split": "val"}
+{"id": "INTENT_068_es", "text": "¿Qué playeras deportivas absorben bien el sudor cuando hace calor y hay mucha humedad?", "language": "es", "market": "MX", "canonical_intent": "INTENT_068", "split": "val"}
+{"id": "INTENT_069_en", "text": "Which performance t-shirts are made from recycled polyester?", "language": "en", "market": "US", "canonical_intent": "INTENT_069", "split": "dev"}
+{"id": "INTENT_069_es", "text": "¿Qué camisetas técnicas están hechas con poliéster reciclado?", "language": "es", "market": "ES", "canonical_intent": "INTENT_069", "split": "dev"}
+{"id": "INTENT_071_en", "text": "What's a hiking t-shirt that dries fast and works for multi-day trips?", "language": "en", "market": "US", "canonical_intent": "INTENT_071", "split": "dev"}
+{"id": "INTENT_071_es", "text": "Camiseta de montaña que se seque rápido y aguante una travesía de varios días, ¿qué me recomiendas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_071", "split": "dev"}
+{"id": "INTENT_072_en", "text": "Are there athletic tees that look like regular cotton t-shirts but perform like gym wear?", "language": "en", "market": "US", "canonical_intent": "INTENT_072", "split": "val"}
+{"id": "INTENT_072_es", "text": "¿Hay playeras deportivas que parezcan de algodón normal pero funcionen como ropa de gym?", "language": "es", "market": "MX", "canonical_intent": "INTENT_072", "split": "val"}
+{"id": "INTENT_073_en", "text": "I cycle to work. Which breathable t-shirt won't look like sportswear once I'm at the office?", "language": "en", "market": "GB", "canonical_intent": "INTENT_073", "split": "dev"}
+{"id": "INTENT_073_es", "text": "Voy al trabajo en bici: ¿qué camiseta transpirable no parece de deporte una vez en la oficina?", "language": "es", "market": "ES", "canonical_intent": "INTENT_073", "split": "dev"}
+{"id": "INTENT_074_en", "text": "I need cheap moisture-wicking shirts for our team at a 5K, under $15 each.", "language": "en", "market": "US", "canonical_intent": "INTENT_074", "split": "dev"}
+{"id": "INTENT_074_es", "text": "Necesito playeras deportivas económicas para un equipo que va a correr una carrera de 5 km, de menos de 250 pesos cada una.", "language": "es", "market": "MX", "canonical_intent": "INTENT_074", "split": "dev"}
+{"id": "INTENT_075_en", "text": "What are good tees for yoga that aren't skin-tight?", "language": "en", "market": "US", "canonical_intent": "INTENT_075", "split": "dev"}
+{"id": "INTENT_075_es", "text": "¿Qué camisetas van bien para hacer yoga sin ser ajustadas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_075", "split": "dev"}
+{"id": "INTENT_076_en", "text": "Which t-shirts are best for playing padel or tennis in the heat?", "language": "en", "market": "GB", "canonical_intent": "INTENT_076", "split": "dev"}
+{"id": "INTENT_076_es", "text": "¿Qué camisetas de pádel transpiran bien cuando hace calor?", "language": "es", "market": "ES", "canonical_intent": "INTENT_076", "split": "dev"}
+{"id": "INTENT_078_en", "text": "What are the best men's gym tank tops with deep armholes?", "language": "en", "market": "US", "canonical_intent": "INTENT_078", "split": "dev"}
+{"id": "INTENT_078_es", "text": "¿Cuáles son las mejores playeras sin mangas para el gym con sisa amplia?", "language": "es", "market": "MX", "canonical_intent": "INTENT_078", "split": "dev"}
+{"id": "INTENT_079_en", "text": "I'm looking for a women's ribbed vest top that works under a blazer.", "language": "en", "market": "GB", "canonical_intent": "INTENT_079", "split": "dev"}
+{"id": "INTENT_079_es", "text": "Busco una camiseta de tirantes de canalé para llevar debajo de una americana.", "language": "es", "market": "ES", "canonical_intent": "INTENT_079", "split": "dev"}
+{"id": "INTENT_080_en", "text": "Which linen tank tops would you recommend for a beach vacation?", "language": "en", "market": "US", "canonical_intent": "INTENT_080", "split": "dev"}
+{"id": "INTENT_080_es", "text": "¿Qué playeras sin mangas de lino me recomiendas para unas vacaciones en la playa?", "language": "es", "market": "MX", "canonical_intent": "INTENT_080", "split": "dev"}
+{"id": "INTENT_081_en", "text": "Which organic cotton tank tops don't stretch out?", "language": "en", "market": "US", "canonical_intent": "INTENT_081", "split": "dev"}
+{"id": "INTENT_081_es", "text": "¿Qué camisetas de tirantes de algodón orgánico no se dan de sí?", "language": "es", "market": "ES", "canonical_intent": "INTENT_081", "split": "dev"}
+{"id": "INTENT_082_en", "text": "What's a good men's vest to wear under a shirt in summer instead of a t-shirt?", "language": "en", "market": "GB", "canonical_intent": "INTENT_082", "split": "val"}
+{"id": "INTENT_082_es", "text": "¿Qué camiseta interior sin mangas va bien debajo de la camisa en verano?", "language": "es", "market": "ES", "canonical_intent": "INTENT_082", "split": "val"}
+{"id": "INTENT_083_en", "text": "Where can I find plus-size tank tops that cover bra straps?", "language": "en", "market": "US", "canonical_intent": "INTENT_083", "split": "dev"}
+{"id": "INTENT_083_es", "text": "Busco playeras sin mangas en tallas grandes que tapen los tirantes del brasier.", "language": "es", "market": "MX", "canonical_intent": "INTENT_083", "split": "dev"}
+{"id": "INTENT_084_en", "text": "What's a lightweight running singlet you'd recommend for race day?", "language": "en", "market": "US", "canonical_intent": "INTENT_084", "split": "dev"}
+{"id": "INTENT_084_es", "text": "¿Qué camiseta de tirantes ligera me recomiendas para correr el día de la carrera?", "language": "es", "market": "ES", "canonical_intent": "INTENT_084", "split": "dev"}
+{"id": "INTENT_085_en", "text": "Where can I buy affordable basic tank tops in multipacks?", "language": "en", "market": "US", "canonical_intent": "INTENT_085", "split": "val"}
+{"id": "INTENT_085_es", "text": "¿Dónde venden paquetes de playeras sin mangas básicas a buen precio?", "language": "es", "market": "MX", "canonical_intent": "INTENT_085", "split": "val"}
+{"id": "INTENT_086_en", "text": "What are the best GOTS-certified organic cotton t-shirts?", "language": "en", "market": "US", "canonical_intent": "INTENT_086", "split": "dev"}
+{"id": "INTENT_086_es", "text": "¿Cuáles son las mejores camisetas de algodón orgánico con certificado GOTS?", "language": "es", "market": "ES", "canonical_intent": "INTENT_086", "split": "dev"}
+{"id": "INTENT_087_en", "text": "Which linen t-shirts are good for a heatwave and don't crease too much?", "language": "en", "market": "GB", "canonical_intent": "INTENT_087", "split": "dev"}
+{"id": "INTENT_087_es", "text": "Camisetas de lino para una ola de calor que no se arruguen demasiado, ¿cuáles hay?", "language": "es", "market": "ES", "canonical_intent": "INTENT_087", "split": "dev"}
+{"id": "INTENT_088_en", "text": "Which merino wool t-shirts can I wear several days in a row while traveling without washing?", "language": "en", "market": "US", "canonical_intent": "INTENT_088", "split": "dev"}
+{"id": "INTENT_088_es", "text": "¿Qué playeras de lana merino puedo usar varios días seguidos en un viaje sin lavarlas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_088", "split": "dev"}
+{"id": "INTENT_091_en", "text": "Are there hemp or hemp-blend t-shirts that are soft and not scratchy?", "language": "en", "market": "US", "canonical_intent": "INTENT_091", "split": "dev"}
+{"id": "INTENT_091_es", "text": "¿Hay camisetas de cáñamo o mezcla de cáñamo que sean suaves y no rasquen?", "language": "es", "market": "ES", "canonical_intent": "INTENT_091", "split": "dev"}
+{"id": "INTENT_092_en", "text": "Which Pima cotton t-shirts are actually worth the price?", "language": "en", "market": "US", "canonical_intent": "INTENT_092", "split": "val"}
+{"id": "INTENT_092_es", "text": "¿Qué playeras son de algodón pima y de verdad valen lo que cuestan?", "language": "es", "market": "MX", "canonical_intent": "INTENT_092", "split": "val"}
+{"id": "INTENT_094_en", "text": "I want a women's linen or linen-blend tee that isn't see-through.", "language": "en", "market": "US", "canonical_intent": "INTENT_094", "split": "dev"}
+{"id": "INTENT_094_es", "text": "Busco una playera de lino o mezcla de lino para mujer que no se transparente.", "language": "es", "market": "MX", "canonical_intent": "INTENT_094", "split": "dev"}
+{"id": "INTENT_095_en", "text": "Are lyocell t-shirts good for hot weather? Which ones do you recommend?", "language": "en", "market": "US", "canonical_intent": "INTENT_095", "split": "val"}
+{"id": "INTENT_095_es", "text": "¿Las camisetas de lyocell van bien para el calor? ¿Cuáles me recomiendas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_095", "split": "val"}
+{"id": "INTENT_096_en", "text": "I need a lightweight merino t-shirt, around 150gsm, for summer hiking.", "language": "en", "market": "GB", "canonical_intent": "INTENT_096", "split": "dev"}
+{"id": "INTENT_096_es", "text": "Busco una camiseta de merino ligera, de unos 150 g/m², para hacer senderismo en verano.", "language": "es", "market": "ES", "canonical_intent": "INTENT_096", "split": "dev"}
+{"id": "INTENT_098_en", "text": "Which t-shirts are 100% cotton with no polyester blend, for hot weather?", "language": "en", "market": "US", "canonical_intent": "INTENT_098", "split": "dev"}
+{"id": "INTENT_098_es", "text": "¿Qué playeras son 100% algodón, sin nada de poliéster, para el calor?", "language": "es", "market": "MX", "canonical_intent": "INTENT_098", "split": "dev"}
+{"id": "INTENT_099_en", "text": "Which running tees are made from recycled plastic bottles?", "language": "en", "market": "GB", "canonical_intent": "INTENT_099", "split": "dev"}
+{"id": "INTENT_099_es", "text": "¿Qué camisetas para correr están hechas de botellas de plástico recicladas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_099", "split": "dev"}
+{"id": "INTENT_100_en", "text": "Which organic cotton t-shirts are made here in the USA?", "language": "en", "market": "US", "canonical_intent": "INTENT_100", "split": "dev"}
+{"id": "INTENT_100_es", "text": "¿Qué playeras de algodón orgánico están hechas aquí en México?", "language": "es", "market": "MX", "canonical_intent": "INTENT_100", "split": "dev"}
+{"id": "INTENT_101_en", "text": "Which t-shirt brands are genuinely sustainable and not just greenwashing?", "language": "en", "market": "US", "canonical_intent": "INTENT_101", "split": "dev"}
+{"id": "INTENT_101_es", "text": "¿Qué marcas de camisetas son realmente sostenibles y no hacen greenwashing?", "language": "es", "market": "ES", "canonical_intent": "INTENT_101", "split": "dev"}
+{"id": "INTENT_102_en", "text": "Where can I buy fair trade t-shirts where the factory workers are paid a living wage?", "language": "en", "market": "GB", "canonical_intent": "INTENT_102", "split": "dev"}
+{"id": "INTENT_102_es", "text": "¿Qué camisetas de comercio justo garantizan un salario digno a quienes las fabrican?", "language": "es", "market": "ES", "canonical_intent": "INTENT_102", "split": "dev"}
+{"id": "INTENT_103_en", "text": "Which small independent brands make really good quality basic t-shirts?", "language": "en", "market": "US", "canonical_intent": "INTENT_103", "split": "dev"}
+{"id": "INTENT_103_es", "text": "¿Qué marcas pequeñas e independientes hacen playeras básicas de muy buena calidad?", "language": "es", "market": "MX", "canonical_intent": "INTENT_103", "split": "dev"}
+{"id": "INTENT_104_en", "text": "Which t-shirt brands are transparent about their factories and supply chain?", "language": "en", "market": "US", "canonical_intent": "INTENT_104", "split": "dev"}
+{"id": "INTENT_104_es", "text": "¿Qué marcas de camisetas son transparentes con sus fábricas y su cadena de suministro?", "language": "es", "market": "ES", "canonical_intent": "INTENT_104", "split": "dev"}
+{"id": "INTENT_105_en", "text": "Where can I find t-shirts made in Portugal by small family-run workshops?", "language": "en", "market": "GB", "canonical_intent": "INTENT_105", "split": "dev"}
+{"id": "INTENT_105_es", "text": "¿Dónde puedo encontrar camisetas hechas en Portugal por talleres pequeños y familiares?", "language": "es", "market": "ES", "canonical_intent": "INTENT_105", "split": "dev"}
+{"id": "INTENT_106_en", "text": "Which small brands make their t-shirts in Spain?", "language": "en", "market": "GB", "canonical_intent": "INTENT_106", "split": "val"}
+{"id": "INTENT_106_es", "text": "¿Qué marcas pequeñas fabrican sus camisetas en España?", "language": "es", "market": "ES", "canonical_intent": "INTENT_106", "split": "val"}
+{"id": "INTENT_107_en", "text": "Which t-shirt brands are carbon neutral or offset their emissions?", "language": "en", "market": "US", "canonical_intent": "INTENT_107", "split": "dev"}
+{"id": "INTENT_107_es", "text": "¿Qué marcas de playeras son carbono neutral o compensan sus emisiones?", "language": "es", "market": "MX", "canonical_intent": "INTENT_107", "split": "dev"}
+{"id": "INTENT_108_en", "text": "Which t-shirt brands have a take-back program to recycle old tees?", "language": "en", "market": "US", "canonical_intent": "INTENT_108", "split": "dev"}
+{"id": "INTENT_108_es", "text": "¿Qué marcas de camisetas recogen las viejas para reciclarlas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_108", "split": "dev"}
+{"id": "INTENT_109_en", "text": "Which online t-shirt shops ship to Mexico without huge import fees?", "language": "en", "market": "US", "canonical_intent": "INTENT_109", "split": "dev"}
+{"id": "INTENT_109_es", "text": "¿Qué tiendas en línea de playeras envían a México sin que te cobren un dineral de impuestos?", "language": "es", "market": "MX", "canonical_intent": "INTENT_109", "split": "dev"}
+{"id": "INTENT_110_en", "text": "Which sustainable t-shirt brands ship within the EU without customs charges?", "language": "en", "market": "GB", "canonical_intent": "INTENT_110", "split": "val"}
+{"id": "INTENT_110_es", "text": "¿Qué marcas de camisetas sostenibles envían dentro de la UE sin pagar aduanas?", "language": "es", "market": "ES", "canonical_intent": "INTENT_110", "split": "val"}
+{"id": "INTENT_111_en", "text": "Which t-shirt brands ship orders without plastic packaging?", "language": "en", "market": "US", "canonical_intent": "INTENT_111", "split": "dev"}
+{"id": "INTENT_111_es", "text": "¿Qué marcas de playeras envían sus pedidos sin empaques de plástico?", "language": "es", "market": "MX", "canonical_intent": "INTENT_111", "split": "dev"}
+{"id": "INTENT_112_en", "text": "I'm looking for good quality matching t-shirts for the whole family for our vacation.", "language": "en", "market": "US", "canonical_intent": "INTENT_112", "split": "dev"}
+{"id": "INTENT_112_es", "text": "Busco playeras iguales para toda la familia para las vacaciones, que sean de buena calidad.", "language": "es", "market": "MX", "canonical_intent": "INTENT_112", "split": "dev"}
+{"id": "INTENT_113_en", "text": "I need custom t-shirts for a company event and want them printed on organic cotton. What are my options?", "language": "en", "market": "US", "canonical_intent": "INTENT_113", "split": "dev"}
+{"id": "INTENT_113_es", "text": "Necesito camisetas personalizadas para un evento de empresa y quiero que sean de algodón orgánico. ¿Qué opciones hay?", "language": "es", "market": "ES", "canonical_intent": "INTENT_113", "split": "dev"}
+{"id": "INTENT_114_en", "text": "What t-shirt looks smart enough under a blazer for a job interview at a creative agency?", "language": "en", "market": "GB", "canonical_intent": "INTENT_114", "split": "dev"}
+{"id": "INTENT_114_es", "text": "¿Qué camiseta queda bien debajo de una americana para una entrevista de trabajo en una agencia creativa?", "language": "es", "market": "ES", "canonical_intent": "INTENT_114", "split": "dev"}
+{"id": "INTENT_115_en", "text": "I want to get my boyfriend a really nice, high-quality t-shirt as a gift, around $50. What do you suggest?", "language": "en", "market": "US", "canonical_intent": "INTENT_115", "split": "dev"}
+{"id": "INTENT_115_es", "text": "Quiero regalarle a mi novio una playera de muy buena calidad, de unos 1,000 pesos. ¿Qué me recomiendas?", "language": "es", "market": "MX", "canonical_intent": "INTENT_115", "split": "dev"}
+{"id": "INTENT_116_en", "text": "Which breathable t-shirts should I take to a music festival in the summer heat?", "language": "en", "market": "US", "canonical_intent": "INTENT_116", "split": "dev"}
+{"id": "INTENT_116_es", "text": "¿Qué camisetas transpirables me llevo a un festival de música en pleno verano?", "language": "es", "market": "ES", "canonical_intent": "INTENT_116", "split": "dev"}
+{"id": "INTENT_117_en", "text": "I'm looking for t-shirts for my teenage daughter that aren't cropped or too tight.", "language": "en", "market": "GB", "canonical_intent": "INTENT_117", "split": "dev"}
+{"id": "INTENT_117_es", "text": "Busco playeras para mi hija adolescente que no sean ni crop ni muy pegadas.", "language": "es", "market": "MX", "canonical_intent": "INTENT_117", "split": "dev"}
+{"id": "INTENT_118_en", "text": "Which t-shirts are easy to put on for seniors or people with limited mobility?", "language": "en", "market": "US", "canonical_intent": "INTENT_118", "split": "dev"}
+{"id": "INTENT_118_es", "text": "¿Qué camisetas son fáciles de poner para personas mayores o con movilidad reducida?", "language": "es", "market": "ES", "canonical_intent": "INTENT_118", "split": "dev"}
+{"id": "INTENT_120_en", "text": "Which second-hand or upcycled t-shirt brands are worth checking out?", "language": "en", "market": "GB", "canonical_intent": "INTENT_120", "split": "dev"}
+{"id": "INTENT_120_es", "text": "¿Qué marcas de camisetas de segunda mano o upcycling merecen la pena?", "language": "es", "market": "ES", "canonical_intent": "INTENT_120", "split": "dev"}
