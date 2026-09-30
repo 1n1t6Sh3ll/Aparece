@@ -1,16 +1,29 @@
-import { Aperture, BarChart3, Cpu, Globe, Layers, ScanSearch } from "lucide-react";
+import { Aperture, BarChart3, Cpu, Globe, Home, Layers, ScanSearch } from "lucide-react";
 import AuditPage from "./components/AuditPage";
 import BulkPage from "./components/BulkPage";
 import ModelsPage from "./components/ModelsPage";
 import { HistoryPage, ProductsPage } from "./components/Monitor";
+import { Dashboard, Landing } from "./components/Home";
+import Onboarding from "./components/Onboarding";
+import { Report, SharedReport } from "./components/Report";
+import { useEffect, useState } from "react";
 import { useHashRoute, useI18n } from "./lib";
+import { papi, token, type Profile } from "./profile";
+
+function EditProfile() {
+  const [p, setP] = useState<Profile | null>(null);
+  useEffect(() => { papi<Profile>("/v1/profile").then(setP).catch(() => { window.location.hash = "/"; }); }, []);
+  return p ? <Onboarding edit={p} /> : null;
+}
 
 export default function App() {
   const { t, lang, setLang } = useI18n();
   const [route] = useHashRoute();
   const [page, arg] = route.split("/");
+  const [, bump] = useState(0);
+  const signedIn = !!token.get();  // re-read on every route change / sign-out
   const link = (to: string, label: string, Icon: typeof Layers) => {
-    const active = page === to || (to === "" && !["bulk", "products", "models"].includes(page));
+    const active = page === to || (to === "" && !["bulk", "products", "models", "audit"].includes(page));
     return (
       <a href={`#/${to}`} aria-current={active ? "page" : undefined}
         className={`btn-ghost px-2 py-2 sm:px-3 ${active ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white" : ""}`}>
@@ -28,7 +41,8 @@ export default function App() {
             </span>
             ProductLens
           </a>
-          {link("", t("nav.audit"), ScanSearch)}
+          {signedIn && link("", t("nav.home"), Home)}
+          {link(signedIn ? "audit" : "", t("nav.audit"), ScanSearch)}
           {link("bulk", t("nav.bulk"), Layers)}
           {link("products", t("nav.products"), BarChart3)}
           {link("models", t("nav.models"), Cpu)}
@@ -39,7 +53,11 @@ export default function App() {
         </nav>
       </header>
       <main className="flex-1">
-        {page === "models" ? <ModelsPage /> : page === "bulk" ? <BulkPage /> : page === "products" && arg ? <HistoryPage id={Number(arg)} />
+        {page === "share" && arg ? <SharedReport id={arg} /> : page === "onboarding" ? <Onboarding />
+          : page === "profile" && signedIn ? <EditProfile /> : page === "report" && signedIn ? <Report />
+          : page === "audit" ? <AuditPage /> : !page && signedIn ? <Dashboard onGone={() => bump((x) => x + 1)} />
+          : !page ? <Landing />
+          : page === "models" ? <ModelsPage /> : page === "bulk" ? <BulkPage /> : page === "products" && arg ? <HistoryPage id={Number(arg)} />
           : page === "products" ? <ProductsPage /> : <AuditPage />}
       </main>
       <footer className="no-print border-t border-slate-200/70 py-8 text-center text-sm muted dark:border-slate-800/70">

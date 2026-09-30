@@ -1,7 +1,13 @@
 const input = document.getElementById("apiBase");
 const msg = document.getElementById("msg");
 
+const tokenInput = document.getElementById("token");
 getApiBase().then((v) => { input.value = v; });
+getProfileToken().then((v) => { tokenInput.value = v; });
+
+document.getElementById("forget").addEventListener("click", () => {
+  chrome.storage.local.remove("profileToken", () => { tokenInput.value = ""; msg.textContent = "Key removed from this device."; });
+});
 
 document.getElementById("save").addEventListener("click", async () => {
   let url;
@@ -19,6 +25,7 @@ document.getElementById("save").addEventListener("click", async () => {
     msg.textContent = "Host permission denied; requests to this API will fail.";
     return;
   }
+  chrome.storage.local.set({ profileToken: tokenInput.value.trim() });
   chrome.storage.sync.set({ apiBase }, () => {
     input.value = apiBase;
     msg.textContent = "Saved.";

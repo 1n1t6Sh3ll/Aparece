@@ -8,7 +8,7 @@ import { actionText } from "./Results";
 type Row = { url: string; status: "queued" | "running" | "done" | "error"; audit?: Audit; error?: string };
 const MAX = 20;
 
-function csvCell(v: unknown) {
+export function csvCell(v: unknown) {
   let s = v == null ? "" : String(v);
   if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // spreadsheet formula injection guard
   return `"${s.replace(/"/g, '""')}"`;

@@ -10,6 +10,9 @@ MV3 popup (plain JS, no build) that sends the active tab URL to `POST {apiBase}/
 ## Settings
 Right-click the icon > **Options** (or use the popup's Settings link) to change the API base URL. Saving requests host access to that origin only.
 
+## Merchant profile (optional)
+Paste the access key from your ProductLens profile in **Settings**. It is kept in `chrome.storage.local` (this device only). The popup then shows your company name and a **Save to my report** button, which adds the current page to your profile and audits it (`X-Profile-Token` header on `/v1/profile*` calls). **Forget key** removes it.
+
 ## Preview with mock data
 Open `chrome-extension://<extension-id>/popup.html?mock=1` (the ID is shown on `chrome://extensions`). It renders `mock.json`, built from `dataset/examples/normalized_record.example.json`.
 
