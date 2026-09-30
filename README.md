@@ -12,7 +12,7 @@
 
 </div>
 
-**Live app: https://aparece.fly.dev/** (hosted on Fly.io). Some shops block cloud servers, so if a link cannot be read there, paste the page text as a draft instead.
+**Live app: [aparece.fly.dev](https://aparece.fly.dev/)** (hosted on Fly.io). Some shops block cloud servers, so if a link cannot be read there, paste the page text as a draft instead.
 
 Shoppers now ask AI what to buy. We asked four AI models 768 real shopping questions: none of the 103 small shirt shops we tested was named; Uniqlo, Patagonia and Everlane were. Paste a product link and Aparece shows what machines can read on your page, ranks it against comparable shirts, lists the 3 fixes to make first, and can check on request whether AI assistants recommend it. Suggested text states only what your page proves, and you approve everything.
 

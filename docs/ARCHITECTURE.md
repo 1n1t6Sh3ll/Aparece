@@ -78,9 +78,10 @@ flowchart LR
   APP -->|"fetch, robots.txt respected"| SHOP["Shop product pages"]
   APP -->|"keys from Fly secrets, spend-capped"| LLM["OpenAI and Anthropic APIs"]
   PEER[("Peer dataset<br/>not in the image")] -.-> APP
-  GH["GitHub main"] -->|"fly deploy builds the Dockerfile"| APP
+  DEV["Developer checkout of main"] -->|"manual fly deploy builds the Dockerfile"| APP
 ```
 
+- **Deploys are manual** (`fly deploy` from a checkout; nothing deploys on push). Fly builds the `Dockerfile` itself; the GHCR image that `docker.yml` publishes is a separate artifact.
 - **Hosting:** `fly.toml` runs one always-on machine on port 8000 with a `/v1/health` check. The keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) are Fly secrets, never in git or in the web build.
 - **State is not persistent yet.** Stored audits, share links, monitoring, governance and webhooks are SQLite files in the container and are lost on redeploy. A persistent volume and the `*_DB` paths would keep them.
 - **Peer data is not in the image.** Without `PRODUCTLENS_DATA` an audit ranks "1 of 1" and lists no fixes.
