@@ -80,7 +80,7 @@ def test(wid: str, request: Request, x_manage_token: str | None = Header(None)):
     w = owned(wid, x_manage_token)
     if not w["active"]:
         raise HTTPException(409, f"webhook is disabled: {w['disabled_reason']}")
-    eid = core.emit(w["product_public_id"], core.TEST_EVENT, {"message": "ProductLens test event"}, only_webhook=wid)
+    eid = core.emit(w["product_public_id"], core.TEST_EVENT, {"message": "Aparece test event"}, only_webhook=wid)
     if not eid:
         raise HTTPException(500, "test event could not be queued")
     return {"event_id": eid, "delivery": next((d for d in store.deliveries(wid) if d["event_id"] == eid), None)}

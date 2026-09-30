@@ -1,6 +1,6 @@
 # ProductLens board (repo: powerlens)
 
-Current status (2026-09-30, main `f0a8fcd`): the audit loop in the [README](../README.md) is on main (audit, Generate Fix, AI comparison, visibility benchmark, hallucination check, monitoring + chat, webhooks, tenant-scoped governance). Model results: README "Model results". Open follow-ups: #95. Live task status is in GitHub Issues, not here.
+Current status (2026-09-30, main `578dfa0`): on main: the audit loop, rank formula, Generate Fix, AI comparison (with keyword boost), Check now live visibility, description panel, 4-model visibility card, dark default, compact README, Docker/Fly deploy config; the production app is https://aparece.fly.dev. Open: peer data and persistence on prod, fetch fallback for blocked shops, fixes without peers (issues #118, #112, #104, #95). TEAM-INTEGRATION (#132) is in progress until this consolidation merges. Model results: README "Model results". Live task status is in GitHub Issues, not here.
 
 Authoritative board: GitHub Issues in this repo, shown on the project https://github.com/users/1n1t6Sh3ll/projects/2. Each task has an issue titled `TEAM-<n> ...` with a `status:*` label (ready, in-progress, review, blocked).
 Project manager: Claude Code PM session (human-designated 2026-09-29). The human can change the owner.

@@ -1,11 +1,11 @@
-# PowerLens Chrome extension
+# Aparece Chrome extension
 
 MV3 popup (plain JS, no build). On a product page, **Audit this product** sends the tab URL to `POST {apiBase}/v1/audit` and shows the listing audit.
 
 ## Load unpacked
 1. Open `chrome://extensions` and enable **Developer mode**.
 2. Click **Load unpacked** and select this `extension/` folder.
-3. Start the API (default `http://localhost:8000`), open a product page, click the PowerLens icon, then **Audit this product**.
+3. Start the API (default `http://localhost:8000`), open a product page, click the Aparece icon, then **Audit this product**.
 
 ## What the popup shows
 - Listing-quality rank: "#k of N similar shirts", or "No comparable shirts" when the dataset has none.
