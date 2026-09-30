@@ -34,7 +34,7 @@ try:  # governance/ may be missing from older images; the API still starts witho
     app.include_router(governance_api.router)
 except ModuleNotFoundError:
     pass
-try:  # experiments/ is not in the Docker allowlist yet (.dockerignore); the API still starts without it
+try:  # experiments/ may be missing from older images; the API still starts without it
     import experiments_api  # noqa: E402
     app.include_router(experiments_api.router)
 except ModuleNotFoundError:
