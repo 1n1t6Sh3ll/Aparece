@@ -73,6 +73,14 @@ export default function AuditPage({ reportId }: { reportId?: string }) {
   const [recent, setRecent] = useState<Recent[]>(recents);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {  // stored audit links are unlisted: keep them out of search indexes
+    if (!reportId) return;
+    const m = document.createElement("meta");
+    m.name = "robots"; m.content = "noindex, nofollow";
+    document.head.appendChild(m);
+    return () => m.remove();
+  }, [reportId]);
+
   useEffect(() => {
     if (!reportId) return;
     setState("loading");

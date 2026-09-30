@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from fastapi.testclient import TestClient  # noqa: E402
 
 import main  # noqa: E402
+import profile_api  # noqa: E402
 import safe_fetch  # noqa: E402
 
 FIX = Path(__file__).parent / "fixtures"
@@ -31,7 +32,8 @@ class ProfileTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         env = {"PROFILE_DB": os.path.join(self.tmp.name, "p.db"), "GOVERNANCE_DB": os.path.join(self.tmp.name, "g.db"),
                "PRODUCTLENS_DATA": str(FIX / "dashboard_records.jsonl"),
-               "PRODUCTLENS_SIGNALS": str(FIX / "dashboard_signals.jsonl"), "PRODUCTLENS_VISIBILITY": str(FIX / "nope")}
+               "PRODUCTLENS_SIGNALS": str(FIX / "dashboard_signals.jsonl"), "PRODUCTLENS_VISIBILITY": str(FIX / "nope"), "PROFILE_CREATE_RATE_LIMIT": "1000", "AUDIT_STORE_RATE_LIMIT": "1000"}
+        profile_api._hits.clear()
         p = mock.patch.dict(os.environ, env)
         p.start()
         self.addCleanup(p.stop)
@@ -158,6 +160,23 @@ class ProfileTest(unittest.TestCase):
         with mock.patch.object(safe_fetch, "fetch_page", side_effect=safe_fetch.FetchError(403, "robots.txt disallows this URL")):
             e = client.post("/v1/audits", json={"url": URL})
         self.assertEqual(e.status_code, 403)
+
+    def test_rate_limits(self):
+        with mock.patch.dict(os.environ, {"PROFILE_CREATE_RATE_LIMIT": "2", "AUDIT_STORE_RATE_LIMIT": "1"}):
+            profile_api._hits.clear()
+            self.assertEqual([client.post("/v1/profile", json=BODY).status_code for _ in range(3)], [201, 201, 429])
+            d = {"title": "Tee", "description": "100% cotton."}
+            self.assertEqual([client.post("/v1/audits", json=d).status_code for _ in range(2)], [201, 429])
+
+    def test_stored_audit_expires(self):
+        rid = client.post("/v1/audits", json={"title": "Tee", "description": "100% cotton."}).json()["id"]
+        self.assertEqual(client.get(f"/v1/audits/{rid}").status_code, 200)
+        with mock.patch.dict(os.environ, {"AUDIT_RESULT_TTL_DAYS": "-1"}):  # everything is older than "tomorrow"
+            self.assertEqual(client.get(f"/v1/audits/{rid}").status_code, 404)
+            client.post("/v1/audits", json={"title": "Tee 2", "description": "100% cotton."})  # a save purges expired rows
+        db = sqlite3.connect(os.environ["PROFILE_DB"])
+        self.assertEqual(db.execute("SELECT COUNT(*) FROM results WHERE id = ?", (rid,)).fetchone()[0], 0)
+        db.close()
 
     def test_share_link_opt_in_revocable_no_personal_data(self):
         tok = self.create()["token"]
