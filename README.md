@@ -57,6 +57,50 @@ A FastAPI service (`api/main.py`) exposes the `/v1` routes and serves the React 
 
 Full detail with the code for each part: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+### The rank formula
+
+Listing quality is a fixed formula with no AI (`api/audit_api.py`: `weights`, `quality`, `rank`):
+
+```
+score = 60 x (key facts stated / 22)
+      + 20 x (shopper questions the description answers / 9)
+      + 20 x (schema.org Product and Offer markup found / 2)
+```
+
+Facts are counted only when the page states them. A description question counts once, only when a sentence answers it and matches a verified fact; keyword lists and repeated text do not count. The page is ranked among up to 24 comparable shirts (same type, similar price band). Ties share a position. If structured data is unknown for any shirt in the group, that part is dropped for everyone and the other weights are rescaled to 100 (75 / 25). It ranks listing completeness only; it is not an AI-visibility or search rank.
+
+### Where the AI and the recommendations live
+
+| What | Files | AI or rules |
+|---|---|---|
+| Reading page facts | `dataset/collect/normalize.py`, `extract.py` | Rules, with evidence |
+| Filling empty fields | `api/model_backend.py`; training in `train/train.py` (QLoRA on Qwen), scoring in `train/eval.py`, `train/api_eval.py`, `train/reward.py` | **AI**: fine-tuned Qwen, optional (`MODEL_BACKEND=qwen`) |
+| Rank and top 3 fixes (the recommendation system) | `api/audit_api.py` (`rank`, `build_actions`), `analysis/gaps.py`, `analysis/peers.py` | Rules: compares the page with its peers and lists what most of them state and it does not |
+| Writing title and description | `optimizer/fix.py`, `optimizer/llm.py`, `optimizer/truth.py` | **AI** writer (`OPTIMIZER_BACKEND`: `stub` by default, or OpenAI, Anthropic, Qwen) |
+| Fact-check of every sentence | `optimizer/guard.py` | Rules: blocks any word or number the facts do not support |
+| AI comparison and visibility | `benchmark/shootout/`, `benchmark/harness.py` | Calls GPT and Claude, then scores with rules |
+| Merchant chat | `chat/engine.py` | LLM (`CHAT_LLM`, `stub` by default), answers only from stored records |
+
+So the ranking and the fix recommendations are transparent rules. The AI parts are the Qwen field filler and the copy writer, and both are checked by rules before anything is shown.
+
+### The web app
+
+`web/src/App.tsx` maps each address to a page (all under `#/`):
+
+| Address | Page | File |
+|---|---|---|
+| `#/` | Landing, then the overview once signed in | `components/Home.tsx` |
+| `#/audit`, `#/report/<id>` | Audit a link or draft and read the result, rank and fixes | `components/AuditPage.tsx`, `Results.tsx`, `FixPanel.tsx` |
+| `#/bulk` | Audit many links at once | `components/BulkPage.tsx` |
+| `#/products`, `#/products/<id>` | Saved products, monitoring and history | `components/ProductDetail.tsx`, `Monitor.tsx` |
+| `#/compare/<id>` | AI comparison, saved or live | `pages/AiComparison.tsx` |
+| `#/models` | Model ranking against ground truth | `components/ModelsPage.tsx` |
+| `#/reports`, `#/share/<id>` | Reports and shareable results | `components/Report.tsx` |
+| `#/chat` | Merchant chat | `components/Chat.tsx` |
+| `#/docs`, `#/settings`, `#/onboarding`, `#/signin` | Help, settings, first run, sign-in | `pages/DocsPage.tsx`, `Settings.tsx`, `Onboarding.tsx` |
+
+English and Spanish strings are in `web/src/i18n/`.
+
 ## Quickstart
 
 Docker (published image):
