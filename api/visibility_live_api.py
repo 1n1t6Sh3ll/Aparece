@@ -73,7 +73,7 @@ def _text(d, key):
 
 def _target(rec):
     """The match target from an audited record; malformed or oversize fields raise 422 (before any spend)."""
-    ident, src = rec.get("identity") or {}, rec.get("source") or {}
+    ident, src = rec.get("identity", {}), rec.get("source", {})
     if not isinstance(ident, dict) or not isinstance(src, dict):
         raise HTTPException(422, "bad_product: identity and source must be objects")
     url = _text(src, "canonical_url") or _text(src, "url")
