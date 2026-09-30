@@ -1,4 +1,5 @@
 """Shared prompt/target helpers for build_examples.py and eval.py."""
+import html
 import json
 
 SYSTEM = (
@@ -40,7 +41,7 @@ def prompt_text(raw, max_chars=4000):
             continue
         if isinstance(v, (list, dict)):
             v = "\n".join(map(str, v)) if isinstance(v, list) else json.dumps(v, ensure_ascii=False)
-        parts.append(f"{label}: {v}")
+        parts.append(f"{label}: {html.unescape(str(v))}")  # "&#x20;" etc. waste tokens
     return "\n".join(parts)[:max_chars]
 
 
@@ -58,9 +59,13 @@ def target(norm):
     return out
 
 
-def messages(raw, norm=None):
+def messages(raw, norm=None, max_chars=4000, gold=None):
+    """gold: an already-built target dict (dataset/output/final records carry one)."""
     msgs = [{"role": "system", "content": SYSTEM + "\nKeys: " + ", ".join(FIELDS)},
-            {"role": "user", "content": prompt_text(raw)}]
-    if norm is not None:
-        msgs.append({"role": "assistant", "content": json.dumps(target(norm), ensure_ascii=False)})
+            {"role": "user", "content": prompt_text(raw, max_chars)}]
+    if gold is None and norm is not None:
+        gold = target(norm)
+    if gold is not None:
+        msgs.append({"role": "assistant",
+                     "content": json.dumps({f: gold.get(f) for f in FIELDS}, ensure_ascii=False)})
     return msgs
