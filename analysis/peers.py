@@ -17,6 +17,9 @@ Score (higher = more comparable), one point each when both sides are known and m
 Ties break by absolute price difference (unknown last), then product_id.
 The score only ranks candidates; it says nothing about product quality.
 
+Both rankings skip candidates whose product link was checked and found gone or redirected away
+(tools/linkcheck, dataset/output/link_status.jsonl); without link-check results nothing changes.
+
 similar_peers() is a separate, softer ranking (no hard filters) using documented
 weights over category, price band, attributes, use/style, market, language and text.
 """
@@ -24,6 +27,8 @@ import json
 import math
 import re
 from collections import Counter
+
+from tools.linkcheck.status import keep as link_alive
 
 PRICE_BAND = 0.30
 SLEEVE_FILL = 10  # known sleeve-length matches needed before unknown-sleeve shirts are left out
@@ -135,7 +140,7 @@ def find_peers(target, records, k=10):
         diff = abs(price(c) - price(target)) if price_comparable(target, c) else float("inf")
         return (-score(target, c), diff, c.get("product_id") or "")
 
-    cands = sorted((c for c in records if _eligible(target, c)), key=order)
+    cands = sorted((c for c in link_alive(records) if _eligible(target, c)), key=order)
     ts = get(target, "fit_and_style", "sleeve_length")
     if ts:  # known sleeve matches first; unknown-sleeve shirts only fill in when fewer than SLEEVE_FILL match
         known = [c for c in cands if get(c, "fit_and_style", "sleeve_length") == ts]
@@ -255,7 +260,7 @@ def similar_peers(target, records, k=10, min_score=0.0, use_sklearn=True):
     """Rank every other record by weighted_similarity (no hard filters).
     Returns {"text_method", "weights", "peers": [{"product_id", "score", "components", "record"}]}.
     The score only measures comparability; it says nothing about product quality."""
-    cands = [c for c in records if c.get("product_id") != target.get("product_id")]
+    cands = [c for c in link_alive(records) if c.get("product_id") != target.get("product_id")]
     method, texts = text_similarities(target, cands, use_sklearn)
     rows = []
     for c, tx in zip(cands, texts):
