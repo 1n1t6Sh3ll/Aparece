@@ -53,9 +53,20 @@ def snapshot(pid, url, html, final_url=None, visibility=None):
         visibility = old.get("visibility")  # carry the last weekly result forward
     new = changes.content(norm, html, visibility)
     events = changes.diff(old, new)
+    gaps = gaps_for(norm)
     sid = store.add_snapshot(pid, {"content": new, "product_id": norm["product_id"], "record": norm,
-                                   "quality_status": norm["quality_status"], "gaps": gaps_for(norm)}, events)
+                                   "quality_status": norm["quality_status"], "gaps": gaps}, events)
+    notify(pid, sid, events, norm, gaps)
     return sid, events
+
+
+def notify(pid, sid, events, record=None, gaps=None):
+    """Outgoing merchant webhooks (TEAM-51); never raises, skipped if webhooks/ is not shipped."""
+    try:
+        from webhooks.core import emit_snapshot
+        emit_snapshot(store.product(pid=pid)["public_id"], sid, events, record, gaps)
+    except Exception as e:
+        log.warning("webhooks skipped: %s", e)
 
 
 def crawl(pid):
@@ -152,6 +163,6 @@ def visibility_all(runner=None):
         if prev and vis is not None:  # re-snapshot the last content with the new visibility result
             new = {**prev["data"]["content"], "visibility": vis}
             events = changes.diff(prev["data"]["content"], new)
-            store.add_snapshot(p["id"], {**prev["data"], "content": new}, events)
+            notify(p["id"], store.add_snapshot(p["id"], {**prev["data"], "content": new}, events), events)
     store.log_run("visibility", "ok", f"{len(prods)} products, cap {cap} USD")
     return {"status": "ok"}

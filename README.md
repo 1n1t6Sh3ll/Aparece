@@ -28,6 +28,7 @@ Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | `signals/` | Review and price signals |
 | `benchmark/` | AI-visibility benchmark harness |
 | `monitor/` | Scheduled crawls, snapshots, change events |
+| `webhooks/` | Outgoing merchant webhooks: signed, retried, SSRF-checked deliveries (`/v1/webhooks`, [docs/WEBHOOKS.md](docs/WEBHOOKS.md)) |
 | `dashboard/`, `extension/` | Analyst dashboard (served at `/dashboard/`) and MV3 Chrome popup |
 | `train/` | Optional Qwen2.5-1.5B QLoRA extractor (GPU; not needed to run the demo) |
 
@@ -140,6 +141,10 @@ Do not use the collected data commercially without checking each source's terms.
 ## Governance
 
 Every action is `auto`, `approve` or `forbidden` with a named owner (account owner, merchant, ProductLens operator); decisions go to an append-only audit log (`GOVERNANCE_DB`). Paid benchmark runs need a key and a spend cap; optimizers never read the hidden prompt split. Full policy: [docs/GOVERNANCE.md](docs/GOVERNANCE.md). Task board and decisions: `coordination/`.
+
+## Webhooks
+
+`POST /v1/webhooks` `{product_id, url, events[]}` with the product's `X-Manage-Token` registers a public http(s) endpoint for `audit.completed`, `product.changed`, `snapshot.created`, `visibility.changed`, `experiment.result` and `optimizer.suggestion_ready`; the signing secret is returned once. Deliveries are HMAC-SHA256 signed (`X-ProductLens-Signature: t=…,v1=…`), retried with backoff (5 attempts, then dead-lettered) and never carry emails. Details, the verification snippet and the list/delete/test/deliveries routes: [docs/WEBHOOKS.md](docs/WEBHOOKS.md).
 
 ## Generate Fix (optimizer)
 
