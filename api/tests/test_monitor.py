@@ -78,6 +78,38 @@ class MonitorTest(unittest.TestCase):
         self.assertEqual(again["events"], [])
         self.assertEqual(store.last_snapshot(iid)["content_hash"], s2["content_hash"])
 
+    def test_snapshots_diff_trends(self):
+        body = self.enroll()
+        pid, h = body["product"]["id"], self.auth(body)
+        self.page = PAGES["v2"]
+        client.post(f"/v1/monitored/{pid}/crawl", headers=h)
+        for path in ("snapshots", "trends", "snapshots/1/diff/2"):
+            self.assertEqual(client.get(f"/v1/products/{pid}/{path}").status_code, 401)
+            self.assertEqual(client.get(f"/v1/products/{pid}/{path}", headers={"X-Manage-Token": "x"}).status_code, 403)
+        snaps = client.get(f"/v1/products/{pid}/snapshots", headers=h).json()["results"]
+        self.assertEqual([s["crawled_at"] for s in snaps], ["2026-09-04T03:00:00Z", "2026-09-07T03:00:00Z"])
+        m1, m2 = snaps[0]["metrics"], snaps[1]["metrics"]
+        self.assertLess(m1["attribute_completeness_pct"], m2["attribute_completeness_pct"])
+        self.assertEqual((m1["price"], m2["price"], m2["currency"]), (30.0, 25.0, "EUR"))
+        self.assertEqual(m2["completeness_rank"]["by"], "attribute_completeness_pct")
+        self.assertLessEqual(m2["completeness_rank"]["position"], m2["completeness_rank"]["of"])
+        a, b = snaps[0]["id"], snaps[1]["id"]
+        self.assertIsNotNone(store.cached_metrics(b))  # cached
+        with mock.patch("monitor.history.compute", side_effect=AssertionError("not cached")):
+            self.assertEqual(client.get(f"/v1/products/{pid}/snapshots", headers=h).json()["results"], snaps)
+        d = client.get(f"/v1/products/{pid}/snapshots/{a}/diff/{b}", headers=h).json()
+        self.assertTrue(d["price"]["changed"])
+        self.assertEqual((d["price"]["old"]["price"], d["price"]["new"]["price"]), (30.0, 25.0))
+        brand = next(x for x in d["attributes"]["added"] if x["field"] == "identity.brand")
+        self.assertTrue(brand["evidence"] and brand["evidence"][0]["source_text"])
+        self.assertTrue(d["description"]["changed"])
+        self.assertTrue(any(line.startswith("+") for line in d["description"]["text_diff"]))
+        t = client.get(f"/v1/products/{pid}/trends", headers=h).json()
+        self.assertEqual([p["attribute_completeness_pct"] for p in t["points"]],
+                         [m1["attribute_completeness_pct"], m2["attribute_completeness_pct"]])
+        self.assertEqual(client.get(f"/v1/products/{pid}/snapshots/{a}/diff/999", headers=h).status_code, 404)
+        self.assertNotIn("record", str(client.get(f"/v1/products/{pid}/history").json()["snapshots"][0]["data"].keys()))
+
     def test_snapshots_immutable(self):
         pid = store.pid_for(self.enroll()["product"]["id"])
         with self.assertRaises(sqlite3.IntegrityError):
