@@ -217,6 +217,8 @@
   "rank.descTip": "Cuántas de {ref} preguntas de compradores (material, corte, tejido, cuidados, tallas...) responde tu descripción. Cada una cuenta una vez, así que repetir palabras clave no suma, y el texto repetido resta. Vale hasta {w} puntos.",
   "rank.sd": "Datos estructurados",
   "rank.sdTip": "Si la página tiene marcado schema.org Product y Offer que buscadores e IA pueden leer. Solo puntúa si se conoce para todas las camisetas comparadas. Vale hasta {w} puntos.",
+  "rank.descDetail": "{n} de {of} preguntas respondidas",
+  "rank.sdUnknown": "No puntúa: no conocemos el marcado de las camisetas comparables de nuestro conjunto de datos, así que se excluye para todas",
   "rank.sdDraft": "No puntúa: un borrador aún no tiene marcado, así que se excluye para todas las camisetas",
   "rank.pts": "{p} de {w} pts",
   "rank.aiNote": "Esto clasifica lo completa que está tu ficha. La clasificación de visibilidad en IA llegará tras nuestro benchmark.",

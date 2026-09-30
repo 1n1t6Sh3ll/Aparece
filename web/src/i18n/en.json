@@ -217,6 +217,8 @@
   "rank.descTip": "How many of {ref} shopper questions (material, fit, fabric, care, sizing...) your description answers. Each counts once, so repeating keywords adds nothing, and repeated text lowers the score. Worth up to {w} points.",
   "rank.sd": "Structured data",
   "rank.sdTip": "Whether the page has schema.org Product and Offer markup that search engines and AI tools can read. Scored only when it is known for every compared shirt. Worth up to {w} points.",
+  "rank.descDetail": "{n} of {of} questions answered",
+  "rank.sdUnknown": "Not scored: markup status is unknown for the comparable shirts in our dataset, so it is left out for every shirt",
   "rank.sdDraft": "Not scored: a draft has no markup yet, so it is left out for every shirt",
   "rank.pts": "{p} of {w} pts",
   "rank.aiNote": "This ranks how complete your listing is. An AI-visibility rank comes after our benchmark runs.",

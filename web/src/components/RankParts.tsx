@@ -41,11 +41,14 @@ export function RankCard({ audit }: { audit: Audit }) {
       </section>
     );
   }
+  // description_intents: the shopper questions the description answers (API), each counted once
+  const intents = (c as typeof c & { description_intents?: string[] }).description_intents ?? [];
+  const sdDropped = !(w.structured_data > 0);
   const rows = [
     { k: "facts", label: t("rank.facts"), tip: t("rank.factsTip", { w: w.facts }), p: c.points.facts, w: w.facts, detail: `${c.facts_stated} / ${c.facts_checked}` },
-    { k: "description", label: t("rank.desc"), tip: t("rank.descTip", { w: w.description, ref: Math.round(c.description_ref).toLocaleString(lang) }), p: c.points.description, w: w.description, detail: t("compare.chars", { n: c.description_chars.toLocaleString(lang) }) },
-    ...(draft ? [] : [{ k: "sd", label: t("rank.sd"), tip: t("rank.sdTip", { w: w.structured_data }), p: c.points.structured_data, w: w.structured_data, detail: `${c.structured_data_flags} / 2` }]),
-  ];
+    { k: "description", label: t("rank.desc"), tip: t("rank.descTip", { w: w.description, ref: c.description_ref }), p: c.points.description, w: w.description, detail: t("rank.descDetail", { n: intents.length, of: c.description_ref }) },
+    { k: "sd", label: t("rank.sd"), tip: t("rank.sdTip", { w: w.structured_data }), p: c.points.structured_data, w: w.structured_data, detail: `${c.structured_data_flags} / 2` },
+  ].filter((x) => x.w > 0); // a component dropped from the comparison (weight 0) is not shown
   return (
     <section className="card overflow-hidden rise">
       <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-[auto_1fr] md:items-center">
@@ -76,7 +79,7 @@ export function RankCard({ audit }: { audit: Audit }) {
               </div>
             </div>
           ))}
-          {draft && <p className="text-xs muted">{t("rank.sd")}: {t("rank.sdDraft")}</p>}
+          {sdDropped && <p className="text-xs muted">{t("rank.sd")}: {t(draft ? "rank.sdDraft" : "rank.sdUnknown")}</p>}
         </div>
       </div>
       <div className="border-t border-slate-100 bg-slate-50/70 px-6 py-3 text-sm dark:border-slate-800 dark:bg-slate-900/60 sm:px-8">
@@ -86,8 +89,8 @@ export function RankCard({ audit }: { audit: Audit }) {
             {t("rank.how")} <ChevronDown className={`size-4 transition-transform ${how ? "rotate-180" : ""}`} aria-hidden />
           </button>
         </div>
-        {how && <p className="mt-2 text-xs leading-relaxed muted">{t("rank.formula", { wf: w.facts, wd: w.description, ref: Math.round(c.description_ref).toLocaleString(lang),
-          sd: draft ? "" : t("rank.formulaSd", { ws: w.structured_data }) })}</p>}
+        {how && <p className="mt-2 text-xs leading-relaxed muted">{t("rank.formula", { wf: w.facts, wd: w.description, ref: c.description_ref,
+          sd: sdDropped ? "" : t("rank.formulaSd", { ws: w.structured_data }) })}</p>}
       </div>
     </section>
   );
