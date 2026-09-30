@@ -28,6 +28,7 @@ Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | `signals/` | Review and price signals |
 | `benchmark/` | AI-visibility benchmark harness |
 | `monitor/` | Scheduled crawls, snapshots, change events |
+| `webhooks/` | Outgoing merchant webhooks: signed, retried, SSRF-checked deliveries (`/v1/webhooks`, [docs/WEBHOOKS.md](docs/WEBHOOKS.md)) |
 | `dashboard/`, `extension/` | Analyst dashboard (served at `/dashboard/`) and MV3 Chrome popup |
 | `train/` | Optional Qwen2.5-1.5B QLoRA extractor (GPU; not needed to run the demo) |
 
@@ -57,7 +58,7 @@ Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.s
 
 The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps1` build it when `npm` is available (else `cd web && npm ci && npm run build`; dev server: `npm run dev`, proxies `/v1` to :8000). Without it the API and `/dashboard/` still work.
 
-Main routes: `GET /v1/health`, `POST /v1/audit` (`{url}`, `{html|text}` or a draft `{title, text, price?, currency?, language?}`), `POST /v1/extract`, `GET /v1/products?q=`, `/v1/products/{id}/gaps`, `/v1/visibility`, `/v1/eval`, `POST /v1/enroll`, `GET /v1/governance/policy`, `GET /v1/audit-log`, `GET|POST /v1/approvals` (POST disabled unless `GOVERNANCE_TOKEN` is set). Details at `/docs`.
+Main routes: `GET /v1/health`, `POST /v1/audit` (`{url}`, `{html|text}` or a draft `{title, text, price?, currency?, language?}`), `POST /v1/extract`, `GET /v1/products?q=`, `/v1/products/{id}/gaps`, `/v1/visibility`, `/v1/eval`, `POST /v1/enroll`, `GET /v1/governance/policy`, `GET /v1/audit-log` and `GET /v1/approvals` (need `X-Manage-Token`, which returns only your products, or `X-Governance-Admin-Token` = `GOVERNANCE_ADMIN_TOKEN` for the full view), `POST /v1/approvals` (disabled unless `GOVERNANCE_TOKEN` is set). Details at `/docs`.
 
 URL audits read product facts from JSON-LD (parsed leniently: comments/CDATA, trailing commas, several objects, `@graph`), else from microdata, `og:`/`product:` meta tags or hidden `js-product-markup-*` spans; those fallbacks don't count as Product schema. Amazon URLs are never fetched. Pages we can't read return a coded `detail`: `amazon_not_supported`, `blocked_by_store` (401/403, bot check), `page_not_found` (404/410), `product_gone` (redirect to home/search), `not_a_web_page` (PDF/image), `host_not_found`, `not_a_product_page`. A blocked or product-less Shopify `/products/` page falls back to its public `.json`.
 
@@ -140,6 +141,10 @@ Do not use the collected data commercially without checking each source's terms.
 ## Governance
 
 Every action is `auto`, `approve` or `forbidden` with a named owner (account owner, merchant, ProductLens operator); decisions go to an append-only audit log (`GOVERNANCE_DB`). Paid benchmark runs need a key and a spend cap; optimizers never read the hidden prompt split. Full policy: [docs/GOVERNANCE.md](docs/GOVERNANCE.md). Task board and decisions: `coordination/`.
+
+## Webhooks
+
+`POST /v1/webhooks` `{product_id, url, events[]}` with the product's `X-Manage-Token` registers a public http(s) endpoint for `audit.completed`, `product.changed`, `snapshot.created`, `visibility.changed`, `experiment.result` and `optimizer.suggestion_ready`; the signing secret is returned once. Deliveries are HMAC-SHA256 signed (`X-ProductLens-Signature: t=…,v1=…`), retried with backoff (5 attempts, then dead-lettered) and never carry emails. Details, the verification snippet and the list/delete/test/deliveries routes: [docs/WEBHOOKS.md](docs/WEBHOOKS.md).
 
 ## Generate Fix (optimizer)
 

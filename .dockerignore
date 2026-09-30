@@ -12,6 +12,7 @@
 !experiments/
 !profile/
 !chat/
+!webhooks/
 !train/common.py
 !train/reward.py
 !dataset/schema/
@@ -26,6 +27,7 @@ experiments/data/*
 profile/data/*
 !profile/data/.gitignore
 optimizer/data/*
+webhooks/data/*
 api/tests/
 **/tests/
 **/__pycache__
