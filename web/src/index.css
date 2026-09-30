@@ -9,25 +9,27 @@
   --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
   /* Square-ish components: every rounded-* utility up to 2xl is capped at 6px. */
   --radius-sm: 2px; --radius-md: 3px; --radius-lg: 4px; --radius-xl: 4px; --radius-2xl: 6px;
-  /* Forest green brand ramp (replaces the stock indigo/violet). */
-  --color-brand-50: #eef5f0; --color-brand-100: #d8e9de; --color-brand-200: #b3d3bf; --color-brand-300: #84b89a;
-  --color-brand-400: #559a74; --color-brand-500: #2d7453; --color-brand-600: #1e5b43; --color-brand-700: #184a37;
-  --color-brand-800: #143c2d; --color-brand-900: #102f24; --color-brand-950: #0a1d16;
+  /* Coral brand ramp (retail accent). 600+ are text-safe on the light background; 200-400 on dark navy. */
+  --color-brand-50: #fff1ee; --color-brand-100: #ffe0da; --color-brand-200: #ffc3b9; --color-brand-300: #ff9e91;
+  --color-brand-400: #ff7f70; --color-brand-500: #ff6b5b; --color-brand-600: #c53f30; --color-brand-700: #a8352a;
+  --color-brand-800: #882c24; --color-brand-900: #6c241e; --color-brand-950: #3e1411;
 }
 
-/* Design tokens: every surface, line and ink colour. Charts use --chart-you / --chart-peer / --chart-band. */
+/* Design tokens: every surface, line and ink colour. Primary buttons use --cta; links and marks use --accent. Charts use --chart-you / --chart-peer / --chart-band. */
 :root {
-  --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #ede6da; --border: #d9d0c1; --text: #1d1b17; --muted: #625b50;
-  --accent: #1e5b43; --accent-fg: #ffffff; --accent-soft: #e1ede5; --accent-ink: #16432f;
-  --chart-you: #1e5b43; --chart-peer: #8c8374; --chart-band: #cfe2d5;
-  --sidebar: #1d1b17; --sidebar-ink: #c9c0b0; --sidebar-active: #2e2a24;
+  --bg: #faf6f0; --surface: #fffdf9; --surface-2: #f2ece3; --border: #e3dacd; --text: #14213d; --muted: #545e75;
+  --accent: #b83a2b; --accent-fg: #ffffff; --accent-soft: #ffe6e1;
+  --cta: #ff6b5b; --cta-fg: #14213d; --cta-hover: #ff8577;
+  --chart-you: #b83a2b; --chart-peer: #858da0; --chart-band: #ffd6cf;
+  --sidebar: #14213d; --sidebar-ink: #c3cbdb; --sidebar-active: #1f2e50;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
-  --bg: #15130f; --surface: #1d1a16; --surface-2: #27231d; --border: #3a342b; --text: #efe9de; --muted: #a89f90;
-  --accent: #5fae86; --accent-fg: #0f1f17; --accent-soft: #1f3329; --accent-ink: #bfe0cc;
-  --chart-you: #5fae86; --chart-peer: #857c6e; --chart-band: #2d4a3b;
-  --sidebar: #0f0d0a; --sidebar-ink: #a89f90; --sidebar-active: #221f1a;
+  --bg: #0e1628; --surface: #152036; --surface-2: #1d2a44; --border: #2c3a57; --text: #f4efe8; --muted: #a5aec2;
+  --accent: #ff8577; --accent-fg: #14213d; --accent-soft: #3a2027;
+  --cta: #ff7a6b; --cta-fg: #14213d; --cta-hover: #ff9d91;
+  --chart-you: #ff8577; --chart-peer: #7d879c; --chart-band: #4a2a31;
+  --sidebar: #0a1120; --sidebar-ink: #a5aec2; --sidebar-active: #16213a;
   color-scheme: dark;
 }
 
@@ -40,7 +42,7 @@ h2.text-sm, h2.text-xs { font-family: var(--font-sans); letter-spacing: 0; }
 @utility card { @apply rounded-md border border-[var(--border)] bg-[var(--surface)]; }
 @utility chip { @apply inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-medium; }
 @utility btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-50 disabled:pointer-events-none; }
-@utility btn-primary { @apply btn bg-[var(--accent)] text-[var(--accent-fg)] hover:bg-[var(--accent-ink)] dark:hover:bg-brand-300; }
+@utility btn-primary { @apply btn bg-[var(--cta)] text-[var(--cta-fg)] hover:bg-[var(--cta-hover)]; }
 @utility btn-ghost { @apply btn text-[var(--text)] hover:bg-[var(--surface-2)]; }
 @utility btn-outline { @apply btn border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-2)]; }
 @utility input { @apply w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none; }

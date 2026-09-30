@@ -57,7 +57,7 @@ export function RankCard({ audit }: { audit: Audit }) {
     <section className="card overflow-hidden rise">
       <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-[auto_1fr] md:items-center">
         <div className="flex items-center gap-5">
-          <div className="relative grid size-28 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-white shadow-lg shadow-brand-500/25">
+          <div className="relative grid size-28 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-[var(--accent-fg)] shadow-lg shadow-brand-500/25">
             <div className="text-center leading-none">
               <span className="text-sm font-semibold opacity-80">#</span><span className={`${pos.length > 3 ? "text-3xl" : "text-5xl"} font-extrabold tracking-tight`}>{pos}</span>
             </div>
@@ -148,7 +148,7 @@ export function CompareTable({ audit }: { audit: Audit }) {
               <th scope="col" className="px-3 py-2 text-left text-xs font-medium muted">{t("table.coverage")}</th>
               {rows.map((r, i) => (
                 <th key={r.product_id} scope="col" onMouseEnter={() => setCol(i)} className={`px-3 py-2 text-left align-bottom font-semibold ${col === i ? "bg-[var(--surface-2)]" : ""}`}>
-                  {r.is_you ? <span className="chip bg-[var(--accent)] text-white">{t("rank.you")}</span>
+                  {r.is_you ? <span className="chip bg-[var(--accent)] text-[var(--accent-fg)]">{t("rank.you")}</span>
                     : r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer" className="hover:underline">{short(r.title)}</a> : short(r.title)}
                   {!r.is_you && r.merchant && <span className="block text-xs font-normal muted">{r.merchant}</span>}
                 </th>
