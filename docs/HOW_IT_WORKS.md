@@ -4,7 +4,7 @@
 
 Shoppers now ask AI assistants what to buy: "a good black t-shirt that won't fade". The assistant answers from what it can read and trust on product pages. If a small shop's page doesn't state its facts clearly (material, weight, fit, care) in text and markup that machines can read, it doesn't get recommended.
 
-We measured this. We asked gpt-4o-mini and Claude Haiku 384 real shopping questions, half in English and half in Spanish. None of the 103 small shops in our test set was ever named. Big brands were named instead: Everlane in 78 answers, Uniqlo in 74, Patagonia in 59.
+We measured this. We asked four AI models (Claude Haiku 4.5, gpt-4o-mini, gpt-4.1-mini and gpt-4.1-nano) 192 real shopping questions each, half in English and half in Spanish: 768 answers. None of the 103 small shops in our test set was ever named. Big brands were named instead: Uniqlo in 174 answers, Patagonia in 133, Everlane in 131. On any audited page, the *Check now* button asks two of those assistants a few of the same kind of questions about that one product and shows what they said.
 
 Aparece shows a shop owner what machines can and cannot read on each product page. It compares the page with similar shirts and suggests fixes built only from facts the page already proves. It never invents claims.
 
@@ -192,7 +192,7 @@ The goal ([VISION.md](VISION.md)) is a platform that helps small shops understan
 | Vision question | What Aparece does | Code | Status |
 |---|---|---|---|
 | 1. How does AI or search see my product? | Reads the page into verified facts, each with evidence, plus markup signals | `api/safe_fetch.py`, `dataset/collect/normalize.py`, `api/main.py` | Done |
-| 2. Where does my product appear? | Asks real AI assistants shopping questions and measures mention rate, top-3 and MRR | `benchmark/harness.py`, `benchmark/match.py`, `benchmark/metrics.py` | Done (2 models, 384 answers) |
+| 2. Where does my product appear? | Asks real AI assistants shopping questions and measures mention rate, top-3 and MRR | `benchmark/harness.py`, `benchmark/match.py`, `benchmark/metrics.py` | Done (4 models, 768 answers); per product on request with *Check now* |
 | 3. What information or intents am I missing? | Ranks against comparable shirts; finds the facts and shopper questions the page misses | `analysis/peers.py`, `analysis/gaps.py`, `api/audit_api.py` | Done |
 | 4. What truthful changes should I test? | Top 3 fixes, plus fact-checked text written only from verified facts | `api/audit_api.py` → `build_actions`, `optimizer/fix.py`, `optimizer/guard.py` | Done |
 | 5. Did the change actually help? | Snapshots and diffs over time; experiments with control products and adjusted lift | `monitor/`, `experiments/`, `api/experiments_api.py` | Built; no real before/after experiment run yet |
