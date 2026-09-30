@@ -7,6 +7,7 @@ CLI: python -m analysis.gaps --data records.jsonl --product-id p_123 [--k 10]
 """
 import argparse
 import json
+import re
 import statistics
 import sys
 
@@ -50,6 +51,54 @@ def description_chars(rec):
     parts = [c.get("full_description") or "", c.get("short_description") or ""]
     parts += [b for b in (c.get("bullet_points") or []) if isinstance(b, str)]
     return sum(len(p) for p in parts)
+
+
+def description_text(rec):
+    c = rec.get("content") or {}
+    parts = [c.get("full_description") or "", c.get("short_description") or ""]
+    parts += [b for b in (c.get("bullet_points") or []) if isinstance(b, str)]
+    return "\n".join(p for p in parts if p)
+
+
+# Shopper questions a shirt description can answer (EN/ES). Each counts once however often it is mentioned,
+# so repeating keywords adds nothing.
+INTENTS = {
+    "material": r"\b(?:cotton|polyester|linen|wool|merino|viscose|modal|lyocell|tencel|elastane|spandex|nylon|hemp|"
+                r"bamboo|algod[oó]n|poli[eé]ster|lino|lana)\b",
+    "composition": r"\b\d{1,3}\s?%",
+    "fabric": r"\b(?:jersey|piqu[eé]|pique|oxford|poplin|popelina|twill|flannel|franela|rib|interlock|slub|knit|"
+              r"punto|gsm|oz|g/m)\b",
+    "fit": r"\b(?:slim|regular|relaxed|oversized?|boxy|classic|athletic|loose|tailored|holgad[oa]|ajustad[oa])\b"
+           r"|\bfit\b|\bcorte\b",
+    "neck_or_collar": r"\b(?:crew|v-neck|neck|neckline|collar|henley|cuello|mock)\b",
+    "sleeve": r"\bsleeves?\b|\bmangas?\b|\bsleeveless\b",
+    "size_guide": r"\b(?:model|wearing|size guide|sizing|true to size|measurements|chest|lleva|talla|gu[ií]a de tallas|"
+                  r"medidas)\b",
+    "care": r"\b(?:wash|washing|machine|tumble|dry|iron|bleach|lavar|lavado|secadora|planchar)\b",
+    "origin_or_certification": r"\b(?:made in|hecho en|fabricado en|organic|org[aá]nico|gots|oeko|fair ?trade|"
+                               r"recycled|reciclad[oa]|certified|certificad[oa])\b",
+    "feel_or_feature": r"\b(?:soft|breathable|stretch|durable|lightweight|heavyweight|pre-?shrunk|moisture|"
+                       r"suave|transpirable|el[aá]stic[oa]|ligera|resistente)\b",
+}
+REPEAT_FREE = 0.15  # share of repeated word 3-grams tolerated before the description score is reduced
+
+
+def repetition(text):
+    """Share of word 3-grams that repeat an earlier 3-gram (0 = no repetition, near 1 = the same text over again)."""
+    words = re.findall(r"\w+", (text or "").lower())
+    grams = list(zip(words, words[1:], words[2:]))
+    return round(1 - len(set(grams)) / len(grams), 3) if len(grams) >= 6 else 0.0
+
+
+def description_coverage(rec):
+    """Distinct shopper intents the description covers (each once, so stuffing adds nothing) times a repetition
+    factor: full credit up to REPEAT_FREE repeated 3-grams, falling linearly to 0 at twice that plus 0.5."""
+    text = description_text(rec)
+    hits = sorted(k for k, rx in INTENTS.items() if re.search(rx, text, re.I))
+    rep = repetition(text)
+    factor = 1.0 if rep <= REPEAT_FREE else max(0.0, 1 - (rep - REPEAT_FREE) / 0.5)
+    return {"intents": hits, "covered": len(hits), "of": len(INTENTS), "repetition": rep,
+            "repetition_factor": round(factor, 3), "value": round(len(hits) / len(INTENTS) * factor, 4)}
 
 
 def _median(xs):
