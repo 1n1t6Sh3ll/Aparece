@@ -82,9 +82,13 @@ def call(provider, model, system, user, max_tokens):
     if provider == "anthropic":
         import anthropic
         kw = extra if extra is not None else {"temperature": 0}
-        r = anthropic.Anthropic().messages.create(
-            model=model, system=system, max_tokens=max_tokens,
-            messages=[{"role": "user", "content": user}], **kw)
+        base = dict(model=model, system=system, max_tokens=max_tokens, messages=[{"role": "user", "content": user}])
+        try:
+            r = anthropic.Anthropic().messages.create(**base, **kw)
+        except TypeError as e:  # newer SDKs have no temperature argument (as in benchmark/harness.py)
+            if "temperature" not in str(e):
+                raise
+            r = anthropic.Anthropic().messages.create(**base, **{k: v for k, v in kw.items() if k != "temperature"})
         return {"text": "".join(b.text for b in r.content if b.type == "text"), "model_version": r.model,
                 "stop": r.stop_reason, "input_tokens": r.usage.input_tokens,
                 "output_tokens": r.usage.output_tokens, "raw": r.model_dump(mode="json")}
