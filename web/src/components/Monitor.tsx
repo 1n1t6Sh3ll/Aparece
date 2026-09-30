@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Camera, ExternalLink, History, Loader2, PauseCircle, RefreshCw, ScanSearch } from "lucide-react";
-import { api, cap, fieldLabel, fmtValue, manageToken, useI18n } from "../lib";
+import { allManageTokens, api, cap, fieldLabel, fmtValue, manageToken, useI18n } from "../lib";
 
 type Monitored = { id: string; url: string; enrolled_at: string; active: number; plan: string | null; last_snapshot_at: string | null;
   snapshot_count: number; event_count: number; demo?: boolean };
@@ -22,7 +22,7 @@ export function ProductsPage() {
   const [rows, setRows] = useState<Monitored[] | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const load = useCallback(() => api<{ results: Monitored[] }>("/v1/monitored").then((r) => setRows(r.results)).catch((e) => setErr(t("err.generic", { detail: e.message }))), [t]);
+  const load = useCallback(() => api<{ results: Monitored[] }>("/v1/monitored", { headers: { "X-Manage-Token": allManageTokens() } }).then((r) => setRows(r.results)).catch((e) => setErr(t("err.generic", { detail: e.message }))), [t]);
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function act(id: string, kind: "crawl" | "stop") {
@@ -95,7 +95,7 @@ export function HistoryPage({ id }: { id: string }) {
   const [data, setData] = useState<{ product: Monitored; snapshots: Snapshot[]; events: Event[] } | null>(null);
   const [err, setErr] = useState("");
   useEffect(() => {
-    api<{ product: Monitored; snapshots: Snapshot[]; events: Event[] }>(`/v1/products/${id}/history`).then(setData)
+    api<{ product: Monitored; snapshots: Snapshot[]; events: Event[] }>(`/v1/products/${id}/history`, { headers: { "X-Manage-Token": manageToken(id) } }).then(setData)
       .catch((e) => setErr(e.status === 404 ? t("hist.empty") : t("err.generic", { detail: e.message })));
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
