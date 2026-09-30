@@ -76,7 +76,7 @@ git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens
 
 Open http://127.0.0.1:8000 (API docs `/docs`, health `/v1/health`, port via `PORT`). `run.sh` builds the venv and the web app, and rebuilds the web app when `web/src` changes.
 
-- **Peer data is needed for rank, similar products and fixes.** Without it the page shows "1 of 1" and no fixes. Point `PRODUCTLENS_DATA` at the shirt dataset (default `dataset/output/final/train.jsonl`, not in git; see the [dataset spec](docs/DATASET_SPEC.md)).
+- **Peer data is needed for rank, similar products and fixes.** Without it the page shows "1 of 1" and no fixes. Download the peer file from the [peers-v1 release](https://github.com/1n1t6Sh3ll/powerlens/releases/tag/peers-v1) (11,964 shirts, 4.5 MB gzipped, research use): `gh release download peers-v1 --pattern peers.jsonl.gz && gunzip peers.jsonl.gz`, then set `PRODUCTLENS_DATA=peers.jsonl` (default path `dataset/output/final/train.jsonl`, not in git; see the [dataset spec](docs/DATASET_SPEC.md)).
 - **Paid features are optional.** Put `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` in `.env` (copy `.env.example`); `run.sh` then installs the provider packages. Without keys the free writers run and paid ones are skipped.
 - **Spend caps:** *Compare with AI* `SHOOTOUT_LIVE_MAX_USD` 0.05 per request and `SHOOTOUT_LIVE_DAILY_USD` 1 per day; *Check now* `VISIBILITY_LIVE_MAX_USD` 0.05, `VISIBILITY_LIVE_DAILY_USD` 1, `VISIBILITY_LIVE_RATE_LIMIT` 3/min, results cached 24 h. A product costs about a cent. Batch runs need `--max-usd`.
 - **Batch tools:** `python -m benchmark.shootout.live_batch run --out r.json --max-usd 0.5` (many real pages); `python train/api_eval.py --data dataset/output/final_v2_2k/test_gold.jsonl --models openai:gpt-4o-mini --max-usd 1 --dry-run` (models vs ground truth).
@@ -89,8 +89,9 @@ Other settings: `MODEL_BACKEND`/`QWEN_ADAPTER_PATH`, `OPTIMIZER_BACKEND`, `MONIT
 ```sh
 fly auth login
 fly launch --copy-config --no-deploy      # uses fly.toml; pick a free app name and a region
+fly volumes create data --size 3 --region iad             # once, before the first deploy
 fly secrets set OPENAI_API_KEY=... ANTHROPIC_API_KEY=...    # optional, enables the paid features
-fly deploy
+fly deploy --ha=false                     # one machine: a volume attaches to a single machine
 ```
 
 In PowerShell you can pass keys from your environment without typing them: `fly secrets set OPENAI_API_KEY=$env:OPENAI_API_KEY ANTHROPIC_API_KEY=$env:ANTHROPIC_API_KEY`. The image (built from `Dockerfile`) includes the OpenAI and Anthropic packages; `docker-compose.yml` passes the same keys and caps to a local container.
@@ -98,7 +99,8 @@ In PowerShell you can pass keys from your environment without typing them: `fly 
 - **Keys** live only in the host's secrets, never in git and never in a website's public environment (for example a Vercel `VITE_` variable). Use dedicated keys with a monthly spend limit set at OpenAI and Anthropic.
 - **The paid routes have no login.** Anyone who can reach the site can spend up to the caps (0.05 USD per request, 1 USD per day per running server) at a limited rate. Put the site behind your host's password protection or a proxy if it is public.
 - **State and peer data live on a volume.** `fly.toml` mounts a volume named `data` at `/data` and points `PROFILE_DB`, `MONITOR_DB`, `GOVERNANCE_DB`, `WEBHOOKS_DB`, `EXPERIMENTS_DB` and `PRODUCTLENS_DATA` (`/data/peers.jsonl`) there, so stored audits, share links, monitoring, governance and webhooks survive restarts and deploys. Create the volume once, before the first deploy of this config: `fly volumes create data --size 3 --region iad`. The image starts as root only to `chown` `/data`, then runs the app as user `app`.
-- **Peer data is not in git or in the image.** Upload your peers file once: `fly ssh sftp put peers.jsonl /data/peers.jsonl` (or `fly ssh sftp shell`, then `put peers.jsonl /data/peers.jsonl`). No restart is needed for new audits; without the file audits still work but rank "1 of 1" and list no fixes.
+- **Peer data is not in git or in the image.** Upload it once (get `peers.jsonl` from the release above): `fly ssh sftp put peers.jsonl /data/peers.jsonl`, then `fly machine restart <id>` so the app loads it. Without the file audits still work but rank "1 of 1" and list no fixes.
+- **Fly's free trial stops machines after 5 minutes.** For an always-on app, add a credit card at https://fly.io/trial.
 - **One machine only.** A volume attaches to a single machine in one region; do not scale beyond one machine with this config (it also keeps the in-memory spend caps meaningful). Volumes are not replicated automatically: take snapshots (`fly volumes snapshots list`) if the data matters.
 - **Vercel** can host only the web app (`web/`), with `/v1/*` rewritten to the API. The API needs a long-running host (slow requests, SQLite, in-memory caps).
 
