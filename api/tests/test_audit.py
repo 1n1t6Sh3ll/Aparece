@@ -80,6 +80,8 @@ class AuditTest(unittest.TestCase):
         gsm = next(f for f in b["facts"] if f["field"] == "materials.fabric_weight_gsm")
         self.assertEqual((gsm["value"], gsm["source_text"]), (240, "240 gsm"))
         self.assertTrue(all(f["value"] not in (None, "", [], {}) for f in b["facts"]))
+        self.assertNotIn("content.full_description", {f["field"] for f in b["facts"]})
+        self.assertEqual(b["comparison"]["description_chars"]["target"], 90)
         nf = {x["field"]: x for x in b["not_found"]}
         self.assertIn("identity.audience", nf)
         self.assertIsNone(nf["identity.audience"]["predicted"])  # no model wired: never a fabricated value

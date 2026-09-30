@@ -206,7 +206,7 @@ def facts(target, norm):
     out = []
     for s, k in ATTRIBUTES:
         f, v = f"{s}.{k}", get(target, s, k)
-        if present(v):
+        if present(v) and f != "content.full_description":  # a length is a metric, not a product fact
             e = ev.get(f) or {}
             out.append({"field": f, "label": label(f), "value": display(f, v), "source_text": e.get("source_text"),
                         "source_location": e.get("source_location")})
