@@ -85,14 +85,15 @@ def clear_cache():
 
 
 def variants(url):
-    """The URL as given, then without query/fragment, with and without www., and for Amazon /dp/<ASIN> forms."""
+    """The URL as given, then with/without www. (query kept except for Amazon, fragment dropped), and for Amazon /dp/<ASIN> forms."""
     p = urlsplit(url.strip())
     host = (p.hostname or "").lower()
     bare = host[4:] if host.startswith("www.") else host
     path = p.path or "/"
     out = [url.strip()]
+    q = "" if AMAZON.search(host) else p.query  # a query can identify the product (?id=42): keep it, never fall back to the bare path
     for h in (host, bare, "www." + bare):
-        out.append(urlunsplit(("https", h, path, "", "")))
+        out.append(urlunsplit(("https", h, path, q, "")))
     if AMAZON.search(host):
         m = ASIN.search(path)
         if m:

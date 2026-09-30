@@ -3,7 +3,7 @@ Rate limits: one retry honouring Retry-After (<= 10 s) inside the total deadline
 10 minutes and robots.txt for 1 hour per host. If a Shopify product page stays rate-limited, the store's public
 /products/<handle>.json (robots permitting) is read instead and wrapped as schema.org JSON-LD. The User-Agent is
 never changed. If the store still blocks or rate-limits us, the newest public Common Crawl copy of the page is used
-(never the store itself) and labelled as an archive: see archive_of()."""
+(never the store itself) and labelled as an archive (ArchivedHtml.archive)."""
 import html as htmllib
 import ipaddress
 import json

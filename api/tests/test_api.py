@@ -452,3 +452,39 @@ class ApiTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RateLimitKeyTest(unittest.TestCase):
+    """Behind a trusted proxy (Fly) the key is the LAST X-Forwarded-For entry: the address the proxy appended, which a
+    client cannot forge (anything it sends stays earlier in the list)."""
+
+    def hit(self, forwarded, host="172.16.0.1"):
+        import profile_api
+        req = mock.Mock(headers={"x-forwarded-for": forwarded} if forwarded else {}, client=mock.Mock(host=host))
+        profile_api.rate_limit(req, "keytest", "KEYTEST_LIMIT", 1)
+
+    def setUp(self):
+        import profile_api
+        profile_api._hits.clear()
+        self.addCleanup(profile_api._hits.clear)
+        patcher = mock.patch.dict(os.environ, {"PROFILE_TRUST_PROXY": "1"})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_two_visitors_behind_one_proxy_have_separate_buckets(self):
+        self.hit("203.0.113.9")
+        self.hit("198.51.100.7")  # a different visitor, same proxy address: not limited
+        with self.assertRaises(main.HTTPException) as e:
+            self.hit("203.0.113.9")
+        self.assertEqual(e.exception.status_code, 429)
+
+    def test_spoofed_leading_entry_does_not_change_the_key(self):
+        self.hit("spoofed-1, 203.0.113.9")
+        with self.assertRaises(main.HTTPException):
+            self.hit("spoofed-2, 203.0.113.9")
+
+    def test_without_trust_flag_the_socket_address_is_used(self):
+        with mock.patch.dict(os.environ, {"PROFILE_TRUST_PROXY": "0"}):
+            self.hit("203.0.113.9")
+            with self.assertRaises(main.HTTPException):
+                self.hit("198.51.100.7")  # same socket address: forwarded header ignored
