@@ -120,6 +120,41 @@ class AuditTest(unittest.TestCase):
         self.assertEqual(b["product"]["product_type"], "unknown")
         self.assertTrue(b["notes"])
 
+    def test_peers_without_recorded_currency(self):
+        """Dataset rows with no currency must still be peers of a priced page (was: #1 of 1, 0 actions)."""
+        import json
+        import tempfile
+        rows = [json.loads(x) for x in (FIX / "dashboard_records.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
+        for r in rows:
+            r["commerce"]["currency"] = None
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "recs.jsonl"
+            p.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+            with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(p)}):
+                b = self.audit(html=HTML, url=URL)
+        self.assertGreater(b["rank"]["total"], 1)
+        self.assertTrue(b["actions"])
+        self.assertTrue(any("no recorded currency" in n for n in b["notes"]))
+        self.assertEqual(b["context"]["currency"], "EUR")  # the page's own facts are unchanged
+        self.assertFalse(any(x["url"] == URL for x in b["peers"]))  # never its own peer
+
+    def test_shopify_json_page_audit(self):
+        """Saved Shopify /products/<handle>.json (sepiia.com) through the fallback mapping and the normal audit."""
+        import json
+        prod = json.loads((FIX / "shopify_product.json").read_text(encoding="utf-8"))["product"]
+        page = safe_fetch.shopify_html(prod)
+        u = "https://sepiia.com/products/camiseta-hombre-cuello-redondo-negra-soft"
+        with mock.patch.object(safe_fetch, "fetch_page", return_value=(u, page)):
+            r = client.post("/v1/extract", json={"url": u})
+            b = self.audit(url=u)
+        n = r.json()["normalized"]
+        self.assertEqual((n["identity"]["product_type"], n["source"]["language"]), ("t_shirt", "es"))
+        self.assertEqual((n["commerce"]["price"], n["commerce"]["currency"]), (49.9, "EUR"))
+        self.assertEqual(n["identity"]["brand"], "Sepiia")
+        self.assertTrue(n["content"]["full_description"])
+        self.assertEqual(b["rank"]["total"], 1)  # the fixture dataset has no Spanish shirts
+        self.assertTrue(any(x.startswith("No comparable shirts") for x in b["notes"]))
+
     def test_no_peers(self):
         with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(FIX / "nope")}):
             b = self.audit(html=HTML, url=URL)

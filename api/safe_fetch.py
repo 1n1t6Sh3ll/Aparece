@@ -154,10 +154,23 @@ def shopify_page(p, robots_txt, deadline):
         prod = json.loads(text)["product"]
     except (ValueError, KeyError, TypeError):
         return None
-    return shopify_html(prod)
+    return shopify_html(prod, (m.group(1).strip("/") or None))
 
 
-def shopify_html(prod):
+ES_WORDS = {"de", "con", "para", "y", "el", "la", "los", "las", "en", "algodón", "camiseta", "manga", "hombre", "mujer"}
+EN_WORDS = {"the", "with", "for", "and", "of", "in", "cotton", "shirt", "sleeve", "men", "women", "our"}
+
+
+def guess_language(text):
+    """'es' or 'en' from common words when the JSON has no locale, else None (no guess)."""
+    words = re.findall(r"[a-záéíóúñ]+", (text or "").lower())
+    es, en = sum(w in ES_WORDS for w in words), sum(w in EN_WORDS for w in words)
+    return "es" if es >= 3 and es > 2 * en else "en" if en >= 3 and en > 2 * es else None
+
+
+def shopify_html(prod, lang=None):
+    """Shopify product JSON as a minimal page: schema.org Product (name, description, brand, category, images,
+    one Offer per priced variant) and <html lang> from the URL locale or, failing that, the text."""
     variants = [v for v in prod.get("variants") or [] if isinstance(v, dict)]
     desc = htmllib.unescape(re.sub(r"<[^>]+>", " ", prod.get("body_html") or ""))
     node = {"@context": "https://schema.org", "@type": "Product", "name": prod.get("title") or "",
@@ -172,7 +185,9 @@ def shopify_html(prod):
             del o[k]
     ld = json.dumps(node, ensure_ascii=False).replace("</", "<\\/")
     t = htmllib.escape(node["name"])
-    return (f'<html><head><title>{t}</title><script type="application/ld+json">{ld}</script></head>'
+    lang = lang or guess_language(f"{node['name']} {node['description']}")
+    attr = f' lang="{htmllib.escape(lang)}"' if lang else ""
+    return (f'<html{attr}><head><title>{t}</title><script type="application/ld+json">{ld}</script></head>'
             f'<body><h1>{t}</h1>{prod.get("body_html") or ""}</body></html>')
 
 
