@@ -1,5 +1,6 @@
 """Product Truth: only the normalized fields that carry evidence, plus origin/certification statements found on the
 merchant's own page. Localized fact sentences and JSON-LD are rendered deterministically from it."""
+import html
 import re
 import sys
 from pathlib import Path
@@ -36,13 +37,13 @@ def product_truth(rec):
     sources = {}
     for e in evidence:
         if e.get("source_text"):
-            sources.setdefault(e.get("field"), []).append(str(e["source_text"]))
+            sources.setdefault(e.get("field"), []).append(html.unescape(str(e["source_text"])))
     facts = {}
     for f in FACT_FIELDS:
         sec, key = f.split(".")
         v = (rec.get(sec) or {}).get(key)
         if f in sources and not _empty(v):
-            facts[f] = v
+            facts[f] = " ".join(html.unescape(v).split()) if isinstance(v, str) else v  # pages may entity-encode
     if "variants.colors" in facts:
         facts["variants.colors"] = [c if isinstance(c, dict) else {"original_color_name": c, "normalized": c}
                                     for c in facts["variants.colors"]]
@@ -165,11 +166,21 @@ def fact_sentences(truth, lang):
     return [s for s in out if s]
 
 
+TITLE_MAX = 90  # same limit as train/reward.py copy_reward
+
+
 def fallback_title(truth, lang):
+    """Deterministic title <= TITLE_MAX: brand + product name (brand not repeated) + material, shortened as needed.
+    A name that is still too long is cut at a word boundary; the guard accepts that as a run of the verified name."""
     f = truth["facts"]
-    head = " ".join(str(f[k]) for k in ("identity.brand", "identity.product_name") if f.get(k))
+    brand, name = (str(f.get(k) or "").strip() for k in ("identity.brand", "identity.product_name"))
+    head = name if brand and name.lower().startswith(brand.lower()) else " ".join(x for x in (brand, name) if x)
     mat = _material(truth, lang)
-    return f"{head} - {mat}" if head and mat else head or (mat or "")
+    for cand in (f"{head} - {mat}" if head and mat else "", head, name, brand, mat or ""):
+        if cand and len(cand) <= TITLE_MAX:
+            return cand
+    cut = (name or head)[:TITLE_MAX + 1].rsplit(" ", 1)[0]
+    return cut.rstrip(" -:|,") or (name or head)[:TITLE_MAX]
 
 
 # ---- schema.org JSON-LD (deterministic, verified facts only) --------------------------------

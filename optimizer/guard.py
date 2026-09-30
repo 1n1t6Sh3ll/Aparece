@@ -137,10 +137,9 @@ def check_sentence(sentence, truth, rec=None, vocab=None):
     rec = rec or check_record(truth)
     words, numbers = vocab or vocabulary(truth)
     s = sentence
-    for k in ("identity.brand", "identity.product_name"):
-        v = truth["facts"].get(k)
-        if v:
-            s = re.sub(re.escape(str(v)), " ", s, flags=re.I)
+    names = [str(truth["facts"].get(k) or "") for k in ("identity.product_name", "identity.brand")]
+    for v in sorted((v for v in names if v.strip()), key=len, reverse=True):  # name first: it may contain the brand
+        s = re.sub(re.escape(v), " ", s, flags=re.I)
     for c in truth.get("care") or []:  # verbatim verified care text
         s = re.sub(re.escape(c.rstrip(".")), " ", s, flags=re.I)
     claims, problems = [], []
@@ -168,6 +167,37 @@ def check_text(text, truth):
         claims, problems = check_sentence(sent, truth, rec, vocab)
         out.append({"sentence": sent, "claims": claims, "problems": problems})
     return out
+
+
+def _identity_runs(truth):
+    """Token sequences a title may use as identity: the whole brand or name, or >= 2 consecutive tokens of the brand,
+    the name, or brand + name. A single name word ("organic") alone is not identity."""
+    seqs = [_tokens(str(truth["facts"].get(k) or "")) for k in ("identity.brand", "identity.product_name")]
+    seqs.append(seqs[0] + seqs[1])
+    runs = {tuple(q) for q in seqs[:2] if q}
+    for q in seqs:
+        runs |= {tuple(q[i:j]) for i in range(len(q)) for j in range(i + 2, len(q) + 1)}
+    return runs
+
+
+def check_title(title, truth, rec=None, vocab=None):
+    """[{sentence, claims, problems}] for a title (one unit, not split into sentences). Verified brand and product-name
+    words count as identity; they never support attribute claims, which are checked on the rest of the title."""
+    title = (title or "").strip()
+    if not title:
+        return []
+    runs, spans = _identity_runs(truth), [(m.start(), m.end(), _fold(m.group(0))) for m in TOKEN_RE.finditer(title)]
+    longest = max((len(r) for r in runs), default=0)
+    keep, i = list(title), 0
+    while i < len(spans):
+        for j in range(min(len(spans), i + longest), i, -1):
+            if tuple(t for _, _, t in spans[i:j]) in runs:
+                keep[spans[i][0]:spans[j - 1][1]] = " " * (spans[j - 1][1] - spans[i][0])
+                i = j - 1
+                break
+        i += 1
+    claims, problems = check_sentence("".join(keep), truth, rec, vocab)
+    return [{"sentence": title, "claims": claims, "problems": problems}]
 
 
 FIELD_PREFIXES = ("materials.", "fit_and_style.", "identity.", "commerce.", "variants.", "origin", "certification")

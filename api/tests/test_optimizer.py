@@ -271,6 +271,54 @@ class OptimizerTest(unittest.TestCase):
         self.assertEqual(client.post("/v1/optimize/publish",
                                      json={"product": RECORD, "suggestion": bad_ld, "actor": "m@x"}).status_code, 422)
 
+    def _lotr(self, encode=False):  # issue #105 (merchoid.com LOTR tee): brand repeated inside the product name
+        brand, name = "Lord of the Rings", "Lord Of The Rings: Gold Foil Logo T-Shirt - Merchoid"
+        if encode:
+            brand, name = (x.replace(" ", "&#x20;").replace(":", "&#x3A;") for x in (brand, name))
+        rec = copy.deepcopy(RECORD)
+        rec["identity"].update(brand=brand, product_name=name)
+        rec["content"]["title"] = name
+        rec["evidence"] = [e for e in rec["evidence"] if not e["field"].startswith("identity.")]
+        rec["evidence"] += [ev("identity.brand", brand, brand), ev("identity.product_name", name, name),
+                            ev("identity.audience", "men", "men's")]
+        return rec
+
+    def test_issue_105_name_words_are_identity_in_titles(self):
+        truth = product_truth(self._lotr())
+        verbatim = "Lord of the Rings Lord Of The Rings: Gold Foil Logo T-Shirt - Merchoid"
+        self.assertEqual(guard.check_title(verbatim, truth)[0]["problems"], [])
+        self.assertEqual(guard.check_title("Gold Foil Logo T-Shirt by Lord of the Rings - 60% cotton, 40% polyester",
+                                           truth)[0]["problems"], [])
+        for bad in ("Gold Foil Logo T-Shirt - organic cotton", "Gold Foil Logo T-Shirt - gold cotton",
+                    "Lord of the Rings T-Shirt - 100% cotton"):
+            self.assertTrue(guard.check_title(bad, truth)[0]["problems"], bad)
+        self.assertTrue(guard.check_text("Gold foil logo.", truth)[0]["problems"])  # never attribute evidence
+
+    def test_issue_105_result_passes_own_guard_and_publishes(self):
+        for encode in (False, True):
+            rec = self._lotr(encode)
+            verbatim = json.dumps({"title": "Lord of the Rings Lord Of The Rings: Gold Foil Logo T-Shirt - Merchoid",
+                                   "description": "Regular fit. Short sleeves."})
+            for backend in ("stub", lambda s, u: verbatim):
+                out = fix.generate(rec, "en", None, backend=backend, candidates=1)
+                self.assertLessEqual(len(out["title"]), 90, out["title"])
+                self.assertNotIn("&#x", out["title"])
+                self.assertTrue(out["reward"]["format_ok"], out["reward"])
+                self.assertEqual(out["reward"]["hallucinated"], [])
+                sug = {k: out[k] for k in ("language", "title", "description", "json_ld")}
+                self.assertEqual(fix.verify_suggestion(rec, sug), [])
+        r = client.post("/v1/optimize", json={"product": self._lotr(True), "language": "en"})
+        sug = {k: r.json()[k] for k in ("language", "title", "description", "json_ld")}
+        r = client.post("/v1/optimize/publish", json={"product": self._lotr(True), "suggestion": sug, "actor": "m@x"})
+        self.assertEqual(r.status_code, 403, r.text)  # grounded: only Merchant approval is missing
+
+    def test_never_returns_guard_failing_title(self):
+        long_bad = json.dumps({"title": "x" * 120, "description": "Free shipping."})
+        out = fix.generate(RECORD, "en", None, backend=lambda s, u: long_bad, candidates=1)
+        self.assertTrue(out["used_fallback"])
+        self.assertEqual(out["title"], "Northwind Everyday Tee - 60% cotton, 40% polyester")
+        self.assertEqual(fix.verify_suggestion(RECORD, {k: out[k] for k in ("title", "description", "json_ld")}), [])
+
     def test_api_bad_language(self):
         self.assertEqual(client.post("/v1/optimize", json={"product": RECORD, "language": "fr"}).status_code, 422)
 
