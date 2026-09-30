@@ -94,7 +94,7 @@ export async function api<R>(path: string, init?: RequestInit): Promise<R> {
 }
 
 /** Map an API error to user-facing copy; the raw detail is only interpolated as plain text. */
-export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean } {
+export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean; openDraft?: boolean } {
   if (!(e instanceof ApiError)) return { msg: t("err.generic", { detail: String(e) }), suggestText: false };
   const d = e.detail;
   if (e.status === 0) return { msg: t("err.network"), suggestText: false };
@@ -105,6 +105,8 @@ export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean
   if (d.includes("non-public")) return { msg: t("err.private"), suggestText: false };
   if (e.status === 504 || d.includes("deadline") || d.includes("Timeout")) return { msg: t("err.timeout"), suggestText: true };
   if (e.status === 413) return { msg: t("err.tooBig"), suggestText: true };
+  if (e.status === 429 || /upstream HTTP (429|503)/.test(d)) return { msg: t("err.rateLimited"), suggestText: true, openDraft: true };
+  if (d.startsWith("draft_needs_title")) return { msg: t("hero.emptyTitle"), suggestText: false };
   if (d.startsWith("upstream") || d.startsWith("fetch failed")) return { msg: t("err.upstream", { detail: d }), suggestText: true };
   return { msg: t("err.generic", { detail: d }), suggestText: false };
 }

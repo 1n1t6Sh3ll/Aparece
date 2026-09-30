@@ -98,6 +98,28 @@ class AuditTest(unittest.TestCase):
         self.assertFalse(any(a["kind"] == "structured_data" for a in b["actions"]))
         self.assertFalse(b["comparison"]["structured_data"]["product_schema_present"]["target"])
 
+    def test_draft_title_description_only(self):
+        b = self.audit(title="Heavyweight organic cotton tee", description="Oversized fit. 100% organic cotton, 240 gsm.",
+                       language="en")
+        self.assertTrue(b["product"]["draft"])
+        self.assertEqual(b["product"]["product_type"], "t_shirt")
+        self.assertIn("position", b["rank"])
+        self.assertGreater(b["rank"]["total"], 1)
+        self.assertTrue(b["actions"])
+
+    def test_draft_plain_text(self):
+        b = self.audit(text="Delvik Black T-shirt\nPrice: 29.90 EUR\nMen t-shirt. 100% organic cotton.", language="en")
+        self.assertTrue(b["product"]["draft"])
+        self.assertEqual(b["product"]["product_type"], "t_shirt")
+        self.assertEqual(b["product"]["price"], 29.9)
+
+    def test_draft_type_from_description_or_unknown(self):
+        b = self.audit(title="Delvik Black", description="A relaxed polo in pique cotton.", language="en")
+        self.assertEqual(b["product"]["product_type"], "polo")
+        b = self.audit(title="Delvik Black", description="Soft and warm.", language="en")
+        self.assertEqual(b["product"]["product_type"], "unknown")
+        self.assertTrue(b["notes"])
+
     def test_no_peers(self):
         with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(FIX / "nope")}):
             b = self.audit(html=HTML, url=URL)
