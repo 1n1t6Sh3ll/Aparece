@@ -156,8 +156,21 @@ type Report = {
   generators?: Record<string, Gen>; products?: Product[];
 };
 
-/** Display name for a generator id ("productlens", "productlens@openai:gpt-4o-mini"); ids stay unchanged. */
-const genName = (g: string | null | undefined) => (g ? g.replace(/^productlens(?=@|$)/, "Aparece") : g);
+/** Display name for a generator id; ids stay unchanged.
+ *  "productlens" = Aparece's pipeline with no model (text built from the facts),
+ *  "productlens@openai:gpt-4o-mini" = Aparece's pipeline with gpt-4o-mini writing (guardrail, reward, fallback),
+ *  "openai:gpt-4o-mini" = the model alone (its own text, same facts), "original" = the shop's text. */
+let genLang: "en" | "es" = "en";  // set by the page on render
+const genName = (g: string | null | undefined) => {
+  if (!g) return g;
+  const es = genLang === "es";
+  if (g === "original") return es ? "Texto original de la tienda" : "Shop's original";
+  if (g === "productlens") return es ? "Aparece (sin modelo de IA)" : "Aparece (no AI model)";
+  const m = g.match(/^productlens@[^:]+:(.+)$/);
+  if (m) return `Aparece + ${m[1]}`;
+  const own = g.match(/^[^:@]+:(.+)$/);
+  return own ? (es ? `${own[1]} solo` : `${own[1]} alone`) : g;
+};
 const PARTS: Part[] = ["title", "tags", "description"];
 const pct = (v: number | null | undefined) => (v == null ? "–" : `${Math.round(v * 100)}%`);
 const ci = (v: CI | undefined) => (v ? `${v.value.toFixed(2)} [${v.lo.toFixed(2)}–${v.hi.toFixed(2)}]` : "–");
@@ -168,6 +181,7 @@ const Pass = ({ ok }: { ok: boolean }) => ok
 export default function AiComparison({ productId }: { productId?: string }) {
   const { t: tShared, lang } = useI18n();
   const t = useStr();
+  genLang = lang === "es" ? "es" : "en";
   const [data, setData] = useState<Report | null>(null);
   const [err, setErr] = useState("");
   const [sel, setSel] = useState<string>("");
