@@ -51,7 +51,8 @@ AWAY_PATH = re.compile(r"^/?(?:[a-z]{2}(?:[-_][a-z]{2})?/?)?$"
 AWAY_QUERY = re.compile(r"(?:^|&)(?:q|s|query|search)=", re.I)
 CHALLENGE = re.compile(r"<title[^>]*>\s*(?:just a moment|attention required|access denied|robot check|"
                        r"are you a (?:human|robot)|security check|pardon our interruption)"
-                       r"|cf-chl-|/_incapsula_resource|px-captcha|captcha-delivery", re.I)
+                       r"|cf-chl-|/_incapsula_resource|px-captcha|captcha-delivery|/errors/validatecaptcha|opfcaptcha"
+                       r"|type the characters you see", re.I)
 NOT_FOUND = re.compile(r"<title[^>]*>[^<]*(?:\b404\b|not found|no longer available|no encontrad|"
                        r"no existe|nicht gefunden|introuvable)[^<]*</title>", re.I)
 
@@ -118,6 +119,7 @@ class Checker:
         self.session.headers.update({"User-Agent": USER_AGENT, "Accept": "text/html,*/*;q=0.8"})
         self.throttle, self.timeout, self.guard = throttle or Throttle(), timeout, guard
         self.robots, self.lock = {}, threading.Lock()
+        self.head_trusted = {}  # host -> False when a GET there showed a bot challenge (HEAD 200 then proves nothing)
 
     def _request(self, method, url):
         self.guard(url)  # SSRF: http(s) + public IPs, re-checked on every redirect hop
@@ -165,7 +167,10 @@ class Checker:
                 return self._done(row, "blocked", "robots_disallowed")
             r, final = self._follow("HEAD", url)
             row["method"], body = "HEAD", ""
-            if not 200 <= r.status_code < 300:  # many stores reject or mis-answer HEAD: confirm with GET
+            h = host_of(url)
+            # Many stores reject or mis-answer HEAD, and some answer HEAD 200 but serve a challenge page on GET:
+            # confirm non-2xx HEADs, the first 2xx HEAD per host, and every HEAD on a host that served a challenge.
+            if not 200 <= r.status_code < 300 or not self.head_trusted.get(h, False):
                 r.close()
                 r, final = self._follow("GET", url)
                 row["method"] = "GET"
@@ -174,7 +179,11 @@ class Checker:
                     body = raw.decode(r.encoding or "utf-8", errors="replace")
             r.close()
             row.update(http_status=r.status_code, final_url=final)
-            return self._done(row, *classify(url, final, r.status_code, r.headers, body))
+            result = classify(url, final, r.status_code, r.headers, body)
+            if row["method"] == "GET" and 200 <= r.status_code < 300:
+                with self.lock:
+                    self.head_trusted[h] = result[1] != "challenge" and self.head_trusted.get(h, True)
+            return self._done(row, *result)
         except safe_fetch.FetchError as e:
             return self._done(row, "error", e.detail)
         except requests.exceptions.SSLError:

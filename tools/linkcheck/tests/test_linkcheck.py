@@ -37,8 +37,9 @@ class FakeSession:
     def request(self, method, url, **kw):
         self.calls.append((method, url))
         assert kw["allow_redirects"] is False and kw["timeout"] == 8
-        if (method, url) in self.routes:
-            r = self.routes[(method, url)]
+        key = (method, url) if (method, url) in self.routes else ("HEAD", url)  # GET mirrors HEAD unless routed
+        if key in self.routes:
+            r = self.routes[key]
             if isinstance(r, Exception):
                 raise r
             return r
@@ -57,9 +58,11 @@ U = "https://shop.example.com/products/tee"
 
 class CheckerTest(unittest.TestCase):
     def test_head_ok_is_live_and_sends_honest_ua(self):
-        c, s = checker({("HEAD", U): Resp(200)})
-        row = c.check(U, "p1")
-        self.assertEqual((row["status"], row["method"], row["product_id"]), ("live", "HEAD", "p1"))
+        u2 = U + "-2"
+        c, s = checker({("HEAD", U): Resp(200), ("GET", U): Resp(200, body="<title>Tee</title>"), ("HEAD", u2): Resp(200)})
+        row = c.check(U, "p1")  # the first 2xx HEAD on a host is confirmed with GET
+        self.assertEqual((row["status"], row["method"], row["product_id"]), ("live", "GET", "p1"))
+        self.assertEqual((c.check(u2)["method"], c.check(u2)["status"]), ("HEAD", "live"))  # then HEAD is trusted
         self.assertIn("ProductLens", s.headers["User-Agent"])
         self.assertIn("checked_at", row)
         self.assertEqual(s.calls[0], ("GET", "https://shop.example.com/robots.txt"))
@@ -99,6 +102,15 @@ class CheckerTest(unittest.TestCase):
         c, _ = checker({("HEAD", U): Resp(405), ("GET", U): Resp(200, body="<title>Just a moment...</title>")})
         self.assertEqual(c.check(U)["detail"], "challenge")
 
+    def test_head_200_but_get_captcha_is_blocked_and_host_keeps_using_get(self):
+        cap = '<html><title>Amazon.com</title><form action="/errors/validateCaptcha">'
+        u, u2 = "https://www.amazon.com/dp/B000000001", "https://www.amazon.com/dp/B000000002"
+        c, s = checker({("HEAD", u): Resp(200), ("GET", u): Resp(200, body=cap),
+                        ("HEAD", u2): Resp(200), ("GET", u2): Resp(200, body=cap)})
+        self.assertEqual(c.check(u)["detail"], "challenge")
+        row = c.check(u2)
+        self.assertEqual((row["status"], row["method"]), ("blocked", "GET"))
+
     def test_robots_disallow_means_no_page_request(self):
         c, s = checker({("GET", "https://shop.example.com/robots.txt"):
                         Resp(200, body="User-agent: *\nDisallow: /products/\n")})
@@ -136,7 +148,7 @@ class CheckerTest(unittest.TestCase):
         self.assertEqual(classify(U, "https://parked.example.net/", 200, {})[0], "redirected_away")
 
     def test_run_is_resumable(self):
-        c, s = checker({("HEAD", U): Resp(200)})
+        c, s = checker({("HEAD", U): Resp(200), ("GET", U): Resp(200)})
         with tempfile.TemporaryDirectory() as d:
             out = Path(d) / "ls.jsonl"
             items = [(U, "p1"), (U + "/", "p1")]  # same page, de-duplicated by url_key upstream
