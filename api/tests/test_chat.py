@@ -180,6 +180,13 @@ class ChatApiTest(unittest.TestCase):
         anon = self.post(product_id=None, message=q).json()  # what the old client sent
         self.assertFalse(any(c.startswith(("snapshot", "trend")) for c in anon["context"]), anon)
 
+    def test_spanish_canned_question_is_cited(self):
+        """The ES product-detail canned question retrieves the same trend records as the EN one (was refused)."""
+        r = self.mpost(message="¿Qué ha cambiado y qué hace falta ahora?").json()
+        self.assertFalse(r["refused"], r)
+        self.assertTrue(any(c["type"] == "trend" for c in r["citations"]), r)
+        self.assertEqual(main.chat_api.search_question("What changed?"), "What changed?")  # EN untouched
+
     def test_monitor_context_has_snapshots_diff_trends(self):
         by_type = {}
         for x in main.chat_api.collect(self.pid, self.internal):
