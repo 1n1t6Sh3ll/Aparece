@@ -4,9 +4,6 @@ import json
 import sys
 import time
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-
 from common import FIELDS
 
 
@@ -39,6 +36,8 @@ def summarize(preds, golds):
 
 
 def score(model, tok, rows, max_new):
+    import torch  # lazy: parse/summarize stay importable without torch (api_eval.py, CI)
+
     preds = []
     for r in rows:
         ids = tok.apply_chat_template(r["messages"][:-1], add_generation_prompt=True,
@@ -58,6 +57,8 @@ def main():
     ap.add_argument("--max_new", type=int, default=512)
     ap.add_argument("--skip_base", action="store_true")
     args = ap.parse_args()
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     rows = [json.loads(l) for l in open(args.data, encoding="utf-8") if l.strip()]
     rows = rows[:args.limit] if args.limit else rows

@@ -58,7 +58,8 @@ class QwenBackendTest(unittest.TestCase):
         rules = client.post("/v1/extract", json={"html": FIXTURE, "url": URL}).json()
         self.assertEqual(body["model_status"], "ok")
         norm = body["normalized"]
-        norm.pop("scraped_at", None), rules["normalized"].pop("scraped_at", None)
+        for n in (norm, rules["normalized"]):  # two requests may straddle a second boundary
+            n["source"].pop("scraped_at")
         self.assertEqual(norm, rules["normalized"])  # model never writes page facts
         self.assertNotIn("_model", norm)
         pred = body["predicted"]

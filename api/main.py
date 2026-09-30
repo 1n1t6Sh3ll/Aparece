@@ -39,6 +39,11 @@ try:  # optimizer/ may be missing from older images
     app.include_router(optimizer_api.router)
 except ModuleNotFoundError:
     pass
+try:  # experiments/ may be missing from older images; the API still starts without it
+    import experiments_api  # noqa: E402
+    app.include_router(experiments_api.router)
+except ModuleNotFoundError:
+    pass
 app.mount("/dashboard", StaticFiles(directory=Path(__file__).resolve().parents[1] / "dashboard", html=True), name="dashboard")
 
 
