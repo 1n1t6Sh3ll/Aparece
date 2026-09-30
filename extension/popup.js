@@ -119,47 +119,5 @@ async function audit() {
   }
 }
 
-// Profile context (TEAM-45): with an access key, show the company and save the page to the merchant's report.
-const who = document.getElementById("who");
-const saveBtn = document.getElementById("save");
-
-async function profileFetch(path, init = {}) {
-  const [apiBase, token] = await Promise.all([getApiBase(), getProfileToken()]);
-  const res = await fetch(`${apiBase}${path}`, {
-    ...init, headers: { "Content-Type": "application/json", "X-Profile-Token": token },
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`API error ${res.status}: ${String(body.detail || "").slice(0, 200)}`);
-  return body;
-}
-
-async function loadProfile() {
-  if (MOCK || !(await getProfileToken())) return;
-  try {
-    const p = await profileFetch("/v1/profile");
-    who.textContent = `Signed in: ${p.company.name}`;
-    saveBtn.hidden = false;
-  } catch {
-    who.textContent = "Access key not recognised. Check Settings.";
-  }
-}
-
-saveBtn.addEventListener("click", async () => {
-  statusEl.textContent = "Saving to your report...";
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !/^https?:/.test(tab.url || "")) throw new Error("Open a product page (http/https) first.");
-    const p = await profileFetch("/v1/profile/products", { method: "POST", body: JSON.stringify({ url: tab.url }) });
-    statusEl.textContent = "Saved. Auditing...";
-    const a = await profileFetch(`/v1/profile/products/${p.id}/audit`, { method: "POST" });
-    const r = a.audit && a.audit.rank;
-    statusEl.textContent = r ? `Saved to your report: #${r.position} of ${r.total} comparable shirts.` : "Saved to your report.";
-  } catch (e) {
-    statusEl.textContent = "";
-    showError(e.message);
-  }
-});
-
 document.getElementById("audit").addEventListener("click", audit);
-loadProfile();
 if (MOCK) audit();
