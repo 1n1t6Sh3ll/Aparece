@@ -136,6 +136,32 @@ class OptimizerTest(unittest.TestCase):
                   "Esta camiseta de corte regular tiene manga corta.", "Precio: 25.00 EUR."):
             self.assertEqual(guard.check_text(s, truth)[0]["problems"], [], s)
 
+    def test_values_bound_to_their_field(self):
+        truth = product_truth(RECORD)
+        for s in ("Sale price: 25.00 EUR.", "Precio rebajado: 25.00 EUR.", "Available in 25 colors.", "180 sizes.",
+                  "Price: 180 EUR.", "Fabric weight: 25 gsm.", "60% polyester, 40% cotton.", "Out of stock.",
+                  "Regular fit with 3/4 sleeves.", "Rated 60 by customers."):
+            self.assertTrue(guard.check_text(s, truth)[0]["problems"], s)
+        rec = copy.deepcopy(RECORD)
+        rec["commerce"]["availability"] = None
+        self.assertTrue(guard.check_text("In stock.", product_truth(rec))[0]["problems"])
+        rec["commerce"]["sale_price"] = 20.0
+        rec["evidence"].append(ev("commerce.sale_price", 20.0, "20.00"))
+        self.assertEqual(guard.check_text("Price: 25.00 EUR. Sale price: 20.00 EUR.", product_truth(rec))[1]["problems"], [])
+
+    def test_product_name_is_not_attribute_evidence(self):
+        rec = copy.deepcopy(RECORD)
+        rec["identity"]["product_name"] = "Organic Eco Tee"
+        rec["content"]["title"] = "Organic Eco Tee"
+        rec["evidence"] = [e for e in rec["evidence"] if e["field"] != "identity.product_name"]
+        rec["evidence"].append(ev("identity.product_name", "Organic Eco Tee", "Organic Eco Tee"))
+        truth = product_truth(rec)
+        for s in ("Organic cotton tee.", "Eco tee.", "Camiseta de algodón orgánico."):
+            self.assertTrue(guard.check_text(s, truth)[0]["problems"], s)
+        self.assertEqual(guard.check_text("The Organic Eco Tee has short sleeves.", truth)[0]["problems"], [])
+        out = fix.generate(rec, "en", None, backend="stub")
+        self.assertEqual(out["removed_sentences"], [])
+
     def test_all_stripped_uses_template(self):
         bad = json.dumps({"title": "", "description": "Good for your health. Free shipping."})
         for lang, first in (("en", "Material: 60% cotton"), ("es", "Material: 60% algodón")):
