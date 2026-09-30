@@ -1,6 +1,7 @@
 import { Aperture, BarChart3, Cpu, Globe, Layers, ScanSearch } from "lucide-react";
 import AuditPage from "./components/AuditPage";
 import BulkPage from "./components/BulkPage";
+import AiComparison from "./pages/AiComparison";
 import ModelsPage from "./components/ModelsPage";
 import { HistoryPage, ProductsPage } from "./components/Monitor";
 import { useHashRoute, useI18n } from "./lib";
@@ -39,7 +40,7 @@ export default function App() {
         </nav>
       </header>
       <main className="flex-1">
-        {page === "models" ? <ModelsPage /> : page === "bulk" ? <BulkPage /> : page === "products" && arg ? <HistoryPage id={arg} />
+        {page === "compare" ? <AiComparison productId={arg ? decodeURIComponent(arg) : undefined} /> : page === "models" ? <ModelsPage /> : page === "bulk" ? <BulkPage /> : page === "products" && arg ? <HistoryPage id={arg} />
           : page === "products" ? <ProductsPage /> : <AuditPage />}
       </main>
       <footer className="no-print border-t border-slate-200/70 py-8 text-center text-sm muted dark:border-slate-800/70">

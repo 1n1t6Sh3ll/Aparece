@@ -109,6 +109,7 @@ export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean
   if (e.status === 0) return { msg: t("err.network"), suggestText: false };
   if (d.includes("robots")) return { msg: t("err.robots"), suggestText: true };
   if (d.startsWith("not_a_product_page")) return { msg: t("err.notProduct"), suggestText: false };
+  if (d.startsWith("not_a_shirt")) return { msg: t("err.notShirt"), suggestText: false };
   if (d.includes("does not resolve")) return { msg: t("err.dns"), suggestText: false };
   if (d.includes("http(s)")) return { msg: t("err.scheme"), suggestText: false };
   if (d.includes("non-public")) return { msg: t("err.private"), suggestText: false };

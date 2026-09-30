@@ -58,7 +58,8 @@ class OptimizerTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         p = mock.patch.dict(os.environ, {"GOVERNANCE_DB": os.path.join(self.tmp.name, "g.db"),
-                                         "GOVERNANCE_TOKEN": "t0k", "OPTIMIZER_BACKEND": "stub"})
+                                         "GOVERNANCE_TOKEN": "t0k", "OPTIMIZER_BACKEND": "stub",
+                                         "OPTIMIZER_PAIRS_LOG": os.path.join(self.tmp.name, "pairs.jsonl")})
         p.start()
         self.addCleanup(p.stop)
         self.addCleanup(self.tmp.cleanup)
@@ -92,7 +93,7 @@ class OptimizerTest(unittest.TestCase):
         def spy(system, user):
             calls.append(user)
             return hallucinating(system, user)
-        out = fix.generate(RECORD, "en", None, backend=spy)
+        out = fix.generate(RECORD, "en", None, backend=spy, candidates=1)
         self.assertEqual(len(calls), 1 + fix.MAX_RETRIES)
         self.assertIn("rejected", calls[1])
         text = out["title"] + " " + out["description"]
@@ -107,10 +108,54 @@ class OptimizerTest(unittest.TestCase):
     def test_regeneration_recovers(self):
         seq = iter([hallucinating(None, None), json.dumps({"title": "Northwind Everyday Tee",
                                                            "description": "Regular fit. Short sleeves. 180 gsm."})])
-        out = fix.generate(RECORD, "en", None, backend=lambda s, u: next(seq))
+        out = fix.generate(RECORD, "en", None, backend=lambda s, u: next(seq), candidates=1)
         self.assertEqual(len(out["attempts"]), 2)
         self.assertEqual(out["removed_sentences"], [])
         self.assertEqual(out["description"], "Regular fit. Short sleeves. 180 gsm.")
+
+    def test_best_of_n_by_reward_hallucination_never_wins(self):
+        outs = [hallucinating(None, None),  # hallucinating (highest raw coverage claims, but flagged)
+                json.dumps({"title": "Northwind Everyday Tee", "description": "Regular fit. Short sleeves."}),
+                json.dumps({"title": "Northwind Everyday Tee - 60% cotton, 40% polyester",
+                            "description": "Regular fit. Short sleeves. 180 gsm. Sizes: S, M, L. Price: 25.00 EUR."})]
+        calls = []
+
+        def three(system, user):
+            calls.append(user)
+            return outs[(len(calls) - 1) % 3]
+        out = fix.generate(RECORD, "en", None, backend=three)
+        self.assertEqual(len(calls), 3)  # one round: a grounded candidate exists
+        self.assertIn("candidate 1 of 3", calls[0])
+        c = out["candidates"]
+        self.assertEqual([x["chosen"] for x in c], [False, False, True])
+        self.assertFalse(c[0]["guard_passed"])
+        self.assertLess(c[0]["reward"]["hallucination"], 0)
+        self.assertTrue(c[0]["reward"]["hallucinated"])
+        self.assertGreater(c[2]["reward"]["coverage"], c[1]["reward"]["coverage"])
+        self.assertGreater(c[2]["reward"]["total"], c[1]["reward"]["total"])
+        self.assertEqual(out["reward"], c[2]["reward"])
+        self.assertEqual(out["description"], "Regular fit. Short sleeves. 180 gsm. Sizes: S, M, L. Price: 25.00 EUR.")
+        self.assertEqual(out["removed_sentences"], [])
+        rows = [json.loads(x) for x in Path(os.environ["OPTIMIZER_PAIRS_LOG"]).read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(all(json.loads(r["chosen"])["description"] == out["description"] for r in rows))
+        self.assertTrue(all(r["chosen_reward"] > r["rejected_reward"] for r in rows))
+        self.assertNotIn("actor", rows[0])
+        # hallucination never wins even when it is the only one with a high claim count and others are sparse
+        seq = iter([hallucinating(None, None)] * 2 + [json.dumps({"title": "Northwind Everyday Tee",
+                                                                 "description": "Regular fit."})])
+        out = fix.generate(RECORD, "en", None, backend=lambda s, u: next(seq))
+        self.assertEqual(out["description"], "Regular fit.")
+
+    def test_all_flagged_winner_not_logged(self):
+        fix.generate(RECORD, "en", None, backend=hallucinating)
+        self.assertFalse(os.path.exists(os.environ["OPTIMIZER_PAIRS_LOG"]))
+
+    def test_api_candidates_param(self):
+        r = client.post("/v1/optimize", json={"product": RECORD, "candidates": 2})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(len(r.json()["candidates"]), 2)
+        self.assertEqual(client.post("/v1/optimize", json={"product": RECORD, "candidates": 9}).status_code, 422)
 
     def test_unparseable_backend_falls_back_to_facts(self):
         out = fix.generate(RECORD, "en", None, backend=lambda s, u: "not json")
