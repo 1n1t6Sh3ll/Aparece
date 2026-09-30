@@ -8,6 +8,13 @@ services:
       MODEL_BACKEND: ${MODEL_BACKEND:-rules}
       MONITOR_ENABLED: ${MONITOR_ENABLED:-0}
       BENCHMARK_MAX_USD: ${BENCHMARK_MAX_USD:-}
+      # Optional paid features; unset means the free writers only. Values come from your shell or .env.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SHOOTOUT_LIVE_MAX_USD: ${SHOOTOUT_LIVE_MAX_USD:-0.05}
+      SHOOTOUT_LIVE_DAILY_USD: ${SHOOTOUT_LIVE_DAILY_USD:-1}
+      VISIBILITY_LIVE_MAX_USD: ${VISIBILITY_LIVE_MAX_USD:-0.05}
+      VISIBILITY_LIVE_DAILY_USD: ${VISIBILITY_LIVE_DAILY_USD:-1}
     volumes:
       - monitor-data:/app/monitor/data
     restart: unless-stopped

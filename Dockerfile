@@ -11,7 +11,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 MODEL_BACKEND=rules
 WORKDIR /app
 COPY dataset/requirements.txt dataset/requirements.txt
 COPY api/requirements.txt api/requirements.txt
-RUN pip install --no-cache-dir -r api/requirements.txt
+COPY benchmark/requirements.txt benchmark/requirements.txt
+# openai + anthropic: needed by the paid features (Compare with AI, Check now) when keys are set
+RUN pip install --no-cache-dir -r api/requirements.txt -r benchmark/requirements.txt
 # Source set (api, dataset/collect, analysis, signals, monitor, benchmark,
 # governance, train/common.py) is controlled by the .dockerignore allowlist.
 COPY . .
