@@ -36,10 +36,12 @@ export type BoardRow = Summary & Quality & { is_you: boolean; link_unverified?: 
 export interface Audit {
   product: Summary & { image: string | null; draft: boolean };
   notes?: string[];
+  /** Not a shirt: the full audit without a rank (rank.position is null). read_text is what we read the type from. */
+  unranked?: { reason: "not_a_shirt"; type: string | null; read_from: string; read_text: string } | null;
   facts: Fact[];
   not_found: NotFound[];
   summary: { facts_found: number; attributes_checked: number; top_median_facts: number | null; top_count: number; top_missing: string[]; price_position: string | null };
-  rank: { position: number; total: number; score: number; components: Quality; formula: string; weights: { facts: number; description: number; structured_data: number } };
+  rank: { position: number | null; total: number; ranked?: boolean; match_step?: string; score: number; components: Quality; formula: string; weights: { facts: number; description: number; structured_data: number } };
   leaderboard: BoardRow[];
   table: { fields: string[]; rows: (Summary & { is_you: boolean; values: Record<string, unknown> })[] };
   context: { language: string | null; currency: string | null; merchant: string | null; dataset_size: number; quality_status: string };

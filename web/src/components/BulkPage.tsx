@@ -16,7 +16,7 @@ function cells(r: Row, t: T, lang: Lang) {
   return {
     input: r.body.url || r.body.title || "", kind: r.body.url ? "url" : "draft", product: a?.product.title || r.label,
     status: t(`bulk.st.${r.status}`), error: r.error || "",
-    rank: a ? (a.rank.total > 1 ? t("rep.rank", { pos: a.rank.position, total: a.rank.total }) : t("rep.noPeers")) : "",
+    rank: a ? (a.rank.total > 1 ? t("rep.rank", { pos: a.rank.position ?? 0, total: a.rank.total }) : t("rep.noPeers")) : "",
     score: a ? a.rank.score : "", facts: fc ? `${fc.n} / ${fc.of}` : "",
     fixes: a ? a.actions.slice(0, 3).map((x) => actionText(x, a, t, lang).title) : [],
     price: a?.product.price != null ? money(a.product.price, a.product.currency, lang) : "",

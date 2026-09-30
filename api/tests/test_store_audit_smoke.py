@@ -103,8 +103,8 @@ class StoreAuditSmoke(unittest.TestCase):
         self.assertEqual(status, 422)
         self.assertTrue(body["detail"].startswith("not_a_product_page:"), body)
         status, body, _ = self.post({"title": "Ceramic coffee mug", "description": "Stoneware, 350 ml."})
-        self.assertEqual(status, 422)
-        self.assertTrue(body["detail"].startswith("not_a_shirt:"), body)
+        self.assertEqual(status, 201)  # not a shirt: a full audit without a rank
+        self.assertEqual(body["audit"]["unranked"]["reason"], "not_a_shirt")
 
     def test_our_rate_limit_is_coded(self):
         with mock.patch.dict(os.environ, {"AUDIT_STORE_RATE_LIMIT": "1"}):

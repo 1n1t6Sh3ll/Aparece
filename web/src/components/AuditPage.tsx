@@ -107,7 +107,7 @@ export default function AuditPage({ reportId }: { reportId?: string }) {
       setResult(a); setStored({ id: r.id, record: r.record, notSaved: r.notSaved }); setState("done");
       if (r.id) window.history.replaceState(null, "", `#/report/${r.id}`);  // stable link without remounting the workspace
       if (body.url) {
-        const r: Recent = { url: body.url, title: a.product.title || body.url, score: a.rank.score, pos: a.rank.position, total: a.rank.total, at: new Date().toISOString() };
+        const r: Recent = { url: body.url, title: a.product.title || body.url, score: a.rank.score, pos: a.rank.position ?? 0, total: a.rank.total, at: new Date().toISOString() };
         const next = [r, ...recents().filter((x) => x.url !== body.url)].slice(0, 8);
         store.set("pl.recent", JSON.stringify(next)); setRecent(next);
       }
@@ -199,6 +199,10 @@ export default function AuditPage({ reportId }: { reportId?: string }) {
 
       <div className="min-w-0">
         {state === "loading" && <Working />}
+        {state === "done" && result?.unranked && (
+          <p role="note" className="card mb-4 border-l-4 border-l-[var(--accent)] p-3 text-sm">
+            {t(result.unranked.type ? "ws.unranked" : "ws.unrankedNoType", { type: result.unranked.type || "", from: result.unranked.read_from, read: result.unranked.read_text })}</p>
+        )}
         {state === "done" && stored.notSaved && <p role="status" className="mb-3 text-xs muted">{t("ws.notSaved", { n: stored.notSaved })}</p>}
         {state === "done" && result && <Results audit={result} record={stored.record} reportId={stored.id} onReset={() => { setState("idle"); setResult(null); setStored({ id: null, record: null }); window.history.replaceState(null, "", "#/audit"); setTimeout(() => inputRef.current?.focus()); }} />}
         {state === "error" && err && (

@@ -675,6 +675,8 @@
   "err.tooMany": "Has hecho muchas auditorías desde esta red en el último minuto. Espera un minuto y vuelve a intentarlo.",
   "err.empty": "Pega el enlace de un producto que empiece por https://, o abre \"Borrador de ficha\" y añade el título del producto.",
   "ws.notSaved": "No se guardó en el historial (límite alcanzado; reintenta en {n} s).",
+  "ws.unranked": "Por ahora solo comparamos camisetas y camisas. Esto parece un producto de tipo «{type}» (leímos en {from}: «{read}»), así que te mostramos la calidad de la ficha y las mejoras sin posición.",
+  "ws.unrankedNoType": "Por ahora solo comparamos camisetas y camisas. Esto no parece una camiseta ni una camisa (leímos en {from}: «{read}»), así que te mostramos la calidad de la ficha y las mejoras sin posición.",
   "err.invalid": "Algún dato no es válido. Revisa los campos e inténtalo de nuevo.",
   "err.unknown": "Algo falló por nuestra parte. Inténtalo de nuevo en un momento.",
   "err.loadProfile": "No pudimos cargar tu perfil. Revisa tu conexión y recarga.",
