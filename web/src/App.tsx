@@ -1,7 +1,7 @@
-import { Aperture, BarChart3, Bot, Cpu, Globe, Layers, ScanSearch } from "lucide-react";
+import { Aperture, BarChart3, Cpu, Globe, Layers, ScanSearch } from "lucide-react";
 import AuditPage from "./components/AuditPage";
 import BulkPage from "./components/BulkPage";
-import ComparePage from "./components/ComparePage";
+import AiComparison from "./pages/AiComparison";
 import ModelsPage from "./components/ModelsPage";
 import { HistoryPage, ProductsPage } from "./components/Monitor";
 import { useHashRoute, useI18n } from "./lib";
@@ -11,7 +11,7 @@ export default function App() {
   const [route] = useHashRoute();
   const [page, arg] = route.split("/");
   const link = (to: string, label: string, Icon: typeof Layers) => {
-    const active = page === to || (to === "" && !["bulk", "products", "models", "compare"].includes(page));
+    const active = page === to || (to === "" && !["bulk", "products", "models"].includes(page));
     return (
       <a href={`#/${to}`} aria-current={active ? "page" : undefined}
         className={`btn-ghost px-2 py-2 sm:px-3 ${active ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white" : ""}`}>
@@ -33,7 +33,6 @@ export default function App() {
           {link("bulk", t("nav.bulk"), Layers)}
           {link("products", t("nav.products"), BarChart3)}
           {link("models", t("nav.models"), Cpu)}
-          {link("compare", t("nav.compare"), Bot)}
           <button className="btn-ghost px-2 py-2 sm:px-3" onClick={() => setLang(lang === "en" ? "es" : "en")}
             aria-label={t("nav.lang")} title={t("nav.lang")}>
             <Globe className="size-4" aria-hidden /> <span>{lang === "en" ? "ES" : "EN"}</span>
@@ -41,7 +40,7 @@ export default function App() {
         </nav>
       </header>
       <main className="flex-1">
-        {page === "compare" ? <ComparePage productId={arg ? decodeURIComponent(arg) : undefined} /> : page === "models" ? <ModelsPage /> : page === "bulk" ? <BulkPage /> : page === "products" && arg ? <HistoryPage id={Number(arg)} />
+        {page === "compare" ? <AiComparison productId={arg ? decodeURIComponent(arg) : undefined} /> : page === "models" ? <ModelsPage /> : page === "bulk" ? <BulkPage /> : page === "products" && arg ? <HistoryPage id={Number(arg)} />
           : page === "products" ? <ProductsPage /> : <AuditPage />}
       </main>
       <footer className="no-print border-t border-slate-200/70 py-8 text-center text-sm muted dark:border-slate-800/70">
