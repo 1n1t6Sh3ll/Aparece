@@ -28,8 +28,9 @@ if [ "${1:-}" != "--skip-tests" ]; then
   "$VPY" -m unittest discover -s api/tests
 fi
 
-# Audit site at "/" (optional): build web/ once when npm is available.
-if [ ! -f web/dist/index.html ] && command -v npm >/dev/null 2>&1; then
+# Audit site at "/" (optional): build web/ when npm is available and the build is missing or older than web/src.
+stale_web() { [ ! -f web/dist/index.html ] || [ -n "$(find web/src web/package.json web/index.html -newer web/dist/index.html 2>/dev/null | head -1)" ]; }
+if stale_web && command -v npm >/dev/null 2>&1; then
   (cd web && npm ci && npm run build) || echo "web build failed; the API still works"
 fi
 
