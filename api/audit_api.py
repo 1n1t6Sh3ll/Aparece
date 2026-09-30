@@ -8,6 +8,7 @@ search/AI ranking, and "not found on the page" is never reported as "the product
 """
 import html as htmllib
 import json
+import re
 import statistics
 from pathlib import Path
 
@@ -118,10 +119,23 @@ def quality(rec, desc_ref, with_sd=True):
             "structured_data_flags": sd_n}
 
 
-def rank(target, recs, with_sd=True):
+def peer_key(target, recs):
+    """The record used to match peers, plus a note. Dataset rows often have no recorded currency, and the
+    same-currency hard filter would then leave a priced page with no peers; in that case peers are matched with
+    the currency unknown (analysis.peers then skips the price band). Only matching changes, never the scored facts."""
+    if not get(target, "commerce", "currency") or find_peers(target, recs, 1):
+        return target, None
+    alt = {**target, "commerce": {**(target.get("commerce") or {}), "currency": None}}
+    if not find_peers(alt, recs, 1):
+        return target, None
+    return alt, ("Comparable shirts in our dataset have no recorded currency, so they were matched on type, language "
+                 "and audience without a price band; prices were not compared.")
+
+
+def rank(target, recs, with_sd=True, match=None):
     """Rank the target among comparable shirts (analysis.peers hard filters: type, language, price band, audience).
-    Returns (rank dict, comparable shirts ordered by listing quality)."""
-    group = [p for _, p in find_peers(target, recs, RANK_K)]
+    `match` (default: target) is the record used for peer matching. Returns (rank dict, shirts ordered by quality)."""
+    group = [p for _, p in find_peers(match or target, recs, RANK_K)]
     ref = statistics.median([description_chars(x) for x in group + [target]])
     scored = sorted(((quality(x, ref, with_sd), x) for x in group), key=lambda q: -q[0]["score"])
     tq = quality(target, ref, with_sd)
@@ -213,15 +227,44 @@ def facts(target, norm):
     return out
 
 
-def draft_request(main, payload):
-    """A draft listing (title, description, optional price/currency; not yet published) as an ExtractRequest.
-    The draft is wrapped in a minimal page so extract/normalize run unchanged; that JSON-LD is ours, so the
-    audit clears the structured-data flags afterwards (a draft has no markup of its own)."""
-    node = {"@context": "https://schema.org", "@type": "Product", "name": str(payload.get("title")).strip()[:500],
-            "description": str(payload.get("text") or "")[:200_000]}
-    if payload.get("price") not in (None, "") and payload.get("currency"):
-        node["offers"] = {"@type": "Offer", "price": str(payload["price"]), "priceCurrency": str(payload["currency"])[:3]}
-    lang = payload.get("language")
+DRAFT_KEYS = ("title", "description", "details")
+CUR = {"€": "EUR", "$": "USD", "£": "GBP"}
+PRICE_RE = re.compile(r"(€|\$|£)\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(€|EUR|USD|GBP|MXN|\$|£)", re.I)
+
+
+def is_draft(payload):
+    """Draft mode: any of title/description/details, or plain text without a URL or HTML."""
+    return any(payload.get(k) for k in DRAFT_KEYS) or bool(payload.get("text") and not (payload.get("url") or payload.get("html")))
+
+
+def draft_fields(payload):
+    """{title, description, price?, currency?, language} from separate fields or plain text (first non-empty
+    line = title, rest = description; details are appended). A price is read from the text only if none was given."""
+    title, desc = str(payload.get("title") or "").strip(), str(payload.get("description") or "").strip()
+    text = str(payload.get("text") or "").strip()
+    if text and not title:
+        lines = [x.strip() for x in text.splitlines() if x.strip()]
+        title, text = (lines[0], "\n".join(lines[1:])) if lines else ("", "")
+    desc = "\n".join(x for x in (desc, text, str(payload.get("details") or "").strip()) if x)
+    price_, cur = payload.get("price"), payload.get("currency")
+    if price_ in (None, ""):
+        m = PRICE_RE.search(f"{title}\n{desc}")
+        if m:
+            price_ = (m.group(2) or m.group(3)).replace(",", ".")
+            sym = m.group(1) or m.group(4)
+            cur = cur or CUR.get(sym, sym.upper())
+    return {"title": title[:500], "description": desc[:200_000], "price": price_, "currency": cur,
+            "language": payload.get("language")}
+
+
+def draft_request(main, d):
+    """A draft listing (not yet published) as an ExtractRequest. The draft is wrapped in a minimal page so
+    extract/normalize run unchanged; that JSON-LD is ours, so the audit clears the structured-data flags afterwards
+    (a draft has no markup of its own). Price is optional."""
+    node = {"@context": "https://schema.org", "@type": "Product", "name": d["title"], "description": d["description"]}
+    if d["price"] not in (None, "") and d["currency"]:
+        node["offers"] = {"@type": "Offer", "price": str(d["price"]), "priceCurrency": str(d["currency"])[:3]}
+    lang = d["language"]
     ld = json.dumps(node, ensure_ascii=False).replace("</", "<\\/")
     t = htmllib.escape(node["name"])
     page = (f'<html lang="{htmllib.escape(str(lang or ""))}"><head><title>{t}</title>'
@@ -229,29 +272,57 @@ def draft_request(main, payload):
     return main.ExtractRequest(html=page, language=lang)
 
 
+def infer_type(target, d):
+    """Draft product type: normalize.py PRODUCT_TYPE rules over the title, then the description."""
+    from normalize import PRODUCT_TYPE, match_lookup
+    sleeve = get(target, "fit_and_style", "sleeve_length")
+    for text in (d["title"], d["description"]):
+        hit = match_lookup(text, PRODUCT_TYPE)
+        if hit and hit[0][0] != "_shirt":
+            return hit[0][0]
+        if hit and sleeve in ("short", "long"):
+            return f"{sleeve}_sleeve_shirt"
+    return None
+
+
 @router.post("/v1/audit")
 def audit(payload: dict = Body(...)):
     import main  # lazy: main imports this module
     try:
-        req = draft_request(main, payload) if payload.get("title") else main.ExtractRequest(**payload)
+        draft = is_draft(payload)
+        d = draft_fields(payload) if draft else None
+        if draft and not d["title"]:
+            raise HTTPException(422, "draft_needs_title: add the product title")
+        req = draft_request(main, d) if draft else main.ExtractRequest(**payload)
     except ValidationError as e:
         raise HTTPException(422, e.errors()[0]["msg"])
     except TypeError as e:
         raise HTTPException(422, str(e).splitlines()[0])
     ex = main.extract(req)
     norm, raw = ex["normalized"], ex["raw"]
-    draft = bool(payload.get("title"))
+    notes = []
     if draft:
         norm["structured_data"] = {"product_schema_present": False, "offer_schema_present": False,
                                    "product_group_present": False, "raw_json_ld": []}
     target = dash.adapt(norm)
-    if not (get(target, "structured_data", "product_schema_present") or price(target)
+    if draft and not get(target, "identity", "product_type"):
+        target.setdefault("identity", {})["product_type"] = infer_type(target, d) or "unknown"
+        if target["identity"]["product_type"] == "unknown":
+            notes.append("We couldn't tell the product type from the title or description, so it is 'unknown' and "
+                         "there are no comparable shirts to rank against. Name the type (e.g. t-shirt, polo) in the title.")
+    if not draft and not (get(target, "structured_data", "product_schema_present") or price(target)
             or get(target, "identity", "product_type")):
         raise HTTPException(422, "not_a_product_page: we couldn't find a product name, price or product type")
     url = get(target, "source", "url")
     recs = [r for r in dash.records() if not url or get(r, "source", "url") != url]  # the page itself is not its own peer
-    matched = find_peers(target, recs, K)
-    rk, ranked = rank(target, recs, with_sd=not draft)
+    key, note = peer_key(target, recs)
+    notes += [note] if note else []
+    matched = find_peers(key, recs, K)
+    rk, ranked = rank(target, recs, with_sd=not draft, match=key)
+    if not ranked and not draft:
+        notes.append("No comparable shirts found: we need the same product type and language in our dataset"
+                     + ("" if get(target, "identity", "product_type") else ", and we couldn't tell this product's type"
+                        " (it may not be a shirt)") + ".")
     top = ranked[:TOP]
     res = analyze(target, top)  # the plan: what the top-ranked comparable shirts state that this one doesn't
     m = res["metrics"]
@@ -296,6 +367,7 @@ def audit(payload: dict = Body(...)):
         "unknowns": [i["statement"] for i in res["issues"] if i["type"] in ("UNKNOWN", "SUPPORTED_HYPOTHESIS")],
         "visibility": {"available": isinstance(vis, dict) and bool(vis.get("models"))},
         "conflicts": norm.get("conflicts") or [],
+        "notes": notes,
     }
 
 

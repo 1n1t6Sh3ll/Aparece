@@ -306,5 +306,10 @@
     "materials.fabric_weight_raw": "fabric weight (as written)",
     "identity.product_type": "product type",
     "features": "features"
-  }
+  },
+  "err.rateLimited": "This store is limiting automated requests right now. Try again in a minute, or paste the product title and description below.",
+  "hero.draftDetails": "Other details (optional)",
+  "hero.draftDetailsPh": "Care, fit notes, size chart, product link",
+  "hero.draftSource": "Product link",
+  "draft.unknownType": "We couldn't tell the product type from your title or description, so there are no comparable shirts to rank against. Name the type (e.g. t-shirt, polo) in the title."
 }

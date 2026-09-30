@@ -10,7 +10,7 @@ export const SAMPLES = [
   { label: "Sepiia Camiseta Soft", url: "https://sepiia.com/products/camiseta-hombre-cuello-redondo-negra-soft" },
 ];
 const STEPS = ["steps.fetch", "steps.read", "steps.peers", "steps.compare", "steps.plan"];
-export type AuditBody = { url?: string; title?: string; text?: string; price?: string; currency?: string; language?: string };
+export type AuditBody = { url?: string; title?: string; description?: string; details?: string; text?: string; price?: string; currency?: string; language?: string };
 
 export function runAudit(body: AuditBody) {
   return api<Audit>("/v1/audit", { method: "POST", body: JSON.stringify(body) });
@@ -57,10 +57,10 @@ export default function AuditPage() {
   const { t, lang } = useI18n();
   const [mode, setMode] = useState<"url" | "draft">("url");
   const [url, setUrl] = useState("");
-  const [draft, setDraft] = useState({ title: "", text: "", price: "", currency: "EUR", language: lang as string });
+  const [draft, setDraft] = useState({ title: "", description: "", details: "", price: "", currency: "EUR", language: lang as string });
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [result, setResult] = useState<Audit | null>(null);
-  const [err, setErr] = useState<{ msg: string; suggestText: boolean } | null>(null);
+  const [err, setErr] = useState<{ msg: string; suggestText: boolean; openDraft?: boolean } | null>(null);
   const [formErr, setFormErr] = useState("");
   const [total, setTotal] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -78,7 +78,12 @@ export default function AuditPage() {
       setResult(await runAudit(body));
       setState("done");
     } catch (e) {
-      setErr(errorText(e, t)); setState("error");
+      const x = errorText(e, t);
+      setErr(x); setState("error");
+      if (x.openDraft && body.url) {  // rate-limited store: open the draft form with the link kept
+        setMode("draft");
+        setDraft((d) => ({ ...d, details: d.details || `${t("hero.draftSource")}: ${body.url}` }));
+      }
     }
   }
 
@@ -87,7 +92,8 @@ export default function AuditPage() {
     setFormErr("");
     if (mode === "draft") {
       if (!draft.title.trim()) return setFormErr(t("hero.emptyTitle"));
-      return go({ title: draft.title, text: draft.text, language: draft.language, ...(draft.price ? { price: draft.price, currency: draft.currency } : {}) });
+      return go({ title: draft.title, description: draft.description, language: draft.language,
+        ...(draft.details.trim() ? { details: draft.details } : {}), ...(draft.price ? { price: draft.price, currency: draft.currency } : {}) });
     }
     const u = url.trim();
     if (!/^https?:\/\/[^\s/]+\.[^\s]+/i.test(u)) { setFormErr(t("hero.invalidUrl")); inputRef.current?.focus(); return; }
@@ -156,8 +162,13 @@ export default function AuditPage() {
                 </div>
                 <div className="sm:col-span-4">
                   <label htmlFor="d-text" className="text-sm font-medium">{t("hero.draftText")}</label>
-                  <textarea id="d-text" rows={6} className="input mt-1" value={draft.text} placeholder={t("hero.draftTextPh")}
-                    onChange={(e) => setDraft({ ...draft, text: e.target.value })} />
+                  <textarea id="d-text" rows={6} className="input mt-1" value={draft.description} placeholder={t("hero.draftTextPh")}
+                    onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+                </div>
+                <div className="sm:col-span-4">
+                  <label htmlFor="d-details" className="text-sm font-medium">{t("hero.draftDetails")}</label>
+                  <textarea id="d-details" rows={2} className="input mt-1" value={draft.details} placeholder={t("hero.draftDetailsPh")}
+                    onChange={(e) => setDraft({ ...draft, details: e.target.value })} />
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="d-price" className="text-sm font-medium">{t("hero.draftPrice")}</label>

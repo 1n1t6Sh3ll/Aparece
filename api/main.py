@@ -44,6 +44,11 @@ try:  # experiments/ may be missing from older images; the API still starts with
     app.include_router(experiments_api.router)
 except ModuleNotFoundError:
     pass
+try:  # chat/ may be missing from older images
+    import chat_api  # noqa: E402
+    app.include_router(chat_api.router)
+except ModuleNotFoundError:
+    pass
 try:  # TEAM-47 shoot-out report route; optional like the others
     import shootout_api  # noqa: E402
     app.include_router(shootout_api.router)

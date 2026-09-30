@@ -266,6 +266,7 @@ export default function Results({ audit, onReset }: { audit: Audit; onReset: () 
             {audit.context.language && <span className="chip bg-slate-100 dark:bg-slate-800">{t("res.ctx.lang")}: {audit.context.language.toUpperCase()}</span>}
           </div>
           {p.draft && <p className="mt-2 text-xs muted">{t("draft.note")}</p>}
+          {p.draft && p.product_type === "unknown" && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{t("draft.unknownType")}</p>}
         </div>
         {live && (
           <a href={p.url!} target="_blank" rel="noopener noreferrer" className="btn-ghost self-start sm:self-center"><ExternalLink className="size-4" aria-hidden /> <span className="sr-only sm:not-sr-only">{p.merchant}</span></a>
