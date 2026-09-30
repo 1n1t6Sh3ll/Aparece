@@ -17,6 +17,7 @@
 !train/reward.py
 !dataset/schema/
 !web/
+!docker/entrypoint.sh
 web/node_modules/
 web/dist/
 monitor/data/*

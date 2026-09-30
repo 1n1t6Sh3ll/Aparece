@@ -7,6 +7,16 @@ app = "aparece"
 
 [env]
   MODEL_BACKEND = "rules"
+  PRODUCTLENS_DATA = "/data/peers.jsonl"
+  PROFILE_DB = "/data/profile.db"
+  MONITOR_DB = "/data/monitor.db"
+  GOVERNANCE_DB = "/data/governance.db"
+  WEBHOOKS_DB = "/data/webhooks.db"
+  EXPERIMENTS_DB = "/data/experiments.db"
+
+[mounts]
+  source = "data"
+  destination = "/data"
 
 [http_service]
   internal_port = 8000
