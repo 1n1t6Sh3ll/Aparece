@@ -1,7 +1,7 @@
 {
   "label": "Controlled evaluation (simulated shopping context); not proof of real-world ranking.",
   "sample": true,
-  "generated_at": "2026-09-30T02:50:17+00:00",
+  "generated_at": "2026-09-30T02:58:33+00:00",
   "setup": {
     "products": 5,
     "languages": [
@@ -37,9 +37,19 @@
   },
   "overall": {
     "ranking": [
-      "productlens"
+      "productlens",
+      "mock:mock-gen"
     ],
     "winner": "productlens",
+    "runner_up": "mock:mock-gen",
+    "diff_vs_runner_up": {
+      "metric": "mrr",
+      "value": 0.05,
+      "lo": -0.0722,
+      "hi": 0.1833,
+      "units": 30
+    },
+    "decisive": false,
     "holdout_judge": {
       "judge": "mock:mock-2",
       "winner": "productlens",
@@ -47,7 +57,7 @@
     },
     "by_language": {
       "en": "productlens",
-      "es": "productlens"
+      "es": "mock:mock-gen"
     },
     "parts": {
       "title": {
@@ -65,10 +75,10 @@
       },
       "description": {
         "wins": {
-          "productlens": 3,
-          "mock:mock-gen": 2
+          "productlens": 2,
+          "mock:mock-gen": 3
         },
-        "winner": "productlens"
+        "winner": "mock:mock-gen"
       }
     }
   },
@@ -218,10 +228,10 @@
         "language_match": 1.0
       },
       "description": {
-        "attribute_coverage": 0.9667,
+        "attribute_coverage": 1.0,
         "intent_coverage": 0.0354,
-        "readability": 53.6,
-        "words": 29.4,
+        "readability": 54.9,
+        "words": 30.6,
         "jsonld_completeness": 0.6223,
         "passes": 5
       },
@@ -229,19 +239,19 @@
         "n": 90,
         "units": 30,
         "mention_rate": {
-          "value": 0.4222,
-          "lo": 0.3444,
-          "hi": 0.5111
+          "value": 0.4,
+          "lo": 0.3222,
+          "hi": 0.4889
         },
         "top3_rate": {
-          "value": 0.4222,
-          "lo": 0.3444,
-          "hi": 0.5111
+          "value": 0.4,
+          "lo": 0.3222,
+          "hi": 0.4889
         },
         "mrr": {
-          "value": 0.3111,
-          "lo": 0.2444,
-          "hi": 0.3833
+          "value": 0.2889,
+          "lo": 0.2222,
+          "hi": 0.3667
         }
       },
       "by_language": {
@@ -268,19 +278,19 @@
           "n": 36,
           "units": 12,
           "mention_rate": {
-            "value": 0.3889,
-            "lo": 0.2778,
-            "hi": 0.5
+            "value": 0.3333,
+            "lo": 0.2222,
+            "hi": 0.4444
           },
           "top3_rate": {
-            "value": 0.3889,
-            "lo": 0.2778,
-            "hi": 0.5
+            "value": 0.3333,
+            "lo": 0.2222,
+            "hi": 0.4444
           },
           "mrr": {
-            "value": 0.25,
-            "lo": 0.1806,
-            "hi": 0.3194
+            "value": 0.1944,
+            "lo": 0.125,
+            "hi": 0.2778
           }
         }
       },
@@ -289,47 +299,47 @@
           "n": 90,
           "units": 30,
           "mention_rate": {
-            "value": 0.4222,
-            "lo": 0.3444,
-            "hi": 0.5111
+            "value": 0.4,
+            "lo": 0.3222,
+            "hi": 0.4889
           },
           "top3_rate": {
-            "value": 0.4222,
-            "lo": 0.3444,
-            "hi": 0.5111
+            "value": 0.4,
+            "lo": 0.3222,
+            "hi": 0.4889
           },
           "mrr": {
-            "value": 0.3111,
-            "lo": 0.2444,
-            "hi": 0.3833
+            "value": 0.2889,
+            "lo": 0.2222,
+            "hi": 0.3667
           }
         },
         "mock:mock-2": {
           "n": 90,
           "units": 30,
           "mention_rate": {
-            "value": 0.4222,
-            "lo": 0.3444,
-            "hi": 0.5111
+            "value": 0.4,
+            "lo": 0.3222,
+            "hi": 0.4889
           },
           "top3_rate": {
-            "value": 0.4222,
-            "lo": 0.3444,
-            "hi": 0.5111
+            "value": 0.4,
+            "lo": 0.3222,
+            "hi": 0.4889
           },
           "mrr": {
-            "value": 0.3111,
-            "lo": 0.2444,
-            "hi": 0.3833
+            "value": 0.2889,
+            "lo": 0.2222,
+            "hi": 0.3667
           }
         }
       }
     },
     "mock:mock-gen": {
       "candidates": 5,
-      "qualified_products": 4,
-      "qualified": false,
-      "flagged": 1,
+      "qualified_products": 5,
+      "qualified": true,
+      "flagged": 0,
       "unsupported_claims": 0,
       "title": {
         "score": 0.86,
@@ -349,7 +359,7 @@
         "readability": 54.9,
         "words": 30.6,
         "jsonld_completeness": null,
-        "passes": 4
+        "passes": 5
       },
       "visibility": {
         "n": 90,
@@ -523,7 +533,7 @@
           "raw": {
             "title": "Terry Unisex Oversized T-Shirt White (TORN24-33)",
             "tags": [],
-            "text": "(merchant description not included in the committed sample)",
+            "text": "(merchant description omitted from the committed sample)",
             "error": null
           },
           "visibility": {
@@ -822,7 +832,7 @@
           "raw": {
             "title": "Green Line Short-Sleeve Unisex T-Shirt",
             "tags": [],
-            "text": "(merchant description not included in the committed sample)",
+            "text": "(merchant description omitted from the committed sample)",
             "error": null
           },
           "visibility": {
@@ -1115,7 +1125,7 @@
           "raw": {
             "title": "Kawartha short sleeve women's organic V-neck t-shirt - 38017",
             "tags": [],
-            "text": "(merchant description not included in the committed sample)",
+            "text": "(merchant description omitted from the committed sample)",
             "error": null
           },
           "visibility": {
@@ -1411,7 +1421,7 @@
           "raw": {
             "title": "Camiseta Esqué Aaron",
             "tags": [],
-            "text": "(merchant description not included in the committed sample)",
+            "text": "(merchant description omitted from the committed sample)",
             "error": null
           },
           "visibility": {
@@ -1506,7 +1516,7 @@
               "para hombre",
               "180 gsm"
             ],
-            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidado: NO USAR LEJIA. Cuidado: NO USAR SECADORA. Cuidado: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidado: PERMITE LIMPIEZA EN SECO.",
+            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Care: (merchant care text omitted from the sample).",
             "error": null
           },
           "visibility": {
@@ -1583,7 +1593,7 @@
           "raw": {
             "title": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico",
             "tags": [],
-            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidado: NO USAR LEJIA. Cuidado: NO USAR SECADORA. Cuidado: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidado: PERMITE LIMPIEZA EN SECO.",
+            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Care: (merchant care text omitted from the sample).",
             "error": null
           },
           "visibility": {
@@ -1635,7 +1645,7 @@
           ]
         },
         "description": {
-          "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidado: NO USAR LEJIA. Cuidado: NO USAR SECADORA. Cuidado: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidado: PERMITE LIMPIEZA EN SECO.",
+          "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Care: (merchant care text omitted from the sample).",
           "from": "mock:mock-gen"
         }
       }
@@ -1710,7 +1720,7 @@
           "raw": {
             "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
             "tags": [],
-            "text": "(merchant description not included in the committed sample)",
+            "text": "(merchant description omitted from the committed sample)",
             "error": null
           },
           "visibility": {
@@ -1775,18 +1785,18 @@
           },
           "description": {
             "guard": {
-              "sentences": 11,
+              "sentences": 12,
               "flagged_sentences": 0,
               "unsupported_claims": 0,
               "accuracy": 1.0,
               "flagged": []
             },
             "passes": true,
-            "attribute_coverage": 0.8333,
+            "attribute_coverage": 1.0,
             "intent_coverage": 0.0,
-            "readability": 72.4,
-            "words": 48,
-            "chars": 318,
+            "readability": 78.9,
+            "words": 54,
+            "chars": 344,
             "jsonld_completeness": 0.5556
           },
           "flagged": 0,
@@ -1803,26 +1813,26 @@
               "para hombre",
               "rosa"
             ],
-            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Cuidado: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidado: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidado: LAVAR EN FRÍO O MÁX 30º. Cuidado: LAVAR Y COLGAR.",
+            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Care: (merchant care text omitted from the sample).",
             "error": null
           },
           "visibility": {
             "n": 18,
             "units": 6,
             "mention_rate": {
-              "value": 0.4444,
-              "lo": 0.3333,
-              "hi": 0.5556
+              "value": 0.3333,
+              "lo": 0.1667,
+              "hi": 0.5
             },
             "top3_rate": {
-              "value": 0.4444,
-              "lo": 0.3333,
-              "hi": 0.5556
+              "value": 0.3333,
+              "lo": 0.1667,
+              "hi": 0.5
             },
             "mrr": {
-              "value": 0.3056,
-              "lo": 0.2222,
-              "hi": 0.3889
+              "value": 0.1944,
+              "lo": 0.0833,
+              "hi": 0.3333
             }
           },
           "cost_usd": 0
@@ -1861,19 +1871,12 @@
           "description": {
             "guard": {
               "sentences": 12,
-              "flagged_sentences": 1,
+              "flagged_sentences": 0,
               "unsupported_claims": 0,
-              "accuracy": 0.9091,
-              "flagged": [
-                {
-                  "sentence": "Tallas: S, M, L, XL, 2XL.",
-                  "problems": [
-                    "number 2 is not the verified value of the field it describes"
-                  ]
-                }
-              ]
+              "accuracy": 1.0,
+              "flagged": []
             },
-            "passes": false,
+            "passes": true,
             "attribute_coverage": 1.0,
             "intent_coverage": 0.0,
             "readability": 78.9,
@@ -1881,13 +1884,13 @@
             "chars": 344,
             "jsonld_completeness": null
           },
-          "flagged": 1,
+          "flagged": 0,
           "unsupported_claims": 0,
-          "qualified": false,
+          "qualified": true,
           "raw": {
             "title": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
             "tags": [],
-            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Cuidado: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidado: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidado: LAVAR EN FRÍO O MÁX 30º. Cuidado: LAVAR Y COLGAR.",
+            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Care: (merchant care text omitted from the sample).",
             "error": null
           },
           "visibility": {
@@ -1915,9 +1918,9 @@
       "part_winners": {
         "title": "productlens",
         "tags": "productlens",
-        "description": "productlens"
+        "description": "mock:mock-gen"
       },
-      "visibility_winner": "productlens",
+      "visibility_winner": "mock:mock-gen",
       "recommended": {
         "title": {
           "text": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
@@ -1938,8 +1941,8 @@
           ]
         },
         "description": {
-          "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Cuidado: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidado: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidado: LAVAR EN FRÍO O MÁX 30º. Cuidado: LAVAR Y COLGAR.",
-          "from": "productlens"
+          "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Care: (merchant care text omitted from the sample).",
+          "from": "mock:mock-gen"
         }
       }
     }
@@ -1952,7 +1955,7 @@
   "caveats": [
     "Simulated context: 5 product pages chosen by us, not a real search index or live assistant.",
     "Small n: 5 products x 6 prompts x 3 repeats; CIs are cluster bootstrap over (product, prompt).",
-    "Judges are from the same model families as the AI generators (OpenAI, Anthropic); self-preference is possible.",
+    "SAMPLE: the judges were MOCK models (deterministic fakes), not OpenAI or Anthropic; the visibility numbers are placeholders and mean nothing. Only the audits are real.",
     "Winner chosen on judges other than the held-out one (mock:mock-2); nothing was tuned on these results.",
     "Guardrail is a strict allowlist: harmless paraphrases can be flagged, which disqualifies that part.",
     "Title and tag winners are deterministic audit scores, not measured visibility.",

@@ -186,6 +186,18 @@ class ScoreTests(unittest.TestCase):
         self.assertTrue(score.tags_audit(tags, truth, "es", [])["passes"])
         self.assertEqual(score.tags_audit(["manga corta"], truth, "en", [])["language_match"], 0.0)
 
+    def test_guard_numeric_sizes_are_sizes_not_numbers(self):
+        from optimizer import guard
+        from optimizer.truth import product_truth
+        r = row("s", "en", "d")
+        r["gold"] = {**GOLD, "variants.sizes": ["S", "XXL", "3XL"]}
+        r["evidence"] = EVIDENCE + [{"field": "variants.sizes", "source_text": "S, XXL, 3XL"}]
+        truth = product_truth(run.prepare(__import__("dashboard_api").adapt(r), cat("s", "en", "target", "g")))
+        for ok in ("Sizes: S, 2XL, 3XL.", "Sizes: XXL."):
+            self.assertEqual(guard.check_sentence(ok, truth)[1], [], ok)
+        self.assertTrue(guard.check_sentence("Sizes: S, 5XL.", truth)[1])  # 5XL is not a verified size
+        self.assertTrue(guard.check_sentence("Loved by 2 people.", truth)[1])  # plain numbers still need a field
+
     def test_paired_diff(self):
         mk = lambda rank, i: {"group": "g", "prompt_id": f"p{i}", "target": "T1",  # noqa: E731
                               "mentions": ["x"] * (rank - 1) + ["T1"]}

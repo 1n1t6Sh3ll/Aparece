@@ -1,6 +1,7 @@
 """Shoot-out report: per-part audits (title, tags, description), per-part winners, a merged recommendation built
 only from guardrail-passing parts, and controlled visibility with bootstrap CIs. JSON + markdown."""
 import json
+import re
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +30,27 @@ def audit(c, g):
     claims = (t["guard"]["unsupported_claims"] if t else 0) + (d["guard"]["unsupported_claims"] if d else 0)
     return {"title": t, "tags": tags, "description": d, "flagged": flagged, "unsupported_claims": claims,
             "qualified": bool(t and t["passes"] and d and d["passes"] and not tags["false"])}
+
+
+MERCHANT_LINE = re.compile(r"^(?:care|cuidado)\s*:", re.I)  # verbatim merchant care text
+
+
+def scrub(a, gen, truth):
+    """Committed samples carry no verbatim merchant text: no original description, no care text, no flagged quotes."""
+    care = " ".join(truth.get("care") or []).lower()
+
+    def merchant(sent):
+        body = MERCHANT_LINE.sub("", sent).strip().rstrip(".").lower()
+        return bool(MERCHANT_LINE.match(sent)) or (len(body) > 3 and body in care)
+    if gen == "original":
+        a["raw"]["text"] = "(merchant description omitted from the committed sample)"
+    elif a["raw"]["text"]:
+        sents = score.guard.sentences(a["raw"]["text"])
+        kept = [x for x in sents if not merchant(x)]
+        a["raw"]["text"] = " ".join(kept) + (" Care: (merchant care text omitted from the sample)." if len(kept) < len(sents) else "")
+    for part in ("title", "description"):
+        if a[part]:
+            a[part]["guard"]["flagged"] = []
 
 
 def _best(items, key):
@@ -95,9 +117,8 @@ def build(args, groups, gens, judges, log=print):
             a = audit(c, g)
             a.update(raw={k: c.get(k) for k in ("title", "tags", "text", "error")},
                      visibility=ci(sel(primary, group=g["group"], generator=s)), cost_usd=round(c.get("cost_usd") or 0, 6))
-            if getattr(args, "sample", False) and s == "original":  # committed samples carry no scraped merchant text
-                a["raw"]["text"] = "(merchant description not included in the committed sample)"
-                a["description"]["guard"]["flagged"] = []
+            if getattr(args, "sample", False):
+                scrub(a, s, g["truth"])
             cands[s] = a
             audits[s].append(a)
         winners = part_winners(cands)
@@ -164,7 +185,9 @@ def build(args, groups, gens, judges, log=print):
                "Simulated context: 5 product pages chosen by us, not a real search index or live assistant.",
                f"Small n: {len(groups)} products x {args.prompts_per_product} prompts x {args.repeats} repeats; "
                "CIs are cluster bootstrap over (product, prompt).",
-               "Judges are from the same model families as the AI generators (OpenAI, Anthropic); self-preference is possible.",
+               ("SAMPLE: the judges were MOCK models (deterministic fakes), not OpenAI or Anthropic; the visibility "
+                "numbers are placeholders and mean nothing. Only the audits are real." if getattr(args, "sample", False) else
+                "Judges are from the same model families as the AI generators (OpenAI, Anthropic); self-preference is possible."),
                f"Winner chosen on judges other than the held-out one ({holdout}); nothing was tuned on these results.",
                "Guardrail is a strict allowlist: harmless paraphrases can be flagged, which disqualifies that part.",
                "Title and tag winners are deterministic audit scores, not measured visibility.",
