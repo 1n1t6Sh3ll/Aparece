@@ -79,4 +79,4 @@ def publish(req: PublishRequest):
     except policy.ApprovalRequired as e:
         raise HTTPException(403, {"detail": str(e), "approval_id": e.approval_id, "owner": e.owner})
     return {"status": "approved_for_publish", "approved_by": decision["approved_by"], "suggestion": keep,
-            "note": "ProductLens does not write to the storefront; apply the approved text in your store."}
+            "note": "Aparece does not write to the storefront; apply the approved text in your store."}
