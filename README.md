@@ -59,6 +59,8 @@ The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps
 
 Main routes: `GET /v1/health`, `POST /v1/audit` (`{url}`, `{html|text}` or a draft `{title, text, price?, currency?, language?}`), `POST /v1/extract`, `GET /v1/products?q=`, `/v1/products/{id}/gaps`, `/v1/visibility`, `/v1/eval`, `POST /v1/enroll`, `GET /v1/governance/policy`, `GET /v1/audit-log`, `GET|POST /v1/approvals` (POST disabled unless `GOVERNANCE_TOKEN` is set). Details at `/docs`.
 
+URL audits read product facts from JSON-LD (parsed leniently: comments/CDATA, trailing commas, several objects, `@graph`), else from microdata, `og:`/`product:` meta tags or hidden `js-product-markup-*` spans; those fallbacks don't count as Product schema. Amazon URLs are never fetched. Pages we can't read return a coded `detail`: `amazon_not_supported`, `blocked_by_store` (401/403, bot check), `page_not_found` (404/410), `product_gone` (redirect to home/search), `not_a_web_page` (PDF/image), `host_not_found`, `not_a_product_page`. A blocked or product-less Shopify `/products/` page falls back to its public `.json`.
+
 Optional model backend: `MODEL_BACKEND=qwen` with `pip install -r api/requirements-qwen.txt` and a LoRA adapter at `QWEN_ADAPTER_PATH` (base Qwen2.5-1.5B-Instruct; 4-bit on CUDA, else CPU). Rule facts with evidence stay primary; the model only fills fields the rules left null, returned separately as `predicted` with `model_status`, and falls back to rules on any error. The Docker image is rules-only.
 
 ## Tests

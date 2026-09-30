@@ -161,6 +161,15 @@ class AuditTest(unittest.TestCase):
         self.assertEqual((b["rank"]["position"], b["rank"]["total"]), (1, 1))
         self.assertFalse(any(a["kind"] == "missing_attribute" for a in b["actions"]))
 
+    def test_js_built_json_ld_page(self):
+        """Saved Charles Tyrwhitt page: Product JSON-LD is built in JavaScript; facts come from the hidden markup."""
+        ct = (Path(__file__).resolve().parents[2] / "dataset" / "tests" / "fixtures" / "charles_tyrwhitt_pdp.html")
+        b = self.audit(html=ct.read_text(encoding="utf-8"),
+                       url="https://www.charlestyrwhitt.com/us/non-iron-stretch-trafalgar-weave-shirt---sky-blue/FOA0026SKY.html")
+        self.assertEqual(b["product"]["product_type"], "long_sleeve_shirt")
+        self.assertIn("Trafalgar", b["product"]["title"])
+        self.assertTrue(b["facts"])
+
     def test_errors(self):
         self.assertEqual(client.post("/v1/audit", json={}).status_code, 422)
         r = client.post("/v1/audit", json={"html": "<html><title>About us</title><body>Our story</body></html>"})

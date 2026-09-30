@@ -274,14 +274,12 @@ def draft_request(main, d):
 
 def infer_type(target, d):
     """Draft product type: normalize.py PRODUCT_TYPE rules over the title, then the description."""
-    from normalize import PRODUCT_TYPE, match_lookup
+    from normalize import PRODUCT_TYPE, match_lookup, shirt_type
     sleeve = get(target, "fit_and_style", "sleeve_length")
     for text in (d["title"], d["description"]):
         hit = match_lookup(text, PRODUCT_TYPE)
-        if hit and hit[0][0] != "_shirt":
-            return hit[0][0]
-        if hit and sleeve in ("short", "long"):
-            return f"{sleeve}_sleeve_shirt"
+        if hit and shirt_type(hit[0][0], sleeve):
+            return shirt_type(hit[0][0], sleeve)
     return None
 
 
@@ -312,7 +310,8 @@ def audit(payload: dict = Body(...)):
                          "there are no comparable shirts to rank against. Name the type (e.g. t-shirt, polo) in the title.")
     if not draft and not (get(target, "structured_data", "product_schema_present") or price(target)
             or get(target, "identity", "product_type")):
-        raise HTTPException(422, "not_a_product_page: we couldn't find a product name, price or product type")
+        raise HTTPException(422, "not_a_product_page: we couldn't find a product name, price or product type"
+                                 " (the page may load them with JavaScript). Paste the title and description instead.")
     url = get(target, "source", "url")
     recs = [r for r in dash.records() if not url or get(r, "source", "url") != url]  # the page itself is not its own peer
     key, note = peer_key(target, recs)

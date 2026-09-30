@@ -24,6 +24,36 @@ PAGE_TTL, ROBOTS_TTL = 600, 3600
 LIMITED = (429, 503)
 SHOPIFY_PRODUCT = re.compile(r"^(/(?:[a-z]{2}(?:-[a-z]{2})?/)?)(?:collections/[^/]+/)?products/([^/?#.]+)/?$", re.I)
 _cache, _lock = {}, threading.Lock()
+TEXT_TYPES = re.compile(r"text/|html|xml|json")
+BINARY_MAGIC = (b"%PDF", b"\x89PNG", b"GIF8", b"\xff\xd8\xff", b"RIFF", b"PK\x03\x04")
+AMAZON = re.compile(r"(?:^|\.)(?:amazon\.[a-z.]+|amzn\.[a-z]+|a\.co)$", re.I)
+# Coded, user-facing reasons (the part before ":" is stable for clients).
+NO_AMAZON = ("amazon_not_supported: Amazon's terms don't allow automated reading of its product pages, so we don't "
+             "fetch them. Paste the title and bullet points as a draft instead.")
+NO_HOST = "host_not_found: host does not resolve (DNS lookup failed). Check the URL."  # web/ matches "does not resolve"
+NOT_HTML = "not_a_web_page: this link is a PDF, image or other file, not a web page. Link the product page instead."
+BLOCKED = ("blocked_by_store: this store blocks automated reading (access denied or a bot check). "
+           "Paste the title and description instead.")
+NOT_FOUND = "page_not_found: the store says this page doesn't exist (HTTP {}). Check the URL; the product may be gone."
+GONE = ("product_gone: the link redirected to the store's home or search page, so the product is probably no longer "
+        "listed. Check the URL or paste the title and description instead.")
+CHALLENGE_TITLE = re.compile(r"just a moment|attention required|access denied|captcha|robot or human|are you a robot"
+                             r"|pardon our interruption|security check|verify you are (?:a )?human|bot protection", re.I)
+CHALLENGE_BODY = re.compile(r"cf-chl|/cdn-cgi/challenge-platform/h/|px-captcha|captcha-delivery\.com|_Incapsula_Resource", re.I)
+
+
+def is_challenge(html):
+    """A bot-check / CAPTCHA / access-denied page: a telling <title>, or a small page carrying challenge scripts."""
+    m = re.search(r"<title[^>]*>(.*?)</title>", html[:20000], re.S | re.I)
+    if m and CHALLENGE_TITLE.search(m.group(1)):
+        return True
+    return len(html) < 60000 and bool(CHALLENGE_BODY.search(html)) and "ld+json" not in html
+
+
+def went_home(url, final):
+    """True if a product URL was redirected to the site's root or a search page."""
+    a, b = urlsplit(url), urlsplit(final)
+    return a.path.strip("/") != "" and (b.path.strip("/") == "" or ("search" in b.path.lower() and "search" not in a.path.lower()))
 
 
 def cached(key):
@@ -68,7 +98,7 @@ def check_url(url):
     try:
         infos = socket.getaddrinfo(p.hostname, p.port or (443 if p.scheme == "https" else 80), proto=socket.IPPROTO_TCP)
     except (socket.gaierror, UnicodeError):
-        raise FetchError(400, "host does not resolve")
+        raise FetchError(400, NO_HOST)
     for info in infos:
         ip = ipaddress.ip_address(info[4][0].split("%")[0])
         if not ip.is_global or ip.is_multicast:
@@ -108,15 +138,34 @@ def get_once(url, deadline):
                     raise FetchError(400, "redirect without Location header")
                 url = urljoin(url, r.headers["location"])
                 continue
+            ctype = r.headers.get("content-type")
+            ctype = ctype.lower() if isinstance(ctype, str) else ""
+            if r.status_code == 200 and ctype and not TEXT_TYPES.search(ctype):
+                raise FetchError(415, NOT_HTML)
             body = b""
             for chunk in r.iter_content(65536):
                 body += chunk
                 remaining(deadline)
                 if len(body) > MAX_BYTES:
                     raise FetchError(413, "page larger than size limit")
+            if r.status_code == 200 and body.lstrip()[:8].startswith(BINARY_MAGIC):
+                raise FetchError(415, NOT_HTML)
             wait = retry_after(r.headers) if r.status_code in LIMITED else None
-            return url, r.status_code, body.decode(r.encoding or "utf-8", errors="replace"), wait
+            return url, r.status_code, decode(body, ctype), wait
     raise FetchError(502, "too many redirects")
+
+
+def decode(body, ctype):
+    """Charset from the Content-Type header, else <meta charset>, else UTF-8, else Windows-1252 (never the
+    ISO-8859-1 default requests assumes for text/* without a charset, which garbles UTF-8 pages)."""
+    m = re.search(r"charset=[\"']?([\w.:-]+)", ctype) or re.search(rb"<meta[^>]+charset=[\"']?([\w.:-]+)", body[:4096], re.I)
+    names = [m.group(1).decode() if isinstance(m.group(1), bytes) else m.group(1)] if m else []
+    for enc in names + ["utf-8"]:
+        try:
+            return body.decode(enc)
+        except (LookupError, UnicodeDecodeError):
+            continue
+    return body.decode("cp1252", errors="replace")
 
 
 def robots(p, deadline):
@@ -192,19 +241,31 @@ def shopify_html(prod, lang=None):
 
 
 def fetch_page(url):
-    """robots.txt check, then the page (cached 10 min). Returns (final_url, html)."""
+    """robots.txt check, then the page (cached 10 min). Returns (final_url, html). Amazon is never fetched. A
+    rate-limited, blocked or product-less Shopify product page falls back to the store's public product JSON.
+    Errors carry a coded reason: blocked_by_store, page_not_found, product_gone, not_a_web_page, host_not_found."""
     hit = cached(("page", url))
     if hit:
         return hit
+    if AMAZON.search(urlsplit(url).hostname or ""):
+        raise FetchError(422, NO_AMAZON)
     p = check_url(url)
     deadline = time.monotonic() + TIMEOUT
     robots_txt = robots(p, deadline)
     allowed(p, robots_txt, p.path + (f"?{p.query}" if p.query else ""))
     final, status, html = get(url, deadline)
-    if status in LIMITED:
+    blocked = status in (401, 403) or (status in (200, 202) + LIMITED and is_challenge(html))
+    no_product = status == 200 and "cdn.shopify.com" in html and not re.search(r'"@type"\s*:\s*"Product', html)
+    if status in LIMITED or blocked or no_product:
         page = shopify_page(p, robots_txt, deadline)
         if page:
             return remember(("page", url), (url, page), PAGE_TTL)
+    if blocked:
+        raise FetchError(403, BLOCKED)
+    if status in (404, 410):
+        raise FetchError(404, NOT_FOUND.format(status))
     if status != 200:
         raise FetchError(502, f"upstream HTTP {status}")
+    if went_home(url, final):
+        raise FetchError(404, GONE)
     return remember(("page", url), (final, html), PAGE_TTL)
