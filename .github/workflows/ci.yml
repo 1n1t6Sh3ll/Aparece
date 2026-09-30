@@ -21,7 +21,7 @@ jobs:
       - run: python -m unittest discover -s api/tests -v
       - run: python -m unittest discover -s analysis/tests -t .
       - run: python -m unittest discover -s benchmark/tests -t .
-      - run: python -m unittest discover -s train/tests  # api_eval tests skip without torch
+      - run: python -m unittest discover -s train/tests -v
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

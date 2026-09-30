@@ -1,5 +1,4 @@
 """Offline tests for api_eval.py: no network, fake model call."""
-import importlib.util
 import json
 import sys
 import tempfile
@@ -9,11 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import FIELDS  # noqa: E402
-
-# api_eval reuses eval.py's metrics, and eval.py imports torch/transformers at module level.
-HAS_TORCH = all(importlib.util.find_spec(m) for m in ("torch", "transformers"))
-if HAS_TORCH:
-    import api_eval  # noqa: E402
+import api_eval  # noqa: E402
 
 PRICES = {"fake-1": {"input": 1.0, "output": 10.0}}
 
@@ -46,7 +41,6 @@ def args_for(data, out, **kw):
 
 
 
-@unittest.skipUnless(HAS_TORCH, "needs torch + transformers (eval.py imports them)")
 class ApiEvalTest(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
