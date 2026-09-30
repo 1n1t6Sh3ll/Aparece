@@ -43,7 +43,8 @@ const STR: Record<string, Record<string, string>> = { en: {
   "candidates": "All candidates",
   "noTags": "no tags",
   "caveats": "Caveats",
-  "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats."
+  "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats.",
+  "real": "Real run on {d}: live AI judges and generators, {n} judge calls, US${c} API cost as recorded by the run."
 }, es: {
   "cta": "Comparar con modelos de IA",
   "title": "Comparación IA: título, etiquetas, descripción",
@@ -84,7 +85,8 @@ const STR: Record<string, Record<string, string>> = { en: {
   "candidates": "Todos los candidatos",
   "noTags": "sin etiquetas",
   "caveats": "Advertencias",
-  "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val x {r} repeticiones."
+  "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val x {r} repeticiones.",
+  "real": "Ejecución real del {d}: jueces y generadores de IA reales, {n} llamadas de juez, US${c} de coste de API según lo registrado por la ejecución."
 } };
 
 function useStr() {
@@ -124,6 +126,7 @@ type Product = {
 type Part = "title" | "tags" | "description";
 type Report = {
   available: boolean; sample?: boolean; label?: string; caveats?: string[]; generated_at?: string;
+  cost?: { judge_calls?: number; judge_usd?: number; generation_usd?: number };
   setup?: { products: number; judges: string[]; holdout_judge: string | null; prompts_per_product: number; repeats: number };
   overall?: { winner: string | null; runner_up?: string; decisive?: boolean; diff_vs_runner_up?: CI | null;
     holdout_judge?: { judge: string; winner: string | null; agrees: boolean };
@@ -171,6 +174,12 @@ export default function AiComparison({ productId }: { productId?: string }) {
       <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-brand-300 bg-brand-50 p-3 text-sm text-brand-900 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-200">
         <FlaskConical className="mt-0.5 size-4 shrink-0" aria-hidden />{t("controlled")}
       </p>
+      {data.sample === false && data.generated_at && (
+        <p role="note" className="mt-3 text-sm muted">
+          {t("real", { d: data.generated_at.slice(0, 10), n: data.cost?.judge_calls ?? "–",
+            c: ((data.cost?.judge_usd ?? 0) + (data.cost?.generation_usd ?? 0)).toFixed(4) })}
+        </p>
+      )}
       {data.sample && (
         <p role="note" className="mt-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{t("sample")}
