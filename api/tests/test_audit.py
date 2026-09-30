@@ -20,6 +20,8 @@ ENV = {"PRODUCTLENS_DATA": str(FIX / "dashboard_records.jsonl"), "PRODUCTLENS_SI
        "PRODUCTLENS_VISIBILITY": str(FIX / "nope"),
        "PRODUCTLENS_LINK_STATUS": str(FIX / "nope")}  # never read a local dataset/output/link_status.jsonl
 client = TestClient(main.app)
+CHECKLIST_ORDER = ["materials.primary_material", "materials.fabric_weight_gsm", "fit_and_style.fit",
+                   "fit_and_style.neckline", "fit_and_style.sleeve_length", "identity.audience", "variants.colors", "variants.sizes"]
 KINDS = ["missing_attribute", "description", "structured_data", "price", "language"]
 
 
@@ -308,6 +310,46 @@ class AuditTest(unittest.TestCase):
             b = self.audit(html=HTML, url=URL)
         self.assertEqual((b["rank"]["position"], b["rank"]["total"]), (1, 1))
         self.assertFalse(any(a["kind"] == "missing_attribute" for a in b["actions"]))
+        self.assertFalse(b["rank"]["peer_data"])
+        self.assertIn("No peer data loaded", b["rank"]["note"])
+        self.assertNotIn("Only 0 comparable", " ".join(b["unknowns"]))
+        self.assertTrue(any("No peer dataset is loaded" in u for u in b["unknowns"]))
+
+    def test_checklist_fixes_without_peers(self):
+        """No dataset: up to 3 fixes from the fixed checklist, labelled, none for facts already stated."""
+        with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(FIX / "nope")}):
+            b = self.audit(title="Tee", text="A tee. 100% organic cotton. Regular fit.", language="en")
+        acts = b["actions"]
+        chk = [a for a in acts if a["kind"] == "checklist"]
+        self.assertEqual(len(chk), 3)
+        self.assertEqual([a["field"] for a in chk], ["materials.fabric_weight_gsm", "fit_and_style.neckline",
+                                                     "fit_and_style.sleeve_length"])  # material and fit are stated
+        for a in chk:
+            self.assertEqual(a["evidence"]["basis"], "not stated on your page")
+            self.assertEqual(a["label"], "OBSERVED_FACT")
+            self.assertIn("if you can verify it", a["title"])
+            self.assertNotRegex(a["why"].lower(), r"peers|top-ranked|will (rank|improve)")
+        self.assertIn("Fabric weight", chk[0]["title"] + chk[0]["why"].replace("fabric weight", "Fabric weight"))
+
+    def test_checklist_skips_facts_stated_and_has_no_markup_for_drafts(self):
+        with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(FIX / "nope")}):
+            b = self.audit(title="Crew neck short sleeve tee", text="Men t-shirt. 240 gsm, 100% cotton. Regular fit. Crew neck. Short sleeves.", language="en")
+        fields = [a["field"] for a in b["actions"] if a["kind"] == "checklist"]
+        for f in ("materials.primary_material", "materials.fabric_weight_gsm", "fit_and_style.fit", "fit_and_style.neckline",
+                  "fit_and_style.sleeve_length"):
+            self.assertNotIn(f, fields)
+        self.assertFalse(any(f.startswith("structured_data") for f in fields))
+
+    def test_checklist_page_gets_markup_fix_and_peers_unchanged(self):
+        with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(FIX / "nope")}):
+            b = self.audit(html=HTML, url=URL)
+        chk = [a["field"] for a in b["actions"] if a["kind"] == "checklist"]
+        self.assertTrue(chk and len(chk) <= 3)
+        self.assertEqual(chk, [f for f in CHECKLIST_ORDER if f in chk] + [f for f in chk if f not in CHECKLIST_ORDER])
+        self.assertTrue(b["actions"])
+        w = self.audit(html=HTML, url=URL)  # with peers: no checklist actions, peer rank shown
+        self.assertFalse(any(a["kind"] == "checklist" for a in w["actions"]))
+        self.assertTrue(w["rank"]["peer_data"])
 
     def test_js_built_json_ld_page(self):
         """Saved Charles Tyrwhitt page: Product JSON-LD is built in JavaScript; facts come from the hidden markup."""
