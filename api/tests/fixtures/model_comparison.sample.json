@@ -12,7 +12,7 @@
       "field_exact": {"identity.product_type": 0.9, "materials.fabric_type": 0.4},
       "by_language": {"en": {"non_null_acc": 0.6, "null_acc": 0.8, "n": 6}, "es": {"non_null_acc": 0.4, "null_acc": 0.8, "n": 4}}},
     "gpt-4o-mini": {"json_valid": 1.0, "non_null_acc": 0.7, "null_acc": 0.6, "non_null_count": 60, "null_count": 140, "n": 10,
-      "cost_per_1k_usd": 0.3,
+      "cost_per_1k_usd": 0.3, "settings": {"temperature": 0},
       "field_exact": {"identity.product_type": 0.8, "materials.fabric_type": 0.6},
       "by_language": {"en": {"non_null_acc": 0.7, "null_acc": 0.6, "n": 6}}}
   }

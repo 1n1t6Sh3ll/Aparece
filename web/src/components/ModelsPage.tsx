@@ -7,8 +7,9 @@ type Rates = { json_valid?: number; non_null_acc?: number; null_acc?: number; n?
 type Model = Rates & {
   label: string; field_exact?: Record<string, number>; by_language?: Record<string, Rates>;
   cost_per_1k_usd?: number | null; latency_ms?: number | null; time_s?: number | null;
+  settings?: string | Record<string, unknown> | null;
 };
-type Comparison = { available: boolean; sample: boolean; generated_at: string | null; test: { products?: number; stores?: number };
+type Comparison = { available: boolean; sample: boolean; generated_at: string | null; test: { products?: number; stores?: number; note?: string };
   models: Record<string, Model>; new_fields: string[] };
 
 const ORDER = ["all_null_baseline", "base_qwen_0_5b", "base_zero_shot", "ft_qwen_0_5b", "finetuned", "ft_qwen_1_5b", "gpt-4o-mini", "claude-haiku-4-5"];
@@ -126,7 +127,10 @@ export default function ModelsPage() {
       <LangBars ms={ms.filter(({ k }) => k !== BASELINE)} color={color} />
 
       <FieldTable title={t("mod.original")} ms={ms} fields={fieldsOf(ms).filter((f) => !data.new_fields.includes(f))} />
-      <FieldTable title={t("mod.newFields")} sub={t("mod.newFieldsSub")} ms={ms} fields={fieldsOf(ms).filter((f) => data.new_fields.includes(f))} />
+      {(() => {
+        const nf = fieldsOf(ms).filter((f) => data.new_fields.includes(f));  // count what the run file actually scored
+        return <FieldTable title={t("mod.newFields", { n: nf.length })} sub={t("mod.newFieldsSub")} ms={ms} fields={nf} />;
+      })()}
 
       <Method data={data} />
     </div>
@@ -216,18 +220,33 @@ function FieldTable({ title, sub, ms, fields }: { title: string; sub?: string; m
 function Method({ data }: { data: Comparison }) {
   const { t } = useI18n();
   const s = data.test.products ? (data.test.stores ? t("mod.productsStores", { p: data.test.products, s: data.test.stores }) : t("mod.products", { p: data.test.products })) : "";
+  const fmt = (v: unknown) => typeof v === "string" ? v
+    : v && typeof v === "object" ? Object.entries(v as Record<string, unknown>).map(([k, x]) => `${k.replace(/_/g, " ")} ${typeof x === "object" ? JSON.stringify(x) : String(x)}`).join(", ") : "";
+  const settings = Object.values(data.models).filter((m) => m.settings && fmt(m.settings)).map((m) => [m.label, fmt(m.settings)] as const);
+  const hasBaseline = BASELINE in data.models;
+  const hasCost = Object.values(data.models).some((m) => m.cost_per_1k_usd != null);
   return (
     <div className="mt-6 grid gap-6 md:grid-cols-2">
       <section className="card p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-semibold"><FlaskConical className="size-5 text-slate-400" aria-hidden />{t("mod.method")}</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
-          <li>{s ? t("mod.m1", { s }) : t("mod.m1NoN")}</li><li>{t("mod.m2")}</li><li>{t("mod.m3")}</li><li>{t("mod.m4")}</li>
+          <li>{s ? t("mod.m1", { s }) : t("mod.m1NoN")}</li><li>{t("mod.m2")}</li><li>{t("mod.m3")}</li>
+          {hasBaseline && <li>{t("mod.m4")}</li>}
+          {data.test.note && <li>{t("mod.runNote", { n: data.test.note })}</li>}
         </ul>
+        {settings.length > 0 && (
+          <>
+            <p className="mt-4 text-sm font-medium">{t("mod.settings")}</p>
+            <dl className="mt-1 space-y-1 text-sm muted">
+              {settings.map(([l, v]) => <div key={l}><dt className="inline font-medium text-slate-700 dark:text-slate-200">{l}: </dt><dd className="inline">{v}</dd></div>)}
+            </dl>
+          </>
+        )}
       </section>
       <section className="card p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-slate-400" aria-hidden />{t("mod.caveats")}</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
-          <li>{t("mod.c1")}</li><li>{t("mod.c2")}</li><li>{t("mod.c3")}</li>
+          <li>{t("mod.c1")}</li><li>{t("mod.c2")}</li>{hasCost && <li>{t("mod.c3")}</li>}
         </ul>
       </section>
     </div>

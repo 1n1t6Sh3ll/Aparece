@@ -31,6 +31,8 @@ class ModelComparisonTest(unittest.TestCase):
         self.assertEqual(b["models"]["ft_qwen_0_5b"]["label"], "Fine-tuned Qwen 0.5B")
         self.assertEqual(b["models"]["gpt-4o-mini"]["non_null_acc"], 0.7)  # passed through, not recomputed
         self.assertEqual(len(b["new_fields"]), 7)
+        self.assertEqual(b["models"]["gpt-4o-mini"]["settings"], {"temperature": 0})  # passed through for the UI
+        self.assertEqual(b["test"]["note"], "sample")
 
     def test_missing_and_bad_file(self):
         b = self.get(FIX.parent / "nope.json")
