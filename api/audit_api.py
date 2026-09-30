@@ -19,7 +19,7 @@ from pydantic import ValidationError
 import dashboard_api as dash
 from analysis.gaps import ATTRIBUTES, analyze, attributes_present, description_chars
 from analysis.peers import find_peers, get, price
-from normalize import PRODUCT_TYPE, SHIRT_TYPES, lang_code, match_lookup  # dataset/collect (on path via dashboard_api)
+from normalize import PRODUCT_TYPE, SHIRT_TYPES, lang_code, match_lookup, shirt_type  # dataset/collect (on path via dashboard_api)
 
 router = APIRouter()
 WEB = Path(__file__).resolve().parents[1] / "web" / "dist"  # Vite build output (npm run build in web/)
@@ -364,10 +364,8 @@ def infer_type(target, d):
     sleeve = get(target, "fit_and_style", "sleeve_length")
     for text in (d["title"], d["description"]):
         hit = match_lookup(text, PRODUCT_TYPE)
-        if hit and hit[0][0] != "_shirt":
-            return hit[0][0]
-        if hit and sleeve in ("short", "long"):
-            return f"{sleeve}_sleeve_shirt"
+        if hit and shirt_type(hit[0][0], sleeve):
+            return shirt_type(hit[0][0], sleeve)
     return None
 
 
@@ -417,7 +415,8 @@ def audit(payload: dict = Body(...)):
         target.setdefault("identity", {})["product_type"] = infer_type(target, d)
     if not draft and not (get(target, "structured_data", "product_schema_present") or price(target)
             or get(target, "identity", "product_type")):
-        raise HTTPException(422, "not_a_product_page: we couldn't find a product name, price or product type")
+        raise HTTPException(422, "not_a_product_page: we couldn't find a product name, price or product type"
+                                 " (the page may load them with JavaScript). Paste the title and description instead.")
     texts = (d["title"], d["description"]) if draft else \
         (get(target, "content", "title"), get(target, "identity", "product_name"))
     if not looks_like_shirt(target, texts):

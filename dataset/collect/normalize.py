@@ -66,9 +66,10 @@ PRODUCT_TYPE = [  # style types first; generic shirts fall back to the sleeve ty
     ("oxford", r"\boxford\b"),
     ("work_shirt", r"\bwork ?shirts?\b"),
     ("t_shirt", r"\bt-?shirts?\b|\btees?\b|\bcamisetas?\b|\bplayeras?\b|\bremeras?\b"),
+    ("_dress_shirt", r"\b(?:dress|formal|business) shirts?\b|\bnon-?iron\b.*\bshirts?\b|\bcamisas? de vestir\b"),
     ("_shirt", r"\bshirts?\b|\bcamisas?\b|\bguayaberas?\b"),
 ]
-SHIRT_TYPES = {v for v, _ in PRODUCT_TYPE if v != "_shirt"} | {"short_sleeve_shirt", "long_sleeve_shirt"}
+SHIRT_TYPES = {v for v, _ in PRODUCT_TYPE if not v.startswith("_")} | {"short_sleeve_shirt", "long_sleeve_shirt"}
 AUDIENCE = [
     ("women", r"\b(?:women'?s?|woman|mujer|damen|femme)\b"),
     ("men", r"\b(?:men'?s?|man|hombre|herren|homme)\b"),
@@ -108,6 +109,16 @@ def match_lookup(text, table):
         if m:
             hits.append((value, m.group(0)))
     return hits
+
+
+def shirt_type(value, sleeve):
+    """A PRODUCT_TYPE value -> product type: style types as is; generic shirts by sleeve length (None if unknown);
+    dress/non-iron shirts are long-sleeved unless the sleeve evidence says short."""
+    if value == "_dress_shirt":
+        return "short_sleeve_shirt" if sleeve == "short" else "long_sleeve_shirt"
+    if value == "_shirt":
+        return f"{sleeve}_sleeve_shirt" if sleeve in ("short", "long") else None
+    return value
 
 
 def material_of(name):
@@ -313,14 +324,15 @@ def build_normalized(raw):
         hit = match_lookup(text, PRODUCT_TYPE)
         if hit:
             value, m = hit[0]
-            if value == "_shirt":
-                if sleeve in ("short", "long"):
-                    product_type = f"{sleeve}_sleeve_shirt"
-                    ev("identity.product_type", product_type, m, loc, "rule", 0.8, "Generic shirt; sleeve length from the sleeve evidence.")
-                else:
-                    flags.append("generic_shirt_type_unknown_sleeve")
+            product_type = shirt_type(value, sleeve)
+            if value == "_dress_shirt":
+                ev("identity.product_type", product_type, m, loc, "rule", 0.75,
+                   "Dress/non-iron shirt: long sleeve unless the sleeve evidence says short.")
+            elif value == "_shirt" and product_type:
+                ev("identity.product_type", product_type, m, loc, "rule", 0.8, "Generic shirt; sleeve length from the sleeve evidence.")
+            elif value == "_shirt":
+                flags.append("generic_shirt_type_unknown_sleeve")
             else:
-                product_type = value
                 ev("identity.product_type", value, m, loc, "rule", 0.9)
             break
 
@@ -451,8 +463,10 @@ def build_normalized(raw):
         "care": care,
         "commerce": {"price": price, "sale_price": sale, "currency": currency, "availability": avail, "rating": rating,
                      "review_count": reviews, "sku": raw["sku"], "gtin": gtin, "mpn": raw["mpn"]},
-        "structured_data": {"product_schema_present": bool(raw["raw_product_schema"] or raw["raw_variant_schema"]),
-                            "offer_schema_present": bool(offers),
+        # "@fallback" nodes were read from microdata/meta tags/page text by extract.py, not from JSON-LD.
+        "structured_data": {"product_schema_present": bool(raw["raw_product_schema"] and "@fallback" not in raw["raw_product_schema"]
+                                                           or raw["raw_variant_schema"]),
+                            "offer_schema_present": any(not o.get("@fallback") for o in offers),
                             "product_group_present": bool(raw["raw_product_group_schema"]),
                             "raw_json_ld": raw["raw_json_ld"] or []},
         "evidence": evidence,
