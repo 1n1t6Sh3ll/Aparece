@@ -44,7 +44,7 @@ const STR: Record<string, Record<string, string>> = { en: {
   "noTags": "no tags",
   "caveats": "Caveats",
   "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats.",
-  "real": "Real run on {d}: live AI judges and generators, {n} judge calls, US${c} total API cost."
+  "real": "Real run on {d}: live AI judges and generators, {n} judge calls, US${c} API cost as recorded by the run."
 }, es: {
   "cta": "Comparar con modelos de IA",
   "title": "Comparación IA: título, etiquetas, descripción",
@@ -86,7 +86,7 @@ const STR: Record<string, Record<string, string>> = { en: {
   "noTags": "sin etiquetas",
   "caveats": "Advertencias",
   "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val x {r} repeticiones.",
-  "real": "Ejecución real del {d}: jueces y generadores de IA reales, {n} llamadas de juez, US${c} de coste total de API."
+  "real": "Ejecución real del {d}: jueces y generadores de IA reales, {n} llamadas de juez, US${c} de coste de API según lo registrado por la ejecución."
 } };
 
 function useStr() {
