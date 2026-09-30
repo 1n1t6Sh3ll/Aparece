@@ -14,7 +14,7 @@ from jsonschema import Draft202012Validator  # noqa: E402
 
 from extract import build_raw, canonical_key, html_lines  # noqa: E402
 from fetch import robots_allows  # noqa: E402
-from normalize import (FIT, NECKLINE, SLEEVE, is_size_option, map_availability, match_lookup,  # noqa: E402
+from normalize import (FIT, NECKLINE, SLEEVE, is_size_option, lang_code, map_availability, match_lookup,  # noqa: E402
                        normalize_color, normalize_size, parse_composition, parse_weight, primary_material,
                        build_normalized)
 from run import is_shirt  # noqa: E402
@@ -59,6 +59,11 @@ class Weight(unittest.TestCase):
 
 
 class Lookups(unittest.TestCase):
+    def test_lang_code(self):
+        for tag, want in (("en-US", "en"), ("EN", "en"), ("es_MX", "es"), (" es-419 ", "es"), ("other", "other"),
+                          ("", None), (None, None), (5, None)):
+            self.assertEqual(lang_code(tag), want, tag)
+
     def test_fit(self):
         self.assertEqual(match_lookup("Camiseta oversize", FIT)[0][0], "oversized")
         self.assertEqual(match_lookup("Regular fit", FIT)[0][0], "regular")
