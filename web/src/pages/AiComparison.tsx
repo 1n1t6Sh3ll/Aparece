@@ -134,7 +134,7 @@ const LIVE_KEY = "pl.compare.";  // sessionStorage: the audited record handed to
 
 export function CompareLink({ productId, record, reportId }: { productId: string; record?: Record<string, unknown> | null; reportId?: string | null }) {
   const s = useStr();
-  const keep = () => { try { if (record) sessionStorage.setItem(LIVE_KEY + productId, JSON.stringify(record)); } catch { /* storage off: the report id is enough */ } };
+  const keep = () => rememberRecord(productId, record);
   const q = reportId ? `?report=${encodeURIComponent(reportId)}` : "";
   return <a href={`#/compare/${encodeURIComponent(productId)}${q}`} onClick={keep} className="btn-ghost no-print self-start sm:self-center"><Scale className="size-4" aria-hidden /> {s("cta")}</a>;
 }
@@ -148,9 +148,27 @@ async function findRecord(productId?: string): Promise<Record<string, unknown> |
   try { return (await api<{ record: Record<string, unknown> | null }>(`/v1/audits/${encodeURIComponent(rid)}`)).record; } catch { return null; }
 }
 
+const RECENT_KEY = "pl.compare.recent";  // localStorage: last few audited records, so a new tab or a reload still finds them
+const RECENT_MAX = 8;
+
+/** Keep the audited record for #/compare/<id>: this tab (sessionStorage) and a short list shared across tabs. */
+function rememberRecord(productId: string, record?: Record<string, unknown> | null) {
+  if (!record) return;
+  try { sessionStorage.setItem(LIVE_KEY + productId, JSON.stringify(record)); } catch { /* storage off */ }
+  try {
+    const rest = recentRecords().filter((r) => r.id !== productId);
+    localStorage.setItem(RECENT_KEY, JSON.stringify([{ id: productId, record }, ...rest].slice(0, RECENT_MAX)));
+  } catch { /* storage off or full: the report id in the link is still tried */ }
+}
+
+function recentRecords(): { id: string; record: Record<string, unknown> }[] {
+  try { const v = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
+}
+
 function liveRecord(productId?: string): Record<string, unknown> | null {
   if (!productId) return null;
-  try { const v = sessionStorage.getItem(LIVE_KEY + productId); return v ? JSON.parse(v) : null; } catch { return null; }
+  try { const v = sessionStorage.getItem(LIVE_KEY + productId); if (v) return JSON.parse(v); } catch { /* fall through */ }
+  return recentRecords().find((r) => r.id === productId)?.record ?? null;
 }
 
 
