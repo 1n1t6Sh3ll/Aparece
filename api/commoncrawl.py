@@ -85,14 +85,15 @@ def clear_cache():
 
 
 def variants(url):
-    """The URL as given, then without query/fragment, with and without www., and for Amazon /dp/<ASIN> forms."""
+    """The URL as given, then with/without www. (query kept except for Amazon, fragment dropped), and for Amazon /dp/<ASIN> forms."""
     p = urlsplit(url.strip())
     host = (p.hostname or "").lower()
     bare = host[4:] if host.startswith("www.") else host
     path = p.path or "/"
     out = [url.strip()]
+    q = "" if AMAZON.search(host) else p.query  # a query can identify the product (?id=42): keep it, never fall back to the bare path
     for h in (host, bare, "www." + bare):
-        out.append(urlunsplit(("https", h, path, "", "")))
+        out.append(urlunsplit(("https", h, path, q, "")))
     if AMAZON.search(host):
         m = ASIN.search(path)
         if m:
@@ -112,6 +113,16 @@ def variants(url):
     return uniq
 
 
+def page_key(u):
+    """(host without www., path without trailing slash, query) or None: scheme and host case are ignored."""
+    q = urlsplit(str(u or ""))
+    return ((q.hostname or "").lower().removeprefix("www."), q.path.rstrip("/"), q.query) if q.hostname else None
+
+
+def same_page(a, b):
+    return page_key(a) is not None and page_key(a) == page_key(b)
+
+
 def lookup(crawl_id, url, deadline):
     """Newest HTML 200 capture of url in one crawl's CDX index, or None."""
     status, body = _get(f"https://index.commoncrawl.org/{crawl_id}-index", deadline, MAX_INDEX,
@@ -125,6 +136,8 @@ def lookup(crawl_id, url, deadline):
         try:
             row = json.loads(line)
         except ValueError:
+            continue
+        if not isinstance(row, dict) or same_page(row.get("url"), url) is False:  # never another page's capture
             continue
         if "html" in row.get("mime", "") + row.get("mime-detected", "") and row.get("filename"):
             rows.append(row)
@@ -200,13 +213,18 @@ def fetch_archived(url, timeout_total=10):
     """Newest archived HTML copy of url from the latest MAX_CRAWLS Common Crawl crawls, or None."""
     if urlsplit(url or "").scheme not in ("http", "https") or not urlsplit(url).hostname:
         return None
+    if re.search(r"[*\s]", url):  # CDX treats * as a prefix/wildcard match: could return another product's capture
+        return None
     deadline = time.monotonic() + timeout_total
     try:
         for crawl_id in crawls(deadline)[:MAX_CRAWLS]:
             for u in variants(url):
                 try:
-                    row = lookup(crawl_id, u, deadline)
-                except (requests.HTTPError, TooLarge):  # index overloaded (5xx) or oversized answer: next crawl
+                    try:
+                        row = lookup(crawl_id, u, deadline)
+                    except requests.HTTPError:  # the index often answers 502/504 once: try the same lookup again
+                        row = lookup(crawl_id, u, deadline)
+                except (requests.HTTPError, TooLarge):  # index still overloaded (5xx) or oversized answer: next crawl
                     break
                 if not row:
                     continue

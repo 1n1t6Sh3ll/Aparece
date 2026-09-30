@@ -13,7 +13,7 @@ import statistics
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import ValidationError
 
@@ -604,8 +604,24 @@ def not_self(target):
             and not ({url_key(get(r, "source", k)) for k in ("url", "canonical_url")} & own)]
 
 
+def mark_archive(result, a):
+    """If the page was read from a Common Crawl copy (a = its archive info), say so: result["archive"] and a note."""
+    if a:
+        result["archive"] = a
+        result["notes"] = [f"Read from a Common Crawl archive copy captured {a['capture_date']}, not the live page; "
+                           "facts such as price or stock may be out of date."] + result["notes"]
+    return result
+
+
 @router.post("/v1/audit")
-def audit(payload: dict = Body(...)):
+def audit(request: Request, payload: dict = Body(...)):
+    from profile_api import rate_limit  # lazy: profile_api imports this module
+    rate_limit(request, "audit", "AUDIT_RATE_LIMIT", 60)
+    return run_audit(payload)
+
+
+def run_audit(payload, archive=None):
+    """The audit for one payload; archive = archive info of a page the caller already fetched (else read from extract)."""
     import main  # lazy: main imports this module
     try:
         draft = is_draft(payload)
@@ -684,7 +700,7 @@ def audit(payload: dict = Body(...)):
                          "predicted": pred.get(f)} for f, ok in attributes_present(target).items() if not ok),
                        key=lambda x: -x["peers_with"])
     facts_found = sum(attributes_present(target).values())
-    return {
+    result = {
         "product": {**dash.summary(target), "url": get(target, "source", "url"),
                     "image": (raw.get("image_urls") or [None])[0], "draft": draft,
                     "description": description_text(target)},
@@ -721,6 +737,7 @@ def audit(payload: dict = Body(...)):
         "notes": notes,
         "unranked": unranked,
     }
+    return mark_archive(result, archive or ex.get("archive")) if not draft else result
 
 
 NEW_FIELDS = ["materials.fabric_type", "materials.texture", "fit_and_style.shirt_length", "fit_and_style.style",

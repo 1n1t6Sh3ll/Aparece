@@ -31,6 +31,8 @@ Environment variables (all optional; see `.env.example`):
 | `PRODUCTLENS_SHOOTOUT`, `PRODUCTLENS_SHOOTOUT_REAL`, `PRODUCTLENS_SHOOTOUT_SAMPLE` | AI comparison report: this path, else `benchmark/shootout/out/report.json`, else the committed real run, else the bundled mock sample (the API serves it marked `sample`; the web page shows "Not run yet" instead of mock numbers) |
 | `VISIBILITY_LIVE_MAX_USD`, `VISIBILITY_LIVE_DAILY_USD`, `VISIBILITY_LIVE_RATE_LIMIT` | Live AI visibility check caps: per request (default 0.05 USD), per process per day (default 1 USD), requests per minute per client (default 3) |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `QWEN_API_KEY` | Paid/local model access; paid runs also need a spend cap (`--max-usd`, `BENCHMARK_MAX_USD`) |
+| `AUDIT_RATE_LIMIT` | Requests per minute per client on `POST /v1/audit` (default 60); `POST /v1/audits` uses `AUDIT_STORE_RATE_LIMIT` (default 60) |
+| `PROFILE_TRUST_PROXY` | Set to `1` behind a trusted proxy such as Fly so per-client limits key on the last `X-Forwarded-For` entry (the address the proxy appended), not the proxy's own; leave unset when reachable directly (default: the socket address) |
 | `MONITOR_ENABLED`, `MONITOR_DB`, `MONITOR_DELAY` | Scheduler and snapshot store |
 | `GOVERNANCE_DB`, `GOVERNANCE_TOKEN`, `GOVERNANCE_ADMIN_TOKEN` | Audit log; enables `POST /v1/approvals`; admin view of the full log |
 | `CHAT_TOKEN`, `CHAT_LLM` | Require a token on `/v1/chat`; chat backend (`stub` default) |

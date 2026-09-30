@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+os.environ.setdefault("AUDIT_RATE_LIMIT", "100000")  # per-client limit: test_api.RateLimitTest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -36,8 +37,10 @@ class FetchCase(unittest.TestCase):
     def setUp(self):
         safe_fetch.clear_cache()
         self.addCleanup(safe_fetch.clear_cache)
+        self.archive = mock.patch.object(safe_fetch.commoncrawl, "fetch_archived", return_value=None).start()
+        self.addCleanup(mock.patch.stopall)
 
-    def run_fetch(self, responses):
+    def run_fetch(self, responses, path="/v1/extract"):
         calls = []
         def fake(url, **kw):
             calls.append(url)
@@ -45,7 +48,7 @@ class FetchCase(unittest.TestCase):
         with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS), \
                 mock.patch.object(safe_fetch.requests, "get", side_effect=fake), \
                 mock.patch.object(safe_fetch.time, "sleep") as sleep:
-            r = client.post("/v1/extract", json={"url": self.URL})
+            r = client.post(path, json={"url": self.URL})
         return r, calls, sleep
 
 
@@ -68,14 +71,14 @@ class FetchLimitTest(FetchCase):
             "https://shop.example.com/products/heavy-tee.json": [resp(429), resp(429)],
             self.URL: [resp(429, headers={"retry-after": "1"}), resp(429)]})
         self.assertEqual(r.status_code, 502)
-        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED_HELP)
 
     def test_long_retry_after_not_waited(self):
         r, _, sleep = self.run_fetch({
             "https://shop.example.com/robots.txt": [resp(404)],
             "https://shop.example.com/products/heavy-tee.json": [resp(404)],
             self.URL: [resp(429, headers={"retry-after": "120"})]})
-        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED_HELP)
         sleep.assert_not_called()
 
     def test_robots_429_is_retry_later(self):
@@ -108,8 +111,155 @@ class FetchLimitTest(FetchCase):
         r, calls, _ = self.run_fetch({
             "https://shop.example.com/robots.txt": [resp(200, "User-agent: *\nDisallow: /products/*.json")],
             self.URL: [resp(429), resp(429)]})
-        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED_HELP)
         self.assertNotIn("https://shop.example.com/products/heavy-tee.json", calls)
+
+
+class ArchiveFallbackTest(FetchCase):
+    """Blocked/rate-limited store: Common Crawl copy, honestly labelled (Common Crawl and the store are mocked)."""
+    ROBOTS = "https://shop.example.com/robots.txt"
+    CAPTURE = {"html": FIXTURE, "capture_date": "2026-08-14", "crawl_id": "CC-MAIN-2026-33",
+               "warc_url": "https://data.commoncrawl.org/x.warc.gz"}
+    @property
+    def LIMITED(self):
+        return {"https://shop.example.com/products/heavy-tee.json": [resp(429), resp(429)]}
+
+    def test_429_uses_archive_and_says_so(self):
+        self.archive.return_value = self.CAPTURE
+        r, calls, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED},
+                                     "/v1/audit")
+        self.assertEqual(r.status_code, 200, r.text)
+        a = r.json()
+        self.assertEqual(a["archive"], {"source": "common_crawl", "capture_date": "2026-08-14",
+                                        "crawl_id": "CC-MAIN-2026-33", "warc_url": self.CAPTURE["warc_url"]})
+        self.assertIn("archive copy captured 2026-08-14, not the live page", a["notes"][0])
+        self.assertEqual(self.archive.call_args.args[0], self.URL)
+        _, calls, _ = self.run_fetch({}, "/v1/audit")  # cached copy stays labelled
+        self.assertEqual(calls, [])
+
+    def test_cached_archive_page_keeps_label_until_it_expires(self):
+        """The label is part of the cached page: served together, near the TTL, still labelled (never shown as live)."""
+        self.archive.return_value = self.CAPTURE
+        now = safe_fetch.time.monotonic()
+        with mock.patch.object(safe_fetch.time, "monotonic", return_value=now):
+            self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        with mock.patch.object(safe_fetch.time, "monotonic", return_value=now + safe_fetch.PAGE_TTL - 1):
+            r, calls, _ = self.run_fetch({}, "/v1/audit")
+        self.assertEqual((r.status_code, calls), (200, []))
+        self.assertEqual(r.json()["archive"]["capture_date"], "2026-08-14")
+        self.assertIn("archive copy", r.json()["notes"][0])
+
+    def test_extract_carries_archive_label(self):
+        self.archive.return_value = self.CAPTURE
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        self.assertEqual(r.json()["archive"]["crawl_id"], "CC-MAIN-2026-33")
+
+    def test_live_success_after_archive_drops_label(self):
+        self.archive.return_value = self.CAPTURE
+        self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        safe_fetch.clear_cache()  # the archived copy expired; the store answers again
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(200, FIXTURE)]}, "/v1/audit")
+        self.assertNotIn("archive", r.json())
+        self.assertFalse(any("archive" in n for n in r.json()["notes"]))
+
+    def test_401_uses_archive(self):
+        self.archive.return_value = self.CAPTURE
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(401)],
+                                  "https://shop.example.com/products/heavy-tee.json": [resp(401)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertIn("archive", r.json())
+
+    def test_archive_failure_never_becomes_a_500(self):
+        self.archive.side_effect = RuntimeError("boom")
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("Paste the page HTML or text as a draft instead.", r.json()["detail"])
+
+    def test_busy_archive_skipped_with_actionable_error(self):
+        self.archive.return_value = self.CAPTURE
+        slots = [safe_fetch._archive_slots.acquire(blocking=False) for _ in range(4)]
+        try:
+            r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        finally:
+            for ok in slots:
+                ok and safe_fetch._archive_slots.release()
+        self.assertEqual(r.status_code, 502)
+        self.archive.assert_not_called()
+        self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})  # slots were released
+        self.archive.assert_called_once()
+
+    def test_blocked_403_uses_archive(self):
+        self.archive.return_value = self.CAPTURE
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(403), resp(403)],
+                                  "https://shop.example.com/products/heavy-tee.json": [resp(403)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["archive"]["crawl_id"], "CC-MAIN-2026-33")
+
+    def test_429_without_archive_is_actionable(self):
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        self.assertEqual(r.status_code, 502)
+        self.assertTrue(r.json()["detail"].startswith("store_rate_limited: upstream HTTP 429"))
+        self.assertIn("Paste the page HTML or text as a draft instead.", r.json()["detail"])
+        self.archive.assert_called_once()
+
+    def test_blocked_without_archive_is_actionable(self):
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(403), resp(403)],
+                                  "https://shop.example.com/products/heavy-tee.json": [resp(403)]})
+        self.assertEqual(r.status_code, 403)
+        self.assertEqual(r.json()["detail"], safe_fetch.BLOCKED)
+        self.assertTrue(safe_fetch.BLOCKED.startswith("blocked_by_store: This store blocks automated reading from our server."))
+
+    def test_archived_bot_check_page_refused(self):
+        self.archive.return_value = {**self.CAPTURE, "html": "<html><head><title>Just a moment...</title></head></html>"}
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        self.assertEqual(r.status_code, 502)
+
+    def test_shopify_json_wins_over_archive(self):
+        self.archive.return_value = self.CAPTURE
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)],
+                                  "https://shop.example.com/products/heavy-tee.json": [resp(200, SHOPIFY)]}, "/v1/audit")
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertNotIn("archive", r.json())
+        self.archive.assert_not_called()
+
+    def test_robots_disallow_never_reaches_archive(self):
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(200, "User-agent: *\nDisallow: /products/")]})
+        self.assertEqual(r.status_code, 403)
+        self.archive.assert_not_called()
+
+    def test_robots_429_never_reaches_archive(self):
+        self.run_fetch({self.ROBOTS: [resp(429), resp(429)]})
+        self.archive.assert_not_called()
+
+    def test_amazon_never_reaches_archive(self):
+        r = client.post("/v1/audit", json={"url": "https://www.amazon.com/dp/B085WMXFP3"})
+        self.assertEqual(r.status_code, 422)
+        self.archive.assert_not_called()
+
+    def test_live_success_has_no_archive(self):
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(200, FIXTURE)]}, "/v1/audit")
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertNotIn("archive", r.json())
+        self.assertFalse(any("archive" in n for n in r.json()["notes"]))
+        self.archive.assert_not_called()
+
+    def test_pasted_html_with_url_is_not_labelled_archived(self):
+        safe_fetch.remember(("archive", self.URL), {"source": "common_crawl", "capture_date": "2026-01-01"}, 600)
+        r = client.post("/v1/audit", json={"url": self.URL, "html": FIXTURE})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertNotIn("archive", r.json())
+
+
+class RateLimitTest(unittest.TestCase):
+    def test_audit_is_rate_limited_per_client(self):
+        import profile_api
+        profile_api._hits.clear()
+        self.addCleanup(profile_api._hits.clear)
+        with mock.patch.dict(os.environ, {"AUDIT_RATE_LIMIT": "2"}):
+            codes = [client.post("/v1/audit", json={"title": "Blue cotton tee", "text": "Soft cotton t-shirt."}).status_code
+                     for _ in range(3)]
+        self.assertEqual(codes[2], 429)
+        self.assertNotIn(429, codes[:2])
 
 
 class FetchErrorTest(FetchCase):
@@ -302,3 +452,39 @@ class ApiTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RateLimitKeyTest(unittest.TestCase):
+    """Behind a trusted proxy (Fly) the key is the LAST X-Forwarded-For entry: the address the proxy appended, which a
+    client cannot forge (anything it sends stays earlier in the list)."""
+
+    def hit(self, forwarded, host="172.16.0.1"):
+        import profile_api
+        req = mock.Mock(headers={"x-forwarded-for": forwarded} if forwarded else {}, client=mock.Mock(host=host))
+        profile_api.rate_limit(req, "keytest", "KEYTEST_LIMIT", 1)
+
+    def setUp(self):
+        import profile_api
+        profile_api._hits.clear()
+        self.addCleanup(profile_api._hits.clear)
+        patcher = mock.patch.dict(os.environ, {"PROFILE_TRUST_PROXY": "1"})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_two_visitors_behind_one_proxy_have_separate_buckets(self):
+        self.hit("203.0.113.9")
+        self.hit("198.51.100.7")  # a different visitor, same proxy address: not limited
+        with self.assertRaises(main.HTTPException) as e:
+            self.hit("203.0.113.9")
+        self.assertEqual(e.exception.status_code, 429)
+
+    def test_spoofed_leading_entry_does_not_change_the_key(self):
+        self.hit("spoofed-1, 203.0.113.9")
+        with self.assertRaises(main.HTTPException):
+            self.hit("spoofed-2, 203.0.113.9")
+
+    def test_without_trust_flag_the_socket_address_is_used(self):
+        with mock.patch.dict(os.environ, {"PROFILE_TRUST_PROXY": "0"}):
+            self.hit("203.0.113.9")
+            with self.assertRaises(main.HTTPException):
+                self.hit("198.51.100.7")  # same socket address: forwarded header ignored

@@ -71,7 +71,8 @@ class CommonCrawlTest(unittest.TestCase):
             return cc.fetch_archived(url, **kw), calls
 
     def test_found_via_normalized_variant(self):
-        res, calls = self.run_with({(NEWEST, "https://www.allbirds.com/products/mens-strider-medium-grey"): CDX})
+        res, calls = self.run_with({(NEWEST, "http://allbirds.com/products/mens-strider-medium-grey"): CDX},
+                                   url="http://allbirds.com/products/mens-strider-medium-grey")
         self.assertEqual(set(res), {"html", "capture_date", "crawl_id", "warc_url"})
         self.assertEqual(res["capture_date"], "2026-07-14")
         self.assertEqual(res["crawl_id"], NEWEST)
@@ -79,8 +80,8 @@ class CommonCrawlTest(unittest.TestCase):
         self.assertIn('"@type":"Product"', res["html"])
         self.assertIn("Men’s Strider", res["html"])
         self.assertTrue(res["html"].endswith("</html>"))
-        # query first as given (with status filter), then without query/fragment
-        self.assertEqual(calls[1][1], {"url": URL, "output": "json", "filter": "status:200"})
+        # the URL as given (with status filter)
+        self.assertEqual(calls[1][1], {"url": "http://allbirds.com/products/mens-strider-medium-grey", "output": "json", "filter": "status:200"})
         # the WARC read is a byte range for exactly the record, honest UA, never a redirect follow
         off, length = int(ROW["offset"]), int(ROW["length"])
         self.assertEqual(calls[-1][2]["Range"], f"bytes={off}-{off + length - 1}")
@@ -89,10 +90,34 @@ class CommonCrawlTest(unittest.TestCase):
             self.assertFalse(redirects)
             self.assertTrue(url.startswith(("https://index.commoncrawl.org/", "https://data.commoncrawl.org/")))
 
+    def test_transient_index_error_retried_once(self):
+        get, _ = network({})
+        with mock.patch.object(cc.requests, "get", side_effect=get), \
+                mock.patch.object(cc, "lookup", side_effect=[requests.HTTPError("index 504"), ROW]) as look:
+            res = cc.fetch_archived(URL)
+        self.assertEqual((res["crawl_id"], look.call_count), (NEWEST, 2))
+
+    def test_wildcard_url_never_queried(self):
+        res, calls = self.run_with({}, url="https://www.allbirds.com/products/*")
+        self.assertIsNone(res)
+        self.assertEqual(calls, [])
+
+    def test_capture_of_another_url_is_ignored(self):
+        other = CDX.replace("mens-strider-medium-grey", "another-product")
+        res, _ = self.run_with({(NEWEST, "https://www.allbirds.com/products/mens-strider-medium-grey"): other})
+        self.assertIsNone(res)
+
     def test_older_crawl_and_overloaded_index(self):
-        bare = "https://www.allbirds.com/products/mens-strider-medium-grey"
-        res, _ = self.run_with({(NEWEST, URL): 504, (SECOND, bare): CDX})
+        url = "https://www.allbirds.com/products/mens-strider-medium-grey"
+        res, _ = self.run_with({(NEWEST, url): 504, (SECOND, url): CDX}, url=url)
         self.assertEqual(res["crawl_id"], SECOND)
+
+    def test_query_identifying_the_product_is_never_dropped(self):
+        url = "https://shop.example.com/product.php?id=42"
+        self.assertTrue(all("id=42" in v for v in cc.variants(url)))
+        res, calls = self.run_with({(NEWEST, "https://shop.example.com/product.php"): CDX}, url=url)
+        self.assertIsNone(res)
+        self.assertNotIn("https://shop.example.com/product.php", [c[1]["url"] for c in calls if c[1]])
 
     def test_not_found_returns_none(self):
         res, calls = self.run_with({})

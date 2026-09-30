@@ -36,6 +36,8 @@ export type BoardRow = Summary & Quality & { is_you: boolean; link_unverified?: 
 export interface Audit {
   product: Summary & { image: string | null; draft: boolean; description?: string };
   notes?: string[];
+  /** Present only when the page was read from a Common Crawl copy instead of live. */
+  archive?: { source: "common_crawl"; capture_date: string; crawl_id: string; warc_url: string };
   /** Not a shirt: the full audit without a rank (rank.position is null). read_text is what we read the type from. */
   unranked?: { reason: "not_a_shirt"; type: string | null; read_from: string; read_text: string } | null;
   facts: Fact[];

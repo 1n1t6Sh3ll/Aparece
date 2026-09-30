@@ -2,7 +2,8 @@
 Rate limits: one retry honouring Retry-After (<= 10 s) inside the total deadline; successful pages are cached for
 10 minutes and robots.txt for 1 hour per host. If a Shopify product page stays rate-limited, the store's public
 /products/<handle>.json (robots permitting) is read instead and wrapped as schema.org JSON-LD. The User-Agent is
-never changed."""
+never changed. If the store still blocks or rate-limits us, the newest public Common Crawl copy of the page is used
+(never the store itself) and labelled as an archive (ArchivedHtml.archive)."""
 import html as htmllib
 import ipaddress
 import json
@@ -14,9 +15,11 @@ from urllib.parse import urljoin, urlsplit
 
 import requests
 
+import commoncrawl
 from fetch import USER_AGENT, robots_allows
 
 TIMEOUT = 10  # total seconds for robots.txt + page + redirects
+ARCHIVE_TIMEOUT = 30  # separate budget for the Common Crawl lookup (index answers take seconds)
 MAX_BYTES = 3_000_000
 MAX_REDIRECTS = 3
 MAX_RETRY_AFTER = 10  # seconds; a longer Retry-After is not waited for
@@ -32,10 +35,11 @@ NO_AMAZON = ("amazon_not_supported: Amazon's terms don't allow automated reading
              "fetch them. Paste the title and bullet points as a draft instead.")
 NO_HOST = "host_not_found: host does not resolve (DNS lookup failed). Check the URL."  # web/ matches "does not resolve"
 NOT_HTML = "not_a_web_page: this link is a PDF, image or other file, not a web page. Link the product page instead."
-BLOCKED = ("blocked_by_store: this store blocks automated reading (access denied or a bot check). "
-           "Paste the title and description instead.")
+NO_ACCESS = "This store blocks automated reading from our server. Paste the page HTML or text as a draft instead."
+BLOCKED = "blocked_by_store: " + NO_ACCESS
 NOT_FOUND = "page_not_found: the store says this page doesn't exist (HTTP {}). Check the URL; the product may be gone."
 STORE_LIMITED = "store_rate_limited: upstream HTTP 429"  # the store rate-limits us (not our own 429)
+STORE_LIMITED_HELP = STORE_LIMITED + ". " + NO_ACCESS
 GONE = ("product_gone: the link redirected to the store's home or search page, so the product is probably no longer "
         "listed. Check the URL or paste the title and description instead.")
 CHALLENGE_TITLE = re.compile(r"just a moment|attention required|access denied|captcha|robot or human|are you a robot"
@@ -244,8 +248,35 @@ def shopify_html(prod, lang=None):
             f'<body><h1>{t}</h1>{prod.get("body_html") or ""}</body></html>')
 
 
+class ArchivedHtml(str):
+    """HTML read from a Common Crawl copy. It carries its own label (.archive), so the label lives and dies with the
+    page in the cache and cannot be separated from it. Live pages are plain str (getattr(page, "archive", None))."""
+    archive = None
+
+
+_archive_slots = threading.BoundedSemaphore(4)  # a lookup can hold a thread for ~30 s: at most 4 at once
+
+
+def archived_page(url):
+    """ArchivedHtml from Common Crawl for a blocked page, or None. Never Amazon; a captured bot-check page is refused.
+    Busy, slow or failing (any exception) means None: the caller then raises its normal actionable error."""
+    if not _archive_slots.acquire(blocking=False):
+        return None
+    try:
+        a = commoncrawl.fetch_archived(url, ARCHIVE_TIMEOUT)
+        if not a or is_challenge(a["html"]):
+            return None
+        page = ArchivedHtml(a["html"])
+        page.archive = {"source": "common_crawl", **{k: a[k] for k in ("capture_date", "crawl_id", "warc_url")}}
+        return page
+    except Exception:
+        return None
+    finally:
+        _archive_slots.release()
+
+
 def fetch_page(url):
-    """robots.txt check, then the page (cached 10 min). Returns (final_url, html). Amazon is never fetched. A
+    """robots.txt check, then the page (cached 10 min). Returns (final_url, html); html is an ArchivedHtml (with .archive) if it came from Common Crawl. Amazon is never fetched. A
     rate-limited, blocked or product-less Shopify product page falls back to the store's public product JSON.
     Errors carry a coded reason: blocked_by_store, page_not_found, product_gone, not_a_web_page, host_not_found."""
     hit = cached(("page", url))
@@ -262,12 +293,16 @@ def fetch_page(url):
         page = shopify_page(p, robots_txt, deadline)
         if page:
             return remember(("page", url), (url, page), PAGE_TTL)
+    if blocked or status in LIMITED:  # still blocked after the retry and the Shopify JSON: last resort, an archive
+        arch = archived_page(url)
+        if arch is not None:
+            return remember(("page", url), (url, arch), PAGE_TTL)
     if blocked:
         raise FetchError(403, BLOCKED)
     if status in (404, 410):
         raise FetchError(404, NOT_FOUND.format(status))
     if status == 429:
-        raise FetchError(502, STORE_LIMITED)
+        raise FetchError(502, STORE_LIMITED_HELP)
     if status != 200:
         raise FetchError(502, f"upstream HTTP {status}")
     if went_home(url, final):
