@@ -1,5 +1,7 @@
 import os
+import re
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -116,9 +118,103 @@ class AuditTest(unittest.TestCase):
     def test_draft_type_from_description_or_unknown(self):
         b = self.audit(title="Delvik Black", description="A relaxed polo in pique cotton.", language="en")
         self.assertEqual(b["product"]["product_type"], "polo")
-        b = self.audit(title="Delvik Black", description="Soft and warm.", language="en")
+        b = self.audit(title="Delvik Black shirt", description="Soft and warm.", language="en")  # generic, no sleeve
         self.assertEqual(b["product"]["product_type"], "unknown")
         self.assertTrue(b["notes"])
+
+    def test_draft_states_only_what_the_text_says(self):
+        """#69: no invented availability, currency only from an explicit symbol/code, never a schema.org source."""
+        b = self.audit(text="Unisex heavyweight tee\n240 gsm 100% cotton, boxy fit, dropped shoulders. $35")
+        facts = {f["field"]: f for f in b["facts"]}
+        self.assertNotIn("commerce.availability", facts)
+        self.assertEqual((facts["commerce.price"]["value"], facts["commerce.currency"]["value"]), (35.0, "USD"))
+        self.assertEqual(facts["commerce.currency"]["source_location"], "draft text")
+        self.assertEqual(facts["commerce.currency"]["source_text"], "$35")
+        for f in b["facts"]:
+            self.assertNotIn("schema", str(f["source_location"]))
+        b = self.audit(title="Heavy tee", description="100% cotton, 240 gsm. Price 35", language="en")
+        self.assertIsNone(b["context"]["currency"])  # no symbol or code -> no currency (and no price)
+        b = self.audit(title="Heavy tee", description="100% cotton. Sold out.", price=35, currency="aud", language="en")
+        facts = {f["field"]: f for f in b["facts"]}
+        self.assertEqual((facts["commerce.availability"]["value"], facts["commerce.availability"]["source_text"]),
+                         ("out_of_stock", "Sold out"))
+        self.assertEqual((facts["commerce.currency"]["value"], facts["commerce.currency"]["source_location"]),
+                         ("AUD", "draft.currency"))
+        self.assertEqual(self.audit(text="Heavy tee\n29,90 EUR. In stock.", language="en")["context"]["currency"], "EUR")
+
+    def test_draft_rejects_bad_price_currency_and_types(self):
+        cases = [({"price": -5, "currency": "EUR"}, "invalid_price"), ({"price": 0}, "invalid_price"),
+                 ({"price": "abc"}, "invalid_price"), ({"price": True}, "invalid_price"),
+                 ({"price": 5, "currency": "ZZZ"}, "invalid_currency"), ({"currency": 5}, "invalid_field"),
+                 ({"title": ["a"]}, "invalid_field"), ({"description": {"x": 1}}, "invalid_field"),
+                 ({"language": 1}, "invalid_field")]
+        for extra, err in cases:
+            r = client.post("/v1/audit", json={"title": "Cotton t-shirt", "description": "cotton", **extra})
+            self.assertEqual(r.status_code, 422, extra)
+            self.assertTrue(r.json()["detail"].startswith(err), (extra, r.text))
+
+    def test_language_codes_normalized_or_detected(self):
+        """#71: en-US / EN / missing give the same peers as en; es-MX -> es."""
+        body = {"title": "Men's slim fit t-shirt", "description": "100% cotton jersey, crew neck, short sleeves."}
+        base = self.audit(**body, language="en")
+        self.assertGreater(base["rank"]["total"], 1)
+        for lang in ("en-US", "EN", "en_gb", None):
+            b = self.audit(**body, **({"language": lang} if lang else {}))
+            self.assertEqual(b["context"]["language"], "en", lang)
+            self.assertEqual([p["product_id"] for p in b["peers"]], [p["product_id"] for p in base["peers"]], lang)
+            self.assertEqual(b["rank"]["total"], base["rank"]["total"])
+        self.assertTrue(any("detected" in n for n in b["notes"]))
+        es = self.audit(title="Camiseta de algodón para hombre", description="Manga corta, cuello redondo.")
+        self.assertEqual(es["context"]["language"], "es")
+        self.assertEqual(self.audit(title="Camiseta", description="algodón", language="es-MX")["context"]["language"], "es")
+        page = HTML.replace("<html", '<html lang="en-US"', 1) if "<html lang" not in HTML else \
+            re.sub(r'<html lang="[^"]*"', '<html lang="EN-us"', HTML, count=1)
+        self.assertEqual(self.audit(html=page, url=URL)["context"]["language"], "en")
+
+    def test_not_a_shirt_is_not_ranked(self):
+        """#72: non-shirts get a clear 422 instead of 'rank 1 of 1'."""
+        for body in ({"title": "Stainless steel water bottle 750ml", "description": "Double-wall insulated"},
+                     {"title": "123456", "description": "789 1011"},
+                     {"html": '<html lang="en"><head><title>Men\'s Tree Runners</title><script type="application/ld+json">'
+                              '{"@type":"Product","name":"Men\'s Tree Runners","offers":{"@type":"Offer","price":"98",'
+                              '"priceCurrency":"USD"}}</script></head><body><h1>Men\'s Tree Runners</h1>'
+                              '<p>Breathable sneakers.</p></body></html>', "url": "https://shoes.example.com/p/runner"}):
+            r = client.post("/v1/audit", json=body)
+            self.assertEqual(r.status_code, 422, body)
+            self.assertTrue(r.json()["detail"].startswith("not_a_shirt"), r.text)
+
+    def test_product_never_ranked_against_itself(self):
+        """The dataset row of the audited page (same URL up to www/slash/query/case) is not a peer."""
+        import json
+        recs = [json.loads(x) for x in (FIX / "dashboard_records.jsonl").read_text(encoding="utf-8").splitlines() if x]
+        me = {**recs[1], "product_id": "p_me", "source": {**recs[1]["source"], "url": "https://WWW.shop.example.com/products/heavy-tee/?v=1"}}
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "r.jsonl"
+            p.write_text("\n".join(json.dumps(r) for r in recs + [me]), encoding="utf-8")
+            with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(p)}):
+                b = self.audit(html=HTML, url=URL)
+        ids = [r["product_id"] for r in b["leaderboard"] if not r["is_you"]] + [x["product_id"] for x in b["peers"]]
+        self.assertNotIn("p_me", ids)
+        self.assertEqual(sum(r["is_you"] for r in b["leaderboard"]), 1)
+
+    def test_url_and_draft_of_same_dataset_tee_get_same_peers(self):
+        """#73 regression: a saved dataset page (merchjungle.com Shopify JSON, 50 AUD) vs the same text as a draft.
+        Root cause was the same-currency hard filter: the page states AUD, dataset rows have no recorded currency."""
+        import json
+        prod = json.loads((FIX / "shopify_blink_tee.json").read_text(encoding="utf-8"))["product"]
+        u = "https://merchjungle.com/products/blink-182-roger-rabbit-tee"
+        with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(FIX / "dataset_blink_peers.jsonl")}), \
+                mock.patch.object(safe_fetch, "fetch_page", return_value=(u, safe_fetch.shopify_html(prod))):
+            page = self.audit(url=u)
+            draft = self.audit(title="Blink-182 Roger Rabbit Tee - Fun Design Cotton T-Shirt",
+                               description="100% cotton tee. printed", language="en", price=50, currency="AUD")
+        self.assertEqual((page["product"]["product_type"], page["context"]["language"], page["context"]["currency"]),
+                         ("t_shirt", "en", "AUD"))
+        self.assertEqual((len(page["peers"]), len(draft["peers"])), (10, 10))
+        # a draft is new text, so the published product's dataset row may be its peer; the page's own row is not
+        self.assertEqual(draft["rank"]["total"], 14)
+        self.assertEqual(page["rank"]["total"], 13)
+        self.assertNotIn("p_808368fc7073d41d", [x["product_id"] for x in page["peers"]])
 
     def test_peers_without_recorded_currency(self):
         """Dataset rows with no currency must still be peers of a priced page (was: #1 of 1, 0 actions)."""
