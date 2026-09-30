@@ -720,5 +720,6 @@
   "mod.origEn": "original text in English",
   "pd.enterToken": "Manage key",
   "pd.useToken": "Open history",
-  "nav.closeMenu": "Close menu"
+  "nav.closeMenu": "Close menu",
+  "res.ccArchived": "Loaded from the Common Crawl public archive (captured {date}) because {store} doesn't allow direct fetching."
 }

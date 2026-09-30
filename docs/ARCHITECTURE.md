@@ -16,7 +16,7 @@ flowchart LR
 
 | Stage | Code | Notes |
 |---|---|---|
-| Crawl | `api/safe_fetch.py`, `dataset/collect/fetch.py`, `monitor/crawl.py` | http(s), public IPs, robots.txt, rate limits, size/time caps. Offline sources: WDC, Amazon Reviews 2023. |
+| Crawl | `api/safe_fetch.py`, `api/commoncrawl.py`, `dataset/collect/fetch.py`, `monitor/crawl.py` | http(s), public IPs, robots.txt, rate limits, size/time caps. When a store blocks a live fetch, `api/commoncrawl.py` reads an archived copy from the public Common Crawl index/WARC files (never the store). Offline sources: WDC, Amazon Reviews 2023. |
 | Ground truth | `dataset/collect/normalize.py`, `dataset/build/` | Regex/lookup rules (EN/ES); conflicts leave the value null. Optional Qwen+LoRA only fills nulls, reported as `predicted`. |
 | Compare / rank | `analysis/`, `signals/` | Up to k comparable peers; issues typed OBSERVED_FACT / SUPPORTED_HYPOTHESIS / UNKNOWN. No composite score, no causal ranking claims. |
 | AI visibility | `benchmark/` | Same prompts to mock/Anthropic/OpenAI/local Qwen; mention rate, top-k, MRR, citation rate, stability. Paid runs need a key, a price and `--max-usd`. |

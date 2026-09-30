@@ -720,5 +720,6 @@
   "mod.origEn": "texto original en inglés",
   "pd.enterToken": "Clave de gestión",
   "pd.useToken": "Abrir historial",
-  "nav.closeMenu": "Cerrar menú"
+  "nav.closeMenu": "Cerrar menú",
+  "res.ccArchived": "Cargado desde el archivo público de Common Crawl (capturado el {date}) porque {store} no permite la lectura directa."
 }
