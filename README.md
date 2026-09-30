@@ -44,6 +44,19 @@ rank          = 1 + number of comparable shirts with a higher score
 reward        = 1 + share of sentences passing the fact-check − 2 × flagged sentences + 2 × share of facts covered
 ```
 
+**The reward mechanism** (`train/reward.py` → `copy_reward`, used by `optimizer/fix.py`):
+1. The writer produces 3 candidate titles and descriptions from your verified facts only.
+2. Every sentence goes through the fact-check.
+3. Each candidate gets a reward:
+   - **+1** for a valid format (a title of up to 90 characters, plus a description); a broken format scores **−10**;
+   - **up to +1** for the share of its sentences that pass the fact-check;
+   - **−2** for every flagged sentence;
+   - **up to +2** for the share of your verified facts it mentions.
+4. **A candidate with any flagged sentence can't win**, whatever its reward. If none passes, the writer gets the flagged sentences back and tries again, up to 2 more rounds. After that, unsupported sentences are removed. If nothing is left, the plain fact sentences are used.
+5. The winner is the passing candidate with the highest reward. Each winner and a lower-scoring candidate are saved as a pair (`optimizer/data/pairs.jsonl`), as future training data.
+
+Example: 5 sentences, all passing, mentioning 6 of 8 facts: 1 + 1 + 0 + 1.5 = **3.5**. The same candidate with 1 flagged sentence: 1 + 0.8 − 2 + 1.5 = **1.3**, and it can't win.
+
 The fact-check rejects any word or number that your page's facts don't back (`optimizer/guard.py`). In the AI comparison, only parts that pass can win: the best title score, the best tag score, and the best description (most AI mentions, or the most facts covered).
 
 ## Results
