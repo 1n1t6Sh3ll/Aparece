@@ -9,7 +9,7 @@ harmless paraphrases may be rejected, which only costs a regeneration or the tem
 import re
 import unicodedata
 
-from benchmark.claims import COARSE, FINE, SUPPORTED, check, extract_claims
+from benchmark.claims import COARSE, FINE, SUPPORTED, _size, check, extract_claims
 import normalize as N
 
 from optimizer.truth import LANGS, check_record, fact_sentences
@@ -62,6 +62,10 @@ def vocabulary(truth):
         else:
             words.add(t)
             words.update(t.split("-"))
+    sizes = " ".join(str(v) for s in truth["facts"].get("variants.sizes") or [] if isinstance(s, dict)
+                     for v in (s.get("normalized_size"), s.get("raw_size")) if v)
+    if re.search(r"\b(?:XXX?L|\dXL)\b", sizes, re.I):
+        words.add("xl")  # "2XL" tokenizes as 2 + xl; the number itself is checked by _size_ok
     ptype = truth["facts"].get("identity.product_type")
     if ptype:
         key = "_shirt" if str(ptype).endswith("_shirt") and ptype not in dict(N.PRODUCT_TYPE) else ptype
@@ -87,13 +91,25 @@ def _near(a, b):
     return a is not None and abs(a - b) <= 0.005 * max(1, abs(b))
 
 
+def _size_ok(tok, facts):
+    """A numeric size token (2XL, 3XL) is supported when it (or its alias, 2XL = XXL) is a verified size."""
+    verified = set()
+    for s in facts.get("variants.sizes") or []:
+        for v in (s.get("normalized_size"), s.get("raw_size")) if isinstance(s, dict) else (s,):
+            if v:
+                verified |= {str(v).upper(), _size(str(v)) or ""}
+    return bool({tok.upper(), _size(tok) or tok.upper()} & (verified - {""}))
+
+
 def _number_problems(s, truth):
     """Every number must be the value of the field its context names: material %, gsm, price, sale price, 3/4."""
     f, out = truth["facts"], []
     pct = f.get("materials.material_percentages") or {}
     for m in re.finditer(r"\d+(?:[.,]\d+)?", s):
         n, after, before = _num(m.group(0)), s[m.end():m.end() + 30], _fold(s[max(0, m.start() - 30):m.start()])
-        if after.startswith("/4") or before.endswith("3/"):
+        if re.match(r"x{0,2}l\b", after, re.I) and not re.search(r"[\d.,]$", before):  # 2XL, 3XL, 4XL...: a size
+            ok = _size_ok(m.group(0) + re.match(r"x{0,2}l", after, re.I).group(0), f)
+        elif after.startswith("/4") or before.endswith("3/"):
             ok = f.get("fit_and_style.sleeve_length") == "three_quarter"
         elif re.match(r"\s*%", after):
             mat = N.material_of(re.split(r"[\d,;.]", after.split("%", 1)[1])[0])

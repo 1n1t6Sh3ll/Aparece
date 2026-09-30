@@ -1,0 +1,270 @@
+import { useEffect, useState, type ReactNode } from "react";
+import { AlertTriangle, Bot, Check, FlaskConical, Info, Trophy, X } from "lucide-react";
+import { api, useI18n } from "../lib";
+
+// Page-local strings (EN/ES) so the page stays self-contained while shared i18n/layout are restyled.
+const STR: Record<string, Record<string, string>> = { en: {
+  "cta": "Compare with AI models",
+  "title": "AI comparison: title, tags, description",
+  "sub": "ProductLens and AI models each write a title, tags and description from the same verified facts. Every part is checked for unsupported claims, audited, and tested in a simulated AI shopping context.",
+  "controlled": "Controlled evaluation: a simulated shopping context with 4 real competitor pages, judged by AI models. It is not proof of how any real assistant or search engine will rank a product.",
+  "sample": "Sample data: visibility numbers come from mock judges and mean nothing yet. The audits (claims, coverage, tags) are real. A paid run replaces this.",
+  "notInSet": "This product is not in the comparison set yet; showing the demo products.",
+  "empty": "No comparison report yet. Run benchmark/shootout/run.py to create one.",
+  "best.title": "Best title",
+  "best.tags": "Best tags",
+  "best.description": "Best description",
+  "best.visibility": "Highest measured visibility",
+  "none": "none passed",
+  "wins": "Products won: {w}",
+  "separated": "Ahead of {r} by {d} MRR.",
+  "tie": "Not separated from {r} ({d} MRR); treat as a tie.",
+  "holdoutAgrees": "Held-out judge {j} agrees.",
+  "holdoutDisagrees": "Held-out judge {j} disagrees.",
+  "generators": "Generators",
+  "col.gen": "Generator",
+  "col.qualified": "No unsupported claims",
+  "col.flagged": "Flagged parts",
+  "col.titleScore": "Title audit",
+  "col.tagsScore": "Tags audit",
+  "col.coverage": "Facts covered",
+  "col.intent": "Intents covered",
+  "col.mrr": "MRR [95% CI]",
+  "col.mention": "Mention rate [95% CI]",
+  "qualifiedNote": "A generator is ranked only if none of its titles, tags or descriptions contain unsupported claims. Greyed rows are shown for reference.",
+  "recommended": "Recommended for this product",
+  "product": "Product",
+  "part.title": "Title",
+  "part.tags": "Tags",
+  "part.description": "Description",
+  "recommendedNote": "Each part comes from the best candidate that passed the claims check; tags are merged from passing tags only. Review before publishing.",
+  "candidates": "All candidates",
+  "noTags": "no tags",
+  "caveats": "Caveats",
+  "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats."
+}, es: {
+  "cta": "Comparar con modelos de IA",
+  "title": "Comparación IA: título, etiquetas, descripción",
+  "sub": "ProductLens y varios modelos de IA escriben un título, etiquetas y una descripción a partir de los mismos datos verificados. Cada parte se revisa para detectar afirmaciones sin respaldo, se audita y se prueba en un contexto de compra simulado.",
+  "controlled": "Evaluación controlada: un contexto de compra simulado con 4 fichas reales de la competencia, juzgado por modelos de IA. No demuestra cómo clasificará un producto ningún asistente o buscador real.",
+  "sample": "Datos de ejemplo: la visibilidad viene de jueces simulados y todavía no significa nada. Las auditorías (afirmaciones, cobertura, etiquetas) son reales. Una ejecución de pago lo sustituirá.",
+  "notInSet": "Este producto aún no está en el conjunto de comparación; se muestran los productos de demostración.",
+  "empty": "Aún no hay informe de comparación. Ejecuta benchmark/shootout/run.py para crearlo.",
+  "best.title": "Mejor título",
+  "best.tags": "Mejores etiquetas",
+  "best.description": "Mejor descripción",
+  "best.visibility": "Mayor visibilidad medida",
+  "none": "ninguno pasó",
+  "wins": "Productos ganados: {w}",
+  "separated": "Por delante de {r} por {d} MRR.",
+  "tie": "Sin separación respecto a {r} ({d} MRR); considéralo un empate.",
+  "holdoutAgrees": "El juez reservado {j} coincide.",
+  "holdoutDisagrees": "El juez reservado {j} no coincide.",
+  "generators": "Generadores",
+  "col.gen": "Generador",
+  "col.qualified": "Sin afirmaciones sin respaldo",
+  "col.flagged": "Partes marcadas",
+  "col.titleScore": "Auditoría del título",
+  "col.tagsScore": "Auditoría de etiquetas",
+  "col.coverage": "Datos cubiertos",
+  "col.intent": "Intenciones cubiertas",
+  "col.mrr": "MRR [IC 95%]",
+  "col.mention": "Tasa de mención [IC 95%]",
+  "qualifiedNote": "Un generador solo se clasifica si ninguno de sus títulos, etiquetas o descripciones contiene afirmaciones sin respaldo. Las filas en gris se muestran como referencia.",
+  "recommended": "Recomendado para este producto",
+  "product": "Producto",
+  "part.title": "Título",
+  "part.tags": "Etiquetas",
+  "part.description": "Descripción",
+  "recommendedNote": "Cada parte procede del mejor candidato que pasó la revisión de afirmaciones; las etiquetas se combinan solo entre las que pasaron. Revísalo antes de publicar.",
+  "candidates": "Todos los candidatos",
+  "noTags": "sin etiquetas",
+  "caveats": "Advertencias",
+  "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val x {r} repeticiones."
+} };
+
+function useStr() {
+  const { lang } = useI18n();
+  return (k: string, v: Record<string, string | number> = {}) =>
+    (STR[lang]?.[k] ?? STR.en[k] ?? k).replace(/\{(\w+)\}/g, (_, x) => String(v[x] ?? `{${x}}`));
+}
+
+/** Link from an audit result to this page. */
+export function CompareLink({ productId }: { productId: string }) {
+  const s = useStr();
+  return <a href={`#/compare/${encodeURIComponent(productId)}`} className="btn-ghost no-print self-start sm:self-center"><Bot className="size-4" aria-hidden /> {s("cta")}</a>;
+}
+
+
+type CI = { value: number; lo: number; hi: number };
+type Vis = { n: number; mrr: CI; mention_rate: CI; top3_rate: CI } | null;
+type Gen = {
+  candidates: number; qualified_products: number; qualified: boolean; flagged: number; unsupported_claims: number;
+  title: { score: number | null }; tags: { score: number | null; false: number; duplicates: number };
+  description: { attribute_coverage: number | null; intent_coverage: number | null; readability: number | null; words: number | null };
+  visibility: Vis;
+};
+type Cand = {
+  raw: { title: string | null; tags: string[]; text: string | null; error: string | null };
+  title: { passes: boolean; score: number; chars: number } | null;
+  tags: { passes: boolean; passing: string[]; false: string[]; score: number };
+  description: { passes: boolean; attribute_coverage: number | null } | null;
+  qualified: boolean; visibility: Vis;
+};
+type Product = {
+  product_id: string; brand: string; name: string; language: string; url: string;
+  candidates: Record<string, Cand>; part_winners: Record<Part, string | null>;
+  recommended: { title: { text: string; from: string } | null; tags: { list: string[]; from: string[] } | null;
+    description: { text: string; from: string } | null };
+};
+type Part = "title" | "tags" | "description";
+type Report = {
+  available: boolean; sample?: boolean; label?: string; caveats?: string[]; generated_at?: string;
+  setup?: { products: number; judges: string[]; holdout_judge: string | null; prompts_per_product: number; repeats: number };
+  overall?: { winner: string | null; runner_up?: string; decisive?: boolean; diff_vs_runner_up?: CI | null;
+    holdout_judge?: { judge: string; winner: string | null; agrees: boolean };
+    parts: Record<Part, { winner: string | null; wins: Record<string, number> }> };
+  generators?: Record<string, Gen>; products?: Product[];
+};
+
+const PARTS: Part[] = ["title", "tags", "description"];
+const pct = (v: number | null | undefined) => (v == null ? "–" : `${Math.round(v * 100)}%`);
+const ci = (v: CI | undefined) => (v ? `${v.value.toFixed(2)} [${v.lo.toFixed(2)}–${v.hi.toFixed(2)}]` : "–");
+const Pass = ({ ok }: { ok: boolean }) => ok
+  ? <Check className="size-4 shrink-0 text-emerald-600" aria-label="pass" />
+  : <X className="size-4 shrink-0 text-rose-600" aria-label="fail" />;
+
+export default function AiComparison({ productId }: { productId?: string }) {
+  const { t: tShared } = useI18n();
+  const t = useStr();
+  const [data, setData] = useState<Report | null>(null);
+  const [err, setErr] = useState("");
+  const [sel, setSel] = useState<string>("");
+  useEffect(() => {
+    api<Report>("/v1/shootout").then(setData).catch((e) => setErr(tShared("err.generic", { detail: e.message })));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const head = (
+    <>
+      <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{t("title")}</h1>
+      <p className="mt-2 max-w-2xl muted">{t("sub")}</p>
+    </>
+  );
+  const wrap = (body: ReactNode) => <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}{body}</div>;
+  if (err) return wrap(<p role="alert" className="mt-6 text-rose-700 dark:text-rose-400">{err}</p>);
+  if (!data) return wrap(<div className="card mt-6 h-64 animate-pulse bg-slate-100/60 dark:bg-slate-800/40" aria-hidden />);
+  if (!data.available || !data.overall || !data.generators || !data.products) return wrap(<p className="card mt-6 p-6 muted">{t("empty")}</p>);
+
+  const o = data.overall, gens = data.generators, products = data.products;
+  const inSet = products.some((p) => p.product_id === productId);
+  const cur = products.find((p) => p.product_id === (sel || (inSet ? productId : products[0].product_id)))!;
+
+  return wrap(
+    <>
+      <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-sky-300 bg-sky-50 p-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
+        <FlaskConical className="mt-0.5 size-4 shrink-0" aria-hidden />{t("controlled")}
+      </p>
+      {data.sample && (
+        <p role="note" className="mt-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{t("sample")}
+        </p>
+      )}
+      {productId && !inSet && <p className="mt-3 text-sm muted">{t("notInSet")}</p>}
+
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {PARTS.map((part) => (
+          <div key={part} className="card p-5">
+            <p className="text-sm muted">{t(`best.${part}`)}</p>
+            <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{o.parts[part].winner || t("none")}</p>
+            <p className="mt-1 text-xs muted">{t("wins", { w: Object.entries(o.parts[part].wins).map(([g, n]) => `${g} ${n}`).join(", ") || "–" })}</p>
+          </div>
+        ))}
+        <div className="card p-5">
+          <p className="text-sm muted">{t("best.visibility")}</p>
+          <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{o.winner || t("none")}</p>
+          <p className="mt-1 text-xs muted">
+            {o.diff_vs_runner_up ? t(o.decisive ? "separated" : "tie", { r: o.runner_up!, d: ci(o.diff_vs_runner_up) }) : ""}
+            {o.holdout_judge ? ` ${t(o.holdout_judge.agrees ? "holdoutAgrees" : "holdoutDisagrees", { j: o.holdout_judge.judge })}` : ""}
+          </p>
+        </div>
+      </section>
+
+      <section className="card mt-6 p-5 sm:p-6">
+        <h2 className="text-lg font-semibold">{t("generators")}</h2>
+        <div className="mt-4 -mx-5 overflow-x-auto sm:-mx-6" role="region" tabIndex={0} aria-label={t("generators")}>
+          <table className="w-full min-w-[760px] text-sm">
+            <thead className="text-left muted"><tr className="border-b border-slate-200 dark:border-slate-800">
+              {["gen", "qualified", "flagged", "titleScore", "tagsScore", "coverage", "intent", "mrr", "mention"].map((k) =>
+                <th key={k} scope="col" className="px-3 py-2 font-medium first:pl-5 sm:first:pl-6">{t(`col.${k}`)}</th>)}
+            </tr></thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {Object.entries(gens).map(([g, v]) => (
+                <tr key={g} className={v.qualified ? "" : "text-slate-400"}>
+                  <th scope="row" className="px-5 py-2 text-left font-medium sm:px-6">{g}</th>
+                  <td className="px-3 py-2"><span className="flex items-center gap-1"><Pass ok={v.qualified} />{v.qualified_products}/{v.candidates}</span></td>
+                  <td className="px-3 py-2 tabular-nums">{v.flagged}</td>
+                  <td className="px-3 py-2 tabular-nums">{pct(v.title.score)}</td>
+                  <td className="px-3 py-2 tabular-nums">{pct(v.tags.score)}</td>
+                  <td className="px-3 py-2 tabular-nums">{pct(v.description.attribute_coverage)}</td>
+                  <td className="px-3 py-2 tabular-nums">{pct(v.description.intent_coverage)}</td>
+                  <td className="px-3 py-2 tabular-nums">{ci(v.visibility?.mrr)}</td>
+                  <td className="px-3 py-2 tabular-nums">{ci(v.visibility?.mention_rate)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs muted">{t("qualifiedNote")}</p>
+      </section>
+
+      <section className="card mt-6 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">{t("recommended")}</h2>
+          <label className="text-sm">
+            <span className="sr-only">{t("product")}</span>
+            <select className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-900"
+              value={cur.product_id} onChange={(e) => setSel(e.target.value)}>
+              {products.map((p) => <option key={p.product_id} value={p.product_id}>{p.brand} · {p.name} ({p.language})</option>)}
+            </select>
+          </label>
+        </div>
+        <dl className="mt-4 space-y-3 text-sm">
+          <div><dt className="font-medium">{t("part.title")} <span className="chip bg-slate-100 dark:bg-slate-800">{cur.recommended.title?.from || "–"}</span></dt>
+            <dd className="mt-1">{cur.recommended.title?.text || t("none")}</dd></div>
+          <div><dt className="font-medium">{t("part.tags")} <span className="chip bg-slate-100 dark:bg-slate-800">{cur.recommended.tags?.from.join(", ") || "–"}</span></dt>
+            <dd className="mt-1 flex flex-wrap gap-1.5">{cur.recommended.tags?.list.map((x) => <span key={x} className="chip bg-indigo-50 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200">{x}</span>) || t("none")}</dd></div>
+          <div><dt className="font-medium">{t("part.description")} <span className="chip bg-slate-100 dark:bg-slate-800">{cur.recommended.description?.from || "–"}</span></dt>
+            <dd className="mt-1">{cur.recommended.description?.text || t("none")}</dd></div>
+        </dl>
+        <p className="mt-3 text-xs muted">{t("recommendedNote")}</p>
+
+        <h3 className="mt-6 font-semibold">{t("candidates")}</h3>
+        <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
+          {Object.entries(cur.candidates).map(([g, c]) => (
+            <li key={g} className="py-3 text-sm">
+              <p className="flex flex-wrap items-center gap-2 font-medium">{g}
+                {Object.entries(cur.part_winners).filter(([, w]) => w === g).map(([part]) =>
+                  <span key={part} className="chip bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">{t(`best.${part}`)}</span>)}
+                <span className="muted">MRR {ci(c.visibility?.mrr)}</span>
+              </p>
+              {c.raw.error && <p className="text-rose-700 dark:text-rose-400">{c.raw.error}</p>}
+              <p className="mt-1 flex items-start gap-1.5">{c.title && <Pass ok={c.title.passes} />}<span>{c.raw.title || "–"}</span></p>
+              <p className="mt-1 flex flex-wrap items-center gap-1.5"><Pass ok={c.tags.passes} />
+                {c.raw.tags.length ? c.raw.tags.map((x, i) => <span key={i} className={`chip ${c.tags.false.includes(x) ? "bg-rose-50 text-rose-700 line-through dark:bg-rose-950/50 dark:text-rose-300" : "bg-slate-100 dark:bg-slate-800"}`}>{x}</span>)
+                  : <span className="muted">{t("noTags")}</span>}</p>
+              <p className="mt-1 flex items-start gap-1.5">{c.description && <Pass ok={c.description.passes} />}<span className="muted">{c.raw.text || "–"}</span></p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="card mt-6 p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-slate-400" aria-hidden />{t("caveats")}</h2>
+        <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
+          {(data.caveats || []).map((c) => <li key={c}>{c}</li>)}
+          {data.setup && <li>{t("setup", { p: data.setup.products, j: data.setup.judges.join(", "), h: data.setup.holdout_judge || "–", q: data.setup.prompts_per_product, r: data.setup.repeats })}</li>}
+        </ul>
+      </section>
+    </>,
+  );
+}
