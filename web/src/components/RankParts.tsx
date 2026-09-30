@@ -39,8 +39,8 @@ export function RankCard({ audit }: { audit: Audit }) {
     return (
       <section className="card p-6 rise">
         <p className="text-sm font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">{t("rank.eyebrow")}</p>
-        <h2 className="mt-2 text-2xl font-bold">{t("rank.alone")}</h2>
-        <p className="mt-1 muted">{t("rank.aloneD")}</p>
+        <h2 className="mt-2 text-2xl font-bold">{t(r.peer_data === false ? "rank.noData" : "rank.alone")}</h2>
+        <p className="mt-1 muted">{t(r.peer_data === false ? "rank.noDataD" : "rank.aloneD")}</p>
         {lang === "en" && (audit.notes || []).map((n) => <p key={n} className="mt-2 text-sm muted">{n}</p>)}
       </section>
     );

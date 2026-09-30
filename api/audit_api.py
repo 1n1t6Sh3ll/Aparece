@@ -219,6 +219,43 @@ def comparison_table(target, top):
     return {"fields": fields, "labels": {f: label(f) for f in fields}, "rows": rows}
 
 
+NO_DATASET = "No peer dataset is loaded, so this listing is not compared with other products."
+MIN_PEERS_FOR_PLAN = 3  # fewer comparable shirts than this: the peer-based plan is topped up from the fixed checklist
+CHECKLIST_FACTS = ["materials.primary_material", "materials.fabric_weight_gsm", "fit_and_style.fit",
+                   "fit_and_style.neckline", "fit_and_style.sleeve_length", "identity.audience", "variants.colors",
+                   "variants.sizes"]  # fixed priority; then unanswered description questions; then schema.org markup
+CHECKLIST_NOTE = "not stated on your page"
+
+
+def checklist_actions(target, have, limit=3):
+    """Up to `limit` fixes from a FIXED attribute checklist (no peers involved): facts not stated on the page in
+    CHECKLIST_FACTS order, then description questions unanswered, then missing Product/Offer markup. `have` are
+    fields already covered by peer-based actions. Says only what is missing; no claim about peers or ranking."""
+    out, present_ = [], attributes_present(target)
+    for f in CHECKLIST_FACTS:
+        if not present_.get(f, True) and f not in have:
+            out.append(action("checklist", 1, f"Add {label(f).lower()}, if you can verify it",
+                              f"We couldn't find {label(f).lower()} on your page. It is on our standard listing checklist; "
+                              "this is not a comparison with other products.",
+                              {"basis": CHECKLIST_NOTE}, "OBSERVED_FACT", EFFORT.get(f, "low"), f))
+    unanswered = sorted(set(INTENTS) - set(description_coverage(target)["intents"]))
+    if unanswered and "content.full_description" not in have:
+        out.append(action("checklist", 2, "Answer common shopper questions in your description, using facts you can verify",
+                          f"Your description does not yet answer {len(unanswered)} of {len(INTENTS)} common shopper questions "
+                          f"({', '.join(unanswered)}). Only answer those you can verify.",
+                          {"basis": CHECKLIST_NOTE, "unanswered": unanswered, "of": len(INTENTS)},
+                          "OBSERVED_FACT", "med", "content.full_description"))
+    if sd_known(target):
+        sd = target["structured_data"]
+        for f, what in (("product_schema_present", "Product"), ("offer_schema_present", "Offer (price and stock)")):
+            if not sd[f] and f"structured_data.{f}" not in have:
+                out.append(action("checklist", 3, f"Add schema.org {what} markup that matches your visible page",
+                                  f"We found no {what} structured data on your page.", {"basis": CHECKLIST_NOTE, "of": 0},
+                                  "OBSERVED_FACT", "med", f"structured_data.{f}",
+                                  "Machine-readable markup only; your visible page and URL stay the same."))
+    return out[:limit]
+
+
 def build_actions(target, metrics, issues, pp):
     """Ranked: missing attributes most top-ranked shirts state > description > structured data > price > language."""
     n = metrics["peer_count"]
@@ -271,6 +308,12 @@ def build_actions(target, metrics, issues, pp):
         acts.append(action(
             "language", 5, "Declare your page language", "We couldn't detect a language (no <html lang>), so "
             "we can't compare you with products in your language.", {}, "UNKNOWN", "low", "source.language"))
+    if n < MIN_PEERS_FOR_PLAN:  # too few peers to compare with: top up from the fixed checklist (up to 3 fixes in all)
+        have = {a["field"] for a in acts}
+        room = 3 - sum(a["kind"] in ("missing_attribute", "description") or (a["kind"] == "structured_data" and sd_known(target))
+                      for a in acts)
+        acts += checklist_actions(target, have, max(room, 0))
+        acts.sort(key=lambda a: a["priority"])
     return acts
 
 
@@ -651,7 +694,8 @@ def audit(payload: dict = Body(...)):
                     "top_median_facts": statistics.median(counts) if counts else None,
                     "top_count": len(top), "top_missing": [a["field"] for a in acts if a["kind"] == "missing_attribute"][:3],
                     "price_position": pp.get("position")},
-        "rank": {k: v for k, v in rk.items() if k != "leaderboard"},
+        "rank": {**{k: v for k, v in rk.items() if k != "leaderboard"}, "peer_data": bool(recs),
+                 **({} if recs else {"note": "No peer data loaded: not ranked."})},
         "leaderboard": rk["leaderboard"],
         "table": comparison_table(target, ranked),
         "context": {"language": get(target, "source", "language"), "currency": get(target, "commerce", "currency"),
@@ -669,7 +713,8 @@ def audit(payload: dict = Body(...)):
                                    "top_with_rating": sum(get(p, "commerce", "rating") is not None for p in top)}},
         "price_position": pp,
         "actions": acts,
-        "unknowns": [i["statement"] for i in res["issues"] if i["type"] in ("UNKNOWN", "SUPPORTED_HYPOTHESIS")],
+        "unknowns": [NO_DATASET if (i["field"] == "peers" and not recs) else i["statement"]
+                     for i in res["issues"] if i["type"] in ("UNKNOWN", "SUPPORTED_HYPOTHESIS")],
         "visibility": dash.visibility_summary(get(target, "source", "merchant_domain")
                                               or (url_key(get(target, "source", "url")) or (None,))[0]),
         "conflicts": norm.get("conflicts") or [],
