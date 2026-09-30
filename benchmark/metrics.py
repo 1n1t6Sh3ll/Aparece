@@ -83,6 +83,70 @@ def build_report(records, products, k=3):
     }
 
 
+def _by_model(records, products):
+    providers = defaultdict(set)
+    for r in records:
+        providers[r["model"]].add(r.get("provider"))
+    ambiguous = {mid for mid, provs in providers.items() if len(provs) > 1}
+    out = defaultdict(list)
+    for r in records:
+        out[model_key(r, ambiguous)].append((r, match_response(r.get("response_text", ""), products)))
+    return out
+
+
+def competitor_win_rate(records, products, a, b):
+    """Pairwise competitor win rate CWR(A,B) per model and overall (vision section 19).
+
+    Per response: A wins when A is mentioned and B is not, or both are and A comes first;
+    B wins symmetrically; neither mentioned is no contest. CWR = A wins / contests
+    (None when there are no contests). CWR(B,A) = 1 - CWR(A,B)."""
+    def rate(pairs):
+        aw = bw = 0
+        for _, m in pairs:
+            ra = m["mentions"].index(a) if a in m["mentions"] else None
+            rb = m["mentions"].index(b) if b in m["mentions"] else None
+            if ra is not None and (rb is None or ra < rb):
+                aw += 1
+            elif rb is not None:
+                bw += 1
+        n = aw + bw
+        return {"a_wins": aw, "b_wins": bw, "contests": n, "responses": len(pairs),
+                "cwr": round(aw / n, 4) if n else None}
+    groups = _by_model(records, products)
+    return {"a": a, "b": b, "overall": rate([p for ps in groups.values() for p in ps]),
+            "models": {mk: rate(ps) for mk, ps in sorted(groups.items())}}
+
+
+def language_visibility_gap(records, products, metric="mention_rate", en="en", es="es"):
+    """LVG = V_EN - V_ES per model and product, where V is `metric` (mention_rate,
+    mrr, citation_rate or top{k}_rate from _entity_rows with k=3). None when either
+    language has no responses for that model. Positive means more visible in English."""
+    ids = {p["product_id"]: p["product_id"] for p in products}
+    out = {}
+    for mk, pairs in sorted(_by_model(records, products).items()):
+        rows = {}
+        for lang in (en, es):
+            ms = [m for r, m in pairs if r.get("language") == lang]
+            rows[lang] = _entity_rows(ms, ids, lambda m: m["cited_products"], 3) if ms else None
+        out[mk] = {}
+        for pid in sorted(ids):
+            ve = rows[en][pid][metric] if rows[en] else None
+            vs = rows[es][pid][metric] if rows[es] else None
+            out[mk][pid] = {"v_en": ve, "v_es": vs,
+                            "lvg": round(ve - vs, 4) if ve is not None and vs is not None else None}
+    return {"metric": metric, "models": out}
+
+
+def claim_accuracy_passthrough(claims_rep):
+    """Claim accuracy per model and language copied from claims.claims_report output
+    (no recomputation), for side-by-side use with CWR and LVG."""
+    return {"overall": (claims_rep.get("overall") or {}).get("claim_accuracy"),
+            "models": {mk: {"claim_accuracy": m.get("claim_accuracy"),
+                            "languages": {l: v.get("claim_accuracy")
+                                          for l, v in (m.get("languages") or {}).items()}}
+                       for mk, m in (claims_rep.get("models") or {}).items()}}
+
+
 def to_markdown(report):
     k = report["k"]
     lines = [f"# AI visibility report ({report['responses']} responses)", "",
