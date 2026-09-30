@@ -21,8 +21,8 @@ client = TestClient(main.app)
 
 def synthetic_report(values, k=3, language="en", per_language=True):
     """Test-only report in benchmark/metrics.py build_report shape. values: {model: {product_id: mention_rate}}.
-    build_report's languages[lang] summaries have no per-product rows today; per_language=True adds them
-    (the rows a language experiment requires), per_language=False is the current real shape."""
+    per_language=True includes languages[lang].products (as build_report does); per_language=False
+    simulates an older report without them."""
     def summary(rows):
         out = {"responses": 10, "any_catalog_mention_rate": 0.5, "stability": None, "unmatched_mentions": 0, "sites": {}}
         return {**out, "products": rows} if rows is not None else out
@@ -156,16 +156,24 @@ class ExperimentsTest(unittest.TestCase):
         with self.assertRaises(lift.MissingLanguageMetrics):
             lift.extract_metrics(rep, {"p_target"}, "fr")  # never falls back to all-language rows
 
-    def test_real_build_report_without_language_products_is_refused(self):
+    def test_real_build_report_is_accepted(self):
+        """Acceptance: a real benchmark/metrics.py build_report output (per-language product rows)
+        is accepted by the experiments API; a report lacking those rows is still refused."""
         from benchmark.metrics import build_report
         products = [{"product_id": "p_target", "site": "shop.example.com", "url": "https://shop.example.com/p/p_target",
                      "aliases": ["Everyday Tee"], "name": "Everyday Tee", "brand": "Northwind"}]
-        records = [{"provider": "mock", "model": "opt", "prompt_id": "q1", "variant": 0, "language": "en",
-                    "response_text": "Try https://shop.example.com/p/p_target"}]
-        rep = build_report(records, products)
-        self.assertIn("p_target", rep["models"]["opt"]["products"])
-        self.assertNotIn("products", rep["models"]["opt"]["languages"]["en"])
+        records = [{"provider": "mock", "model": "opt", "prompt_id": "q1", "variant": 0, "language": lang,
+                    "split": "dev", "response_text": text}
+                   for lang, text in (("en", "Try https://shop.example.com/p/p_target"), ("en", "nothing"),
+                                      ("es", "nada"))]
+        rep = json.loads(json.dumps(build_report(records, products)))  # as written to report.json
+        self.assertEqual(rep["models"]["opt"]["languages"]["en"]["products"]["p_target"]["mention_rate"], 0.5)
+        self.assertEqual(rep["models"]["opt"]["languages"]["es"]["products"]["p_target"]["mention_rate"], 0.0)
         eid = self.create()["id"]
+        r = client.post(f"/v1/experiments/{eid}/results",
+                        json={"kind": "benchmark", "phase": "baseline", "split": "dev", "report": rep})
+        self.assertEqual(r.status_code, 201, r.text)
+        rep["models"]["opt"]["languages"]["en"].pop("products")
         r = client.post(f"/v1/experiments/{eid}/results",
                         json={"kind": "benchmark", "phase": "baseline", "split": "dev", "report": rep})
         self.assertEqual(r.status_code, 422)

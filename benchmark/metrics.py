@@ -62,8 +62,10 @@ def build_report(records, products, k=3):
     by_model = defaultdict(list)
     for r, m in zip(records, matched):
         by_model[model_key(r, ambiguous)].append((r, m))
-    models = {}
+    models, product_rows, lvg = {}, [], {}
     for model, pairs in sorted(by_model.items()):
+        product_rows += product_language_rows(model, pairs, products, k)
+        lvg[model] = _lvg(pairs, products, k=k)
         recs, ms = [p[0] for p in pairs], [p[1] for p in pairs]
         out = _summary(recs, ms, products, k)
         out["products"] = _entity_rows(ms, {p["product_id"]: p["product_id"] for p in products},
@@ -71,7 +73,10 @@ def build_report(records, products, k=3):
         langs = defaultdict(list)
         for r, m in pairs:
             langs[r["language"]].append((r, m))
-        out["languages"] = {lang: _summary([p[0] for p in lp], [p[1] for p in lp], products, k)
+        ids = {p["product_id"]: p["product_id"] for p in products}
+        out["languages"] = {lang: dict(_summary([p[0] for p in lp], [p[1] for p in lp], products, k),
+                                       products=_entity_rows([p[1] for p in lp], ids,
+                                                             lambda m: m["cited_products"], k))
                             for lang, lp in sorted(langs.items())}
         models[model] = out
     unmatched = Counter((u["kind"], u["text"]) for m in matched for u in m["unmatched"])
@@ -79,6 +84,10 @@ def build_report(records, products, k=3):
         "k": k,
         "responses": len(records),
         "models": models,
+        # per model x product x language x split, for language-specific lift
+        "product_rows": product_rows,
+        # LVG = V_EN - V_ES (mention_rate, all splits) per model and product
+        "lvg": {"metric": "mention_rate", "models": lvg},
         "top_unmatched": [{"kind": kd, "text": t, "count": c} for (kd, t), c in unmatched.most_common(20)],
     }
 
@@ -121,20 +130,40 @@ def language_visibility_gap(records, products, metric="mention_rate", en="en", e
     """LVG = V_EN - V_ES per model and product, where V is `metric` (mention_rate,
     mrr, citation_rate or top{k}_rate from _entity_rows with k=3). None when either
     language has no responses for that model. Positive means more visible in English."""
+    return {"metric": metric,
+            "models": {mk: _lvg(pairs, products, metric, en, es)
+                       for mk, pairs in sorted(_by_model(records, products).items())}}
+
+
+def _lvg(pairs, products, metric="mention_rate", en="en", es="es", k=3):
+    """{product_id: {v_en, v_es, lvg}} for one model's (record, match) pairs."""
     ids = {p["product_id"]: p["product_id"] for p in products}
+    rows = {}
+    for lang in (en, es):
+        ms = [m for r, m in pairs if r.get("language") == lang]
+        rows[lang] = _entity_rows(ms, ids, lambda m: m["cited_products"], k) if ms else None
     out = {}
-    for mk, pairs in sorted(_by_model(records, products).items()):
-        rows = {}
-        for lang in (en, es):
-            ms = [m for r, m in pairs if r.get("language") == lang]
-            rows[lang] = _entity_rows(ms, ids, lambda m: m["cited_products"], 3) if ms else None
-        out[mk] = {}
-        for pid in sorted(ids):
-            ve = rows[en][pid][metric] if rows[en] else None
-            vs = rows[es][pid][metric] if rows[es] else None
-            out[mk][pid] = {"v_en": ve, "v_es": vs,
-                            "lvg": round(ve - vs, 4) if ve is not None and vs is not None else None}
-    return {"metric": metric, "models": out}
+    for pid in sorted(ids):
+        ve = rows[en][pid][metric] if rows[en] else None
+        vs = rows[es][pid][metric] if rows[es] else None
+        out[pid] = {"v_en": ve, "v_es": vs,
+                    "lvg": round(ve - vs, 4) if ve is not None and vs is not None else None}
+    return out
+
+
+def product_language_rows(model, pairs, products, k=3):
+    """Flat rows per product x language x split for one model: mention_rate,
+    top{k}_rate, mrr, citation_rate and runs (responses in that language/split)."""
+    ids = {p["product_id"]: p["product_id"] for p in products}
+    groups = defaultdict(list)
+    for r, m in pairs:
+        groups[(r.get("language"), r.get("split"))].append(m)
+    rows = []
+    for (lang, split), ms in sorted(groups.items(), key=lambda x: (str(x[0][0]), str(x[0][1]))):
+        for pid, row in _entity_rows(ms, ids, lambda m: m["cited_products"], k).items():
+            rows.append(dict(model=model, product_id=pid, language=lang, split=split,
+                             runs=len(ms), **row))
+    return rows
 
 
 def claim_accuracy_passthrough(claims_rep):
