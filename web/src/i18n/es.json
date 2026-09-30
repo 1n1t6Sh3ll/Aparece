@@ -47,7 +47,7 @@
   "res.headline0.d": "Tu página ya incluye los datos que muestran la mayoría de productos similares. Mantenla al día y vuelve a revisarla cuando la cambies.",
   "res.sentence": "Encontramos {facts} de {of} datos clave en tu página. Las camisetas similares mejor clasificadas indican {median}.",
   "res.sentenceNoPeers": "Encontramos {facts} de {of} datos clave en tu página. Aún no encontramos productos similares con los que comparar.",
-  "res.trust": "Posición calculada entre {peers} camisetas comparables de nuestra base de datos según lo completa que está la ficha. Todavía no hemos probado tu producto con asistentes de IA y no podemos prometer mejoras de posicionamiento ni de ventas.",
+  "res.trust": "Posición calculada entre {peers} camisetas comparables de nuestra base de datos según lo completa que está la ficha. Si los asistentes de IA recomiendan este producto solo se mide cuando pulsas Comprobar ahora arriba, con pocas preguntas. No podemos prometer mejoras de posicionamiento ni de ventas.",
   "res.ctx.lang": "Idioma",
   "res.ctx.currency": "Moneda",
   "res.ctx.peers": "Comparado con",
