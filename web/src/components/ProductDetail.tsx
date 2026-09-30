@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, CornerDownLeft, ExternalLink, GitCompare, History, KeyRound, Loader2, MessageSquare, RefreshCw, Shirt } from "lucide-react";
-import { ApiError, cap, errorText, fieldLabel, fmtValue, manageToken, money, tn, useI18n } from "../lib";
+import { ApiError, cap, errorText, fieldLabel, fmtValue, manageToken, money, saveManageToken, tn, useI18n } from "../lib";
 import { history, num, type ChangeEvent, type ChatAnswer, type Diff, type Monitored, type Snapshot, type TrendPoint } from "../history";
 import { useSession } from "../session";
 import { Empty, ErrorBox, useToast } from "../ui";
@@ -187,6 +187,7 @@ export default function ProductDetail({ id }: { id: string }) {
   const [err, setErr] = useState<{ msg: string; auth: boolean; missing: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [img, setImg] = useState(true);
+  const [mt, setMt] = useState("");
 
   const load = () => Promise.all([history.snapshots(id), history.trends(id), history.history(id)])
     .then(([s, tr, hi]) => { setSnaps(s); setPoints(tr); setInfo(hi); setErr(null); })
@@ -198,7 +199,13 @@ export default function ProductDetail({ id }: { id: string }) {
       <a href="#/products" className="btn-ghost -ml-2 mb-3"><ArrowLeft className="size-4" aria-hidden /> {t("nav.products")}</a>
       {err.missing ? <Empty icon={<History className="size-6" aria-hidden />} title={t("pd.notFound")} body={t("pd.notFoundBody")}><a className="btn-outline" href="#/products">{t("nav.products")}</a></Empty>
         : err.auth || !manageToken(id)
-        ? <Empty icon={<KeyRound className="size-6" aria-hidden />} title={t("pd.noToken")} body={t("pd.noTokenBody")} />
+        ? <Empty icon={<KeyRound className="size-6" aria-hidden />} title={t("pd.noToken")} body={t("pd.noTokenBody")}>
+            <form className="flex w-full max-w-md gap-2" onSubmit={(e) => { e.preventDefault(); if (mt.trim()) { saveManageToken(id, mt.trim()); load(); } }}>
+              <label htmlFor="mt" className="sr-only">{t("pd.enterToken")}</label>
+              <input id="mt" className="input font-mono" autoComplete="off" value={mt} onChange={(e) => setMt(e.target.value)} placeholder={t("pd.enterToken")} />
+              <button className="btn-primary" disabled={!mt.trim()}>{t("pd.useToken")}</button>
+            </form>
+          </Empty>
         : <ErrorBox title={t("err.title")} msg={err.msg}><button className="btn-outline" onClick={load}>{t("pd.retry")}</button></ErrorBox>}
     </div>
   );

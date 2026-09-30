@@ -8,7 +8,7 @@ import Results, { Checklist } from "./Results";
 /** Examples verified 2026-09-29 against /v1/audit (robots.txt allows them, 200 in under 4 s, ranked among 25).
  * Re-verify before changing; stores that rate-limited us (HTTP 429) were dropped. */
 export const SAMPLES = [
-  { label: "Tacos Domingo Tee", url: "https://mundodomingo.xyz/products/tacos-domingo-tee-white" },
+  { label: "Mundo Domingo T-shirt", url: "https://mundodomingo.xyz/products/tacos-domingo-tee-white" },
   { label: "Brava Fabrics Out of Office Tee", url: "https://bravafabrics.com/products/out-of-office-t-shirt-mint" },
   { label: "Sepiia Camiseta Soft", url: "https://sepiia.com/products/camiseta-hombre-cuello-redondo-negra-soft" },
 ];

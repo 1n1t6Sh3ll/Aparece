@@ -5,6 +5,7 @@ import { papi, productName, type Decision, type Product, type Profile, type Shar
 import { useSession } from "../session";
 import { Empty } from "../ui";
 import { csvCell } from "./BulkPage";
+import { factCount } from "../facts";
 import FixPanel, { type FixDecision } from "./FixPanel";
 import { actionText } from "./Results";
 
@@ -36,7 +37,7 @@ function ProductCard({ p, owner, onChange }: { p: Product; owner: boolean; onCha
             {!a.actions.length && <p className="muted">{t("rep.noFixes")}</p>}
           </div>
           <div>
-            <p className="font-medium">{t("rep.found", { n: a.summary.facts_found, of: a.summary.attributes_checked })}</p>
+            <p className="font-medium">{t("rep.found", { n: factCount(a).n, of: factCount(a).of })}</p>
             <p className="mt-1 muted">{t("rep.notFound")}: {a.not_found.slice(0, 6).map((x) => fieldLabel(lang, x.field)).join(", ") || "-"}</p>
           </div>
           <div>
@@ -76,8 +77,8 @@ function csv(name: string, products: Product[], t: T, lang: Lang) {
   const rows = products.map((p) => {
     const a = p.audit;
     const f = a ? a.actions.slice(0, 3).map((x) => actionText(x, a, t, lang).title) : [];
-    return [productName(p), p.source, p.merchant_stated, p.url, a?.rank.position, a?.rank.total, a?.rank.score, a?.summary.facts_found,
-      a?.summary.attributes_checked, f[0], f[1], f[2], a?.product.price, a?.product.currency, a?.price_position.position,
+    return [productName(p), p.source, p.merchant_stated, p.url, a?.rank.position, a?.rank.total, a?.rank.score, a && factCount(a).n,
+      a && factCount(a).of, f[0], f[1], f[2], a?.product.price, a?.product.currency, a?.price_position.position,
       a ? a.visibility.available : ""].map(csvCell).join(",");
   });
   const link = document.createElement("a");

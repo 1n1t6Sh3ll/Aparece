@@ -139,7 +139,7 @@ const Pass = ({ ok }: { ok: boolean }) => ok
   : <X className="size-4 shrink-0 text-rose-600" aria-label="fail" />;
 
 export default function AiComparison({ productId }: { productId?: string }) {
-  const { t: tShared } = useI18n();
+  const { t: tShared, lang } = useI18n();
   const t = useStr();
   const [data, setData] = useState<Report | null>(null);
   const [err, setErr] = useState("");
@@ -267,7 +267,8 @@ export default function AiComparison({ productId }: { productId?: string }) {
       <section className="card mt-6 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-stone-400" aria-hidden />{t("caveats")}</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
-          {(data.caveats || []).map((c) => <li key={c}>{c}</li>)}
+          {(data.caveats || []).map((c) => <li key={c} lang="en">{c}</li>)}
+          {lang !== "en" && (data.caveats || []).length > 0 && <li className="list-none muted">{tShared("mod.origEn")}</li>}
           {data.setup && <li>{t("setup", { p: data.setup.products, j: data.setup.judges.join(", "), h: data.setup.holdout_judge || "–", q: data.setup.prompts_per_product, r: data.setup.repeats })}</li>}
         </ul>
       </section>
