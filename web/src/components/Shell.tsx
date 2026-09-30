@@ -122,7 +122,7 @@ export default function Shell({ page, children }: { page: string; children: Reac
   );
   const brand = (
     <a href="#/" className="flex items-center gap-2 px-6 py-5 font-bold tracking-tight text-white">
-      <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] shadow-sm"><Aperture className="size-5" aria-hidden /></span>
+      <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] shadow-sm"><Aperture className="size-5" aria-hidden /></span>
       ProductLens
     </a>
   );

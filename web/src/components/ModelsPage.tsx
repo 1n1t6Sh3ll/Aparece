@@ -78,7 +78,7 @@ export default function ModelsPage() {
 
       {winner && (
         <section className="card mt-6 flex items-start gap-4 p-6 rise">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent)] text-white"><Award className="size-6" aria-hidden /></span>
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent)] text-[var(--accent-fg)]"><Award className="size-6" aria-hidden /></span>
           <div>
             <p className="text-lg font-semibold sm:text-xl">
               {n ? t("mod.headline", { m: winner.m.label, p: pct(winner.m.non_null_acc)!, n }) : t("mod.headlineNoN", { m: winner.m.label, p: pct(winner.m.non_null_acc)! })}

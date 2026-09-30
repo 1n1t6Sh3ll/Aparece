@@ -37,7 +37,7 @@ export function Landing() {
       <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]">
         <nav className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4" aria-label={t("nav.menu")}>
           <a href="#/" className="mr-auto flex items-center gap-2 font-bold tracking-tight">
-            <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-white"><Aperture className="size-5" aria-hidden /></span>ProductLens
+            <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-[var(--accent-fg)]"><Aperture className="size-5" aria-hidden /></span><span className="max-sm:sr-only">ProductLens</span>
           </a>
           <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById("features")?.scrollIntoView({ behavior: "smooth" }); }} className="btn-ghost hidden sm:inline-flex">{t("land.nav.features")}</a>
           <a href="#/models" className="btn-ghost hidden sm:inline-flex">{t("nav.models")}</a>
@@ -110,7 +110,7 @@ export function Landing() {
           <ol className="mt-10 grid gap-6 sm:grid-cols-3">
             {[1, 2, 3].map((n) => (
               <li key={n} className="card p-6">
-                <span className="grid size-8 place-items-center rounded-full bg-[var(--accent)] text-sm font-bold text-white">{n}</span>
+                <span className="grid size-8 place-items-center rounded-full bg-[var(--accent)] text-sm font-bold text-[var(--accent-fg)]">{n}</span>
                 <h3 className="mt-4 font-semibold">{t(`land.how.${n}.t`)}</h3><p className="mt-1 text-sm muted">{t(`land.how.${n}.d`)}</p>
               </li>
             ))}
@@ -385,7 +385,7 @@ export function ProductsHub() {
             </p>
           )}
           {rows.length ? (
-            <div className="overflow-x-auto">
+            <div className="relative overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
                 <thead className="text-left text-xs muted"><tr>
                   {th("name", t("table.product"))}<th scope="col" className="px-4 py-2 font-medium">{t("pr.rank")}</th>{th("score", t("chart.score"))}{th("fixes", t("pr.fixes"))}
