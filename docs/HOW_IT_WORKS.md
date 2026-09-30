@@ -148,7 +148,7 @@ The page shows which writer each part came from.
 
 **5. Matching AI answers.** For the visibility benchmark, `benchmark/match.py` counts a product as mentioned when its exact URL appears, one of its aliases appears, or its brand and name appear on the same line. The metrics are mention rate, top-3 rate and MRR (average of 1 ÷ position of the first mention).
 
-**6. The AI comparison: how the versions are ranked.** Six writers get the same verified facts (`benchmark/shootout/run.py` → `generate`):
+**6. The AI comparison: how the versions are ranked.** Five writers get the same verified facts in the saved benchmark (`benchmark/shootout/run.py` → `generate`); the live comparison for a pasted link adds a sixth, Aparece + keywords:
 - **Aparece (no AI model)**: text built from templates;
 - **Aparece + keywords** (live comparison, any link): the same text plus shopper keywords (t-shirt, cotton, crew neck...) that the fact-check accepts as grounded; free, no model. If no keyword can be added it equals the plain Aparece version. Code: `benchmark/shootout/boost.py`;
 - **Aparece + gpt-4o-mini**: the model writes inside Aparece's fact-check and reward;
