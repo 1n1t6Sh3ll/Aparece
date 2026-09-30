@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS change_events (id INTEGER PRIMARY KEY, product_id INT
   before TEXT, after TEXT);
 CREATE TABLE IF NOT EXISTS runs (id INTEGER PRIMARY KEY, kind TEXT NOT NULL, product_id INTEGER, started_at TEXT NOT NULL,
   status TEXT NOT NULL, detail TEXT);
+CREATE TABLE IF NOT EXISTS snapshot_metrics (snapshot_id INTEGER PRIMARY KEY REFERENCES snapshots(id), metrics TEXT NOT NULL);
 CREATE TRIGGER IF NOT EXISTS snapshots_no_update BEFORE UPDATE ON snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS snapshots_no_delete BEFORE DELETE ON snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS events_no_update BEFORE UPDATE ON change_events BEGIN SELECT RAISE(ABORT, 'events are immutable'); END;
@@ -165,6 +166,25 @@ def add_snapshot(pid, data, events):
                        [(pid, sid, at, e["type"], e.get("field"), json.dumps(e.get("before"), ensure_ascii=False),
                          json.dumps(e.get("after"), ensure_ascii=False)) for e in events])
     return sid
+
+
+def snapshot(pid, sid):
+    """One snapshot of product pid (None if it belongs to another product)."""
+    with connect() as db:
+        row = db.execute("SELECT * FROM snapshots WHERE id = ? AND product_id = ?", (sid, pid)).fetchone()
+    return {**dict(row), "data": json.loads(row["data"])} if row else None
+
+
+def cached_metrics(sid):
+    with connect() as db:
+        row = db.execute("SELECT metrics FROM snapshot_metrics WHERE snapshot_id = ?", (sid,)).fetchone()
+    return json.loads(row["metrics"]) if row else None
+
+
+def cache_metrics(sid, metrics):
+    with connect() as db:
+        db.execute("INSERT OR REPLACE INTO snapshot_metrics (snapshot_id, metrics) VALUES (?, ?)",
+                   (sid, json.dumps(metrics, ensure_ascii=False)))
 
 
 def history(pid):

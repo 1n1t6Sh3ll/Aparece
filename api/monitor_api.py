@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import safe_fetch  # noqa: E402
-from monitor import crawl, scheduler, store  # noqa: E402
+from monitor import crawl, history as snapshot_history, scheduler, store  # noqa: E402
 
 router = APIRouter(prefix="/v1", tags=["monitor"], on_startup=[scheduler.start], on_shutdown=[scheduler.stop])
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -124,4 +124,25 @@ def recrawl(public_id: str, request: Request, x_manage_token: str | None = Heade
 def history(public_id: str, x_manage_token: str | None = Header(None)):
     pid = authorize(public_id, x_manage_token)
     h = {k: [{c: v for c, v in r.items() if c != "product_id"} for r in rows] for k, rows in store.history(pid).items()}
+    for s in h["snapshots"]:
+        s["data"].pop("record", None)  # full normalized record is only used server-side (metrics, diffs)
     return {"product": public(store.product(pid=pid)), **h}
+
+
+@router.get("/products/{public_id}/snapshots")
+def snapshots(public_id: str, x_manage_token: str | None = Header(None)):
+    return {"results": snapshot_history.snapshots(authorize(public_id, x_manage_token))}
+
+
+@router.get("/products/{public_id}/snapshots/{a}/diff/{b}")
+def snapshot_diff(public_id: str, a: int, b: int, x_manage_token: str | None = Header(None)):
+    pid = authorize(public_id, x_manage_token)
+    sa, sb = store.snapshot(pid, a), store.snapshot(pid, b)
+    if not sa or not sb:
+        raise HTTPException(404, "snapshot not found")
+    return snapshot_history.diff(sa, sb)
+
+
+@router.get("/products/{public_id}/trends")
+def trends(public_id: str, x_manage_token: str | None = Header(None)):
+    return snapshot_history.trends(authorize(public_id, x_manage_token))
