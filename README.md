@@ -94,6 +94,10 @@ python -m benchmark.harness run ... --models anthropic:<model> --max-usd 5
 - Hallucination check (`benchmark/claims.py`): `report` parses the sentences around each matched product with the `normalize.py` rules and labels each attribute claim SUPPORTED / CONTRADICTED / UNVERIFIABLE against that product's non-null ground truth. Per model/language it reports claim accuracy = supported/(supported+contradicted), hallucination rate = contradicted/(supported+contradicted), the unverifiable share (never counted wrong), and quoted examples with gold evidence.
 - Metrics (mention rate, top-k, MRR, citation rate, stability) describe observed outputs of black-box systems, not their internals.
 
+## Experiments (intervention lift)
+
+`POST /v1/experiments` records an intervention (`EXP-000001`, ...): product, language, market, problem, intervention, before/after snapshot refs, optimization and holdout models. Control products are auto-picked with `analysis/peers.py` from `EXPERIMENTS_CATALOG` (else `PRODUCTLENS_DATA`), excluding `changed_products`. `POST /v1/experiments/{id}/results` appends one benchmark `report.json` per run (`phase` baseline/post, `split` dev/hidden) or an accuracy value (`phase` before/after). `GET /v1/experiments/{id}` returns the analysis: adjusted lift = treatment change - control change (pp) with a bootstrap CI over runs, a dev-vs-hidden overfitting flag, holdout-model generalization, and an accuracy guardrail (rejected if accuracy drops). Wording is "Observed adjusted visibility lift: +X pp", an observational comparison, not a causal claim. Store: SQLite at `EXPERIMENTS_DB` (append-only). Export the intervention dataset with `python -m experiments export rows.jsonl`.
+
 ## Results
 
 No results are claimed in this README. Numbers appear only when the evaluation files exist in your checkout:
