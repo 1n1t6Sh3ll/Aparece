@@ -1,10 +1,12 @@
 """Raw record -> normalized record (dataset/schema/normalized_record.schema.json).
 
 Deterministic rules only (regex + lookup tables, English and Spanish). Every value is backed by an
-evidence item whose source_text is an exact substring of the raw field named by source_location.
+evidence item whose source_text is an exact substring of the raw field named by source_location, after
+HTML-entity decoding (decoded_text; the raw record keeps the page's own encoding).
 Values not stated on the page stay null. Disagreeing sources are recorded in `conflicts` and the
 value is left null (no authority ranking is approved yet, docs/DATASET_SPEC.md Part B).
 """
+import html
 import re
 
 from extract import BULLET_RE, hash_id, canonical_key
@@ -378,7 +380,36 @@ def text_sources(raw, kinds=ATTRIBUTE_SECTIONS):
     return [(loc, t) for loc, t in out if t]
 
 
+RAW_KEEP = {"raw_json_ld", "raw_product_schema", "raw_offer_schema", "raw_product_group_schema", "raw_variant_schema",
+            "source_url", "final_url", "canonical_url", "image_urls", "url", "image_url"}
+
+
+def unescape(s):
+    """HTML entities decoded until stable (double-encoded, named, decimal and hex: "Lord&#x20;of" -> "Lord of")."""
+    for _ in range(5):
+        decoded = html.unescape(s)
+        if decoded == s:
+            break
+        s = decoded
+    return s
+
+
+def decoded_text(value, key=None):
+    """A copy of a raw record (or part) with entities decoded in text fields; schema blobs and URLs untouched."""
+    if key in RAW_KEEP:
+        return value
+    if isinstance(value, str):
+        return unescape(value)
+    if isinstance(value, list):
+        return [decoded_text(v) for v in value]
+    if isinstance(value, dict):
+        return {k: decoded_text(v, k) for k, v in value.items()}
+    return value
+
+
 def build_normalized(raw):
+    """Rules run on entity-decoded text (decoded_text); the stored raw record itself is not changed."""
+    raw = decoded_text(raw)
     url = raw["final_url"]
     evidence, conflicts, flags = [], [], []
 
