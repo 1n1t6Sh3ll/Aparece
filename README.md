@@ -22,7 +22,7 @@ Shoppers now ask AI what to buy. We asked gpt-4o-mini and Claude Haiku 384 real 
 - **Rank and fixes**: a fixed, visible formula (no AI) ranks the page among comparable shirts and lists the top 3 fixes, each with evidence.
 - **Generate Fix**: writes a title and description from your verified facts, fact-checks every sentence, scores candidates with a reward, and only a fully passing candidate can win.
 - **AI visibility**: real AI answers to shopping questions, showing which shops and brands get named and whether the claims match the facts.
-- **AI comparison**: your original text vs Aparece vs AI models, all written from the same facts.
+- **AI comparison**: your original text vs Aparece (also with grounded shopper keywords added, for any link you paste) vs AI models, all written from the same facts.
 - **Monitoring and chat**: snapshots, change events, and a chat that may only cite stored records.
 - **Governance and webhooks**: approvals, an append-only audit log, signed webhooks. English and Spanish UI, plus a Chrome extension.
 

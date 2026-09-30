@@ -21,7 +21,8 @@ from optimizer.truth import fact_sentences, product_truth
 
 HERE = Path(__file__).resolve().parent
 PAID = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
-GENERATORS = ("original", "productlens", "productlens@openai:gpt-4o-mini", "openai:gpt-4o-mini",
+KEYWORDS = "productlens+keywords"  # free: the productlens title/description plus grounded shopper keywords (boost.py)
+GENERATORS = ("original", "productlens", KEYWORDS, "productlens@openai:gpt-4o-mini", "openai:gpt-4o-mini",
               "anthropic:claude-haiku-4-5-20251001")
 _day = {"date": None, "spent": 0.0}
 
@@ -51,6 +52,13 @@ def _summary(a):
             "visibility": None}
 
 
+def _keywords(g, base):
+    """The productlens row with grounded keywords added to its title and description (no model, no spend)."""
+    from benchmark.shootout.boost import boost  # lazy: boost imports this module
+    title, text = boost(g["truth"], g["language"], g["intents"], base["title"], base["text"])
+    return {**base, "generator": KEYWORDS, "title": title, "text": text, "cost_usd": 0.0, "calls": 0}
+
+
 def compare(rec, lang, factory=make_adapter, gens=GENERATORS):
     """Report-shaped result for one product: products=[entry], generators, overall.parts (no visibility test)."""
     lang = lang if lang in ("en", "es") else "en"
@@ -73,13 +81,17 @@ def compare(rec, lang, factory=make_adapter, gens=GENERATORS):
     cap = min(float(os.environ.get("SHOOTOUT_LIVE_MAX_USD") or 0.05), max(0.0, daily - _day["spent"]))
     budget = Budget(cap, json.loads((HERE.parent / "prices.json").read_text(encoding="utf-8"))["models"])
     args = SimpleNamespace(gen_temperature=0.0, gen_max_tokens=600)
-    cands, skipped = {}, []
+    cands, skipped, rows = {}, [], {}
     for spec in gens:
         if not _available(spec):
             skipped.append(spec)
             continue
         try:
-            row = generate(g, spec, args, budget, factory)
+            if spec == KEYWORDS:
+                row = _keywords(g, rows.get("productlens") or generate(g, "productlens", args, budget, factory))
+            else:
+                row = generate(g, spec, args, budget, factory)
+            rows[spec] = row
         except BudgetExceeded:
             skipped.append(spec)
             continue

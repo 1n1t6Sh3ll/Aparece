@@ -196,6 +196,7 @@ const genName = (g: string | null | undefined) => {
   const es = genLang === "es";
   if (g === "original") return es ? "Texto original de la tienda" : "Shop's original";
   if (g === "productlens") return es ? "Aparece (sin modelo de IA)" : "Aparece (no AI model)";
+  if (g === "productlens+keywords") return es ? "Aparece + palabras clave" : "Aparece + keywords";
   const m = g.match(/^productlens@[^:]+:(.+)$/);
   if (m) return `Aparece + ${m[1]}`;
   const own = g.match(/^[^:@]+:(.+)$/);
