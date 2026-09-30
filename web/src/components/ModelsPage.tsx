@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Award, BarChart3, FlaskConical, Hourglass, Info } from "lucide-react";
 import { api, cap, errorText, fieldLabel, useI18n } from "../lib";
 import { Tip } from "./RankParts";
+import { nm } from "../modelLabel";
 
 type Rates = { json_valid?: number; non_null_acc?: number; null_acc?: number; n?: number };
 type Model = Rates & {
@@ -225,15 +226,12 @@ function FieldTable({ title, sub, ms, fields }: { title: string; sub?: string; m
   );
 }
 
-/** Data labels may carry their own English "— partial: 87 of 200"; the localized chip already says it, so drop it. */
-const nm = (m: { label: string }) => m.label.replace(/\s*[—–-]\s*partial.*$/i, "");
-
 function Method({ data }: { data: Comparison }) {
   const { t, lang } = useI18n();
   const s = data.test.products ? (data.test.stores ? t("mod.productsStores", { p: data.test.products, s: data.test.stores }) : t("mod.products", { p: data.test.products })) : "";
   const fmt = (v: unknown) => typeof v === "string" ? v
     : v && typeof v === "object" ? Object.entries(v as Record<string, unknown>).map(([k, x]) => `${k.replace(/_/g, " ")} ${typeof x === "object" ? JSON.stringify(x) : String(x)}`).join(", ") : "";
-  const settings = Object.values(data.models).filter((m) => m.settings && fmt(m.settings)).map((m) => [m.label, fmt(m.settings)] as const);
+  const settings = Object.values(data.models).filter((m) => m.settings && fmt(m.settings)).map((m) => [nm(m), fmt(m.settings)] as const);
   const hasBaseline = BASELINE in data.models;
   const hasCost = Object.values(data.models).some((m) => m.cost_per_1k_usd != null);
   return (
