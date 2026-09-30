@@ -31,27 +31,35 @@ export function RankCard({ audit }: { audit: Audit }) {
   const w = r.weights;
   const [how, setHow] = useState(false);
   const draft = audit.product.draft;
+  // ties share a position: "2–3" when shirts with the same score span positions 2 to 3 (API position_from/to)
+  const tie = r as typeof r & { position_from?: number; position_to?: number };
+  const pos = tie.position_from && tie.position_to && tie.position_to > tie.position_from
+    ? `${tie.position_from}–${tie.position_to}` : String(r.position);
   if (r.total <= 1) {
     return (
       <section className="card p-6 rise">
         <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">{t("rank.eyebrow")}</p>
         <h2 className="mt-2 text-2xl font-bold">{t("rank.alone")}</h2>
         <p className="mt-1 muted">{t("rank.aloneD")}</p>
+        {lang === "en" && (audit.notes || []).map((n) => <p key={n} className="mt-2 text-sm muted">{n}</p>)}
       </section>
     );
   }
+  // description_intents: the shopper questions the description answers (API), each counted once
+  const intents = (c as typeof c & { description_intents?: string[] }).description_intents ?? [];
+  const sdDropped = !(w.structured_data > 0);
   const rows = [
     { k: "facts", label: t("rank.facts"), tip: t("rank.factsTip", { w: w.facts }), p: c.points.facts, w: w.facts, detail: `${c.facts_stated} / ${c.facts_checked}` },
-    { k: "description", label: t("rank.desc"), tip: t("rank.descTip", { w: w.description, ref: Math.round(c.description_ref).toLocaleString(lang) }), p: c.points.description, w: w.description, detail: t("compare.chars", { n: c.description_chars.toLocaleString(lang) }) },
-    ...(draft ? [] : [{ k: "sd", label: t("rank.sd"), tip: t("rank.sdTip", { w: w.structured_data }), p: c.points.structured_data, w: w.structured_data, detail: `${c.structured_data_flags} / 2` }]),
-  ];
+    { k: "description", label: t("rank.desc"), tip: t("rank.descTip", { w: w.description, ref: c.description_ref }), p: c.points.description, w: w.description, detail: t("rank.descDetail", { n: intents.length, of: c.description_ref }) },
+    { k: "sd", label: t("rank.sd"), tip: t("rank.sdTip", { w: w.structured_data }), p: c.points.structured_data, w: w.structured_data, detail: `${c.structured_data_flags} / 2` },
+  ].filter((x) => x.w > 0); // a component dropped from the comparison (weight 0) is not shown
   return (
     <section className="card overflow-hidden rise">
       <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-[auto_1fr] md:items-center">
         <div className="flex items-center gap-5">
           <div className="relative grid size-28 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25">
             <div className="text-center leading-none">
-              <span className="text-sm font-semibold opacity-80">#</span><span className="text-5xl font-extrabold tracking-tight">{r.position}</span>
+              <span className="text-sm font-semibold opacity-80">#</span><span className={`${pos.length > 3 ? "text-3xl" : "text-5xl"} font-extrabold tracking-tight`}>{pos}</span>
             </div>
             <Trophy className="absolute -right-1 -top-1 size-8 rounded-full bg-white p-1.5 text-amber-500 shadow dark:bg-slate-900" aria-hidden />
           </div>
@@ -59,7 +67,7 @@ export function RankCard({ audit }: { audit: Audit }) {
             <p className="flex items-center text-sm font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
               {t("rank.eyebrow")}{draft && <span className="chip ml-2 bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">{t("draft.badge")}</span>}
             </p>
-            <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">#{r.position} {t("rank.of", { n: r.total })}</h2>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">#{pos} {t("rank.of", { n: r.total })}</h2>
             <p className="mt-1 text-sm muted">{t("rank.score", { s: r.score })}</p>
           </div>
         </div>
@@ -75,7 +83,7 @@ export function RankCard({ audit }: { audit: Audit }) {
               </div>
             </div>
           ))}
-          {draft && <p className="text-xs muted">{t("rank.sd")}: {t("rank.sdDraft")}</p>}
+          {sdDropped && <p className="text-xs muted">{t("rank.sd")}: {t(draft ? "rank.sdDraft" : "rank.sdUnknown")}</p>}
         </div>
       </div>
       <div className="border-t border-slate-100 bg-slate-50/70 px-6 py-3 text-sm dark:border-slate-800 dark:bg-slate-900/60 sm:px-8">
@@ -85,8 +93,8 @@ export function RankCard({ audit }: { audit: Audit }) {
             {t("rank.how")} <ChevronDown className={`size-4 transition-transform ${how ? "rotate-180" : ""}`} aria-hidden />
           </button>
         </div>
-        {how && <p className="mt-2 text-xs leading-relaxed muted">{t("rank.formula", { wf: w.facts, wd: w.description, ref: Math.round(c.description_ref).toLocaleString(lang),
-          sd: draft ? "" : t("rank.formulaSd", { ws: w.structured_data }) })}</p>}
+        {how && <p className="mt-2 text-xs leading-relaxed muted">{t("rank.formula", { wf: w.facts, wd: w.description, ref: c.description_ref,
+          sd: sdDropped ? "" : t("rank.formulaSd", { ws: w.structured_data }) })}</p>}
       </div>
     </section>
   );

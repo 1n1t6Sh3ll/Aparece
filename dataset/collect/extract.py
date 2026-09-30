@@ -74,24 +74,118 @@ def section_type(heading):
     return "other"
 
 
-def json_ld_nodes(soup):
-    blocks, nodes = [], []
-    for tag in soup.select('script[type="application/ld+json"]'):
+LD_WRAPPERS = re.compile(r"<!--|-->|<!\[CDATA\[|\]\]>|^\s*//.*$", re.M)
+CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+TRAILING_COMMA = re.compile(r",\s*([}\]])")
+
+
+def lenient_json(text):
+    """Values in one ld+json script: strict JSON first; else without HTML comment/CDATA wrappers, control characters
+    and trailing commas, reading several concatenated values. [] when nothing parses."""
+    try:
+        return [json.loads(text, strict=False)]
+    except ValueError:
+        pass
+    text = TRAILING_COMMA.sub(r"\1", CONTROL_CHARS.sub(" ", LD_WRAPPERS.sub("", text)))
+    dec, out, i = json.JSONDecoder(strict=False), [], 0
+    while True:
+        start = min((j for j in (text.find("{", i), text.find("[", i)) if j >= 0), default=-1)
+        if start < 0:
+            return out
         try:
-            data = json.loads(tag.string or tag.get_text(), strict=False)
+            value, i = dec.raw_decode(text, start)
+            out.append(value)
         except ValueError:
-            continue
-        blocks.append(data)
-        stack = data if isinstance(data, list) else [data]
-        for item in stack:
-            if isinstance(item, dict):
-                nodes.extend(item["@graph"] if isinstance(item.get("@graph"), list) else [item])
-    return blocks, [n for n in nodes if isinstance(n, dict)]
+            i = start + 1
+
+
+def json_ld_nodes(soup):
+    """(parsed ld+json blocks, flat list of dict nodes incl. @graph members). When no Product/ProductGroup node
+    exists, a node read from other page markup (fallback_product) is appended, marked "@fallback"."""
+    blocks, nodes = [], []
+    for tag in soup.find_all("script", type=lambda t: bool(t) and "ld+json" in t.lower()):
+        for data in lenient_json(tag.string or tag.get_text()):
+            blocks.append(data)
+            stack = [data]
+            while stack:
+                item = stack.pop(0)
+                if isinstance(item, list):
+                    stack[:0] = item
+                elif isinstance(item, dict):
+                    graph = item.get("@graph")
+                    if isinstance(graph, (list, dict)):
+                        stack[:0] = graph if isinstance(graph, list) else [graph]
+                    if set(item) - {"@context", "@graph"}:
+                        nodes.append(item)
+    if not any(ld_type(n, "Product") or ld_type(n, "ProductGroup") for n in nodes):
+        fb = fallback_product(soup)
+        if fb:
+            nodes.append(fb)
+    return blocks, nodes
 
 
 def ld_type(node, name):
+    """True if @type is name (also "schema:Product" / "https://schema.org/Product" forms)."""
     t = node.get("@type")
-    return name in (t if isinstance(t, list) else [t])
+    return any(isinstance(x, str) and re.split(r"[/:]", x)[-1] == name for x in (t if isinstance(t, list) else [t]))
+
+
+def fallback_product(soup):
+    """Product facts from non-JSON-LD markup: schema.org microdata, hidden js-product-markup-* spans (pages that
+    build their JSON-LD in JavaScript), Open Graph / product:* meta tags, then <h1>. Returns a Product-like node
+    marked "@fallback" (so it never counts as JSON-LD schema), or None without both a name and a price."""
+    scope = soup.find(attrs={"itemtype": re.compile(r"schema\.org/Product/?$", re.I)})
+
+    def micro(name, own=False):
+        for el in (scope.find_all(attrs={"itemprop": name}) if scope else []):
+            if own and el.find_parent(attrs={"itemscope": True}) is not scope:
+                continue
+            v = text_or_none(el.get("content") or (el.get("href") if el.name == "link" else None) or el.get_text(" "))
+            if v:
+                return v
+        return None
+
+    def markup(name):
+        el = soup.find(class_=f"js-product-markup-{name}")
+        return text_or_none(el.get_text(" ")) if el else None
+
+    def meta(*names):
+        for n in names:
+            m = soup.find("meta", attrs={"property": n}) or soup.find("meta", attrs={"name": n})
+            if m and text_or_none(m.get("content")):
+                return text_or_none(m.get("content"))
+        return None
+
+    def h1():
+        el = soup.find("h1")
+        if not el:
+            return None
+        el = BeautifulSoup(str(el), "html.parser")
+        for hidden in el.select(".accessibility-hidden, .sr-only, .visually-hidden, .screen-reader-text"):
+            hidden.decompose()
+        return text_or_none(el.get_text(" "))
+
+    is_product = (meta("og:type") or "").lower().startswith("product")
+    name = micro("name", own=True) or markup("name") or (meta("og:title") if is_product else None) or h1()
+    price = micro("price") or markup("offer-price") or meta("product:price:amount", "og:price:amount")
+    if not name or not price:
+        return None
+    source = "microdata" if micro("price") else "page_markup"
+    node = {"@type": "Product", "@fallback": source, "name": name}
+    for key, value in (("description", micro("description", own=True) or markup("description") or meta("og:description")),
+                       ("sku", micro("sku", own=True) or markup("sku")), ("image", markup("image") or meta("og:image"))):
+        if value:
+            node[key] = value
+    offer = {"@type": "Offer", "@fallback": source, "price": price if "." in price else price.replace(",", "."),
+             "priceCurrency": micro("priceCurrency") or markup("offer-currency")
+             or meta("product:price:currency", "og:price:currency"),
+             "availability": micro("availability") or markup("offer-availability") or meta("product:availability")}
+    node["offers"] = {k: v for k, v in offer.items() if v}
+    rating = markup("rating") or micro("ratingValue")
+    count = markup("rating-count") or micro("ratingCount") or micro("reviewCount")
+    if rating:
+        node["aggregateRating"] = {"@type": "AggregateRating", "ratingValue": rating, **({"ratingCount": count} if count else {})}
+    return node
 
 
 def as_list(x):

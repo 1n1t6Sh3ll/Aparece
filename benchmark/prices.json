@@ -25,6 +25,12 @@
       "source": "https://www.anthropic.com/pricing#api",
       "verified": true
     },
+    "claude-sonnet-5-5": {
+      "input": 2.0,
+      "output": 10.0,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "verified": true
+    },
     "gpt-4.1": {
       "input": 2.0,
       "output": 8.0,

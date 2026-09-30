@@ -18,9 +18,10 @@ def gate_benchmark_run(args, actor=None):
                           approval_id=getattr(args, "approval_id", None))
 
 
-def confirm_prediction(record_id, field, value, actor, approval_id=None):
-    """A model prediction becomes a merchant-confirmed fact only after Merchant approval of exactly this value."""
+def confirm_prediction(record_id, field, value, actor, approval_id=None, owner=None):
+    """A model prediction becomes a merchant-confirmed fact only after Merchant approval of exactly this value.
+    owner: validated monitored product id (see policy.require), else None."""
     decision = policy.require("confirm_model_prediction", actor, target=f"{record_id}#{field}",
-                              details={"value": value}, approval_id=approval_id)
+                              details={"value": value}, approval_id=approval_id, owner=owner)
     return {"record_id": record_id, "field": field, "value": value, "confirmed": True,
             "approved_by": decision["approved_by"]}

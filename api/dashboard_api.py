@@ -18,9 +18,11 @@ from fastapi import APIRouter, HTTPException, Query
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "dataset" / "collect"))
 
 from analysis.gaps import analyze, completeness  # noqa: E402
 from analysis.peers import find_peers, get, load_records, price  # noqa: E402
+from normalize import lang_code  # noqa: E402
 
 router = APIRouter(prefix="/v1")
 _cache = {}
@@ -59,7 +61,7 @@ def adapt(row):
         name = txt(raw.get("raw_title")) or txt(raw.get("raw_product_name"))
         rec = {"product_id": row.get("product_id"), "dataset_source": row.get("source"),
                "source": {"merchant_domain": row.get("domain") or raw.get("merchant_domain"),
-                          "language": row.get("language"), "url": prov.get("url") or raw.get("source_url"),
+                          "language": lang_code(row.get("language")), "url": prov.get("url") or raw.get("source_url"),
                           "scraped_at": prov.get("scraped_at")},
                "identity": {"brand": txt(raw.get("brand")), "product_name": name},
                "content": {"title": name, "full_description": txt(raw.get("raw_full_description")),
@@ -76,6 +78,8 @@ def adapt(row):
     for sec in SECTIONS:
         if not isinstance(rec.get(sec), dict):
             rec[sec] = {}
+    if rec["source"].get("language"):  # 'en-US' / 'EN' -> 'en', so peers match on language (#71)
+        rec["source"] = {**rec["source"], "language": lang_code(rec["source"]["language"])}
     return rec
 
 

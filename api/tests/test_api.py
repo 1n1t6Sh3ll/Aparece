@@ -18,7 +18,191 @@ EXT = "chrome-extension://" + "a" * 32
 client = TestClient(main.app)
 
 
+def resp(status, body="", headers=None):
+    r = mock.MagicMock(is_redirect=False, status_code=status, headers=headers or {}, encoding="utf-8")
+    r.iter_content.return_value = [body.encode()]
+    r.__enter__.return_value = r
+    return r
+
+
+SHOPIFY = ('{"product": {"title": "Heavyweight Organic Cotton Tee", "vendor": "Example", "product_type": "T-shirts",'
+           ' "body_html": "<p>100% organic cotton, 240 gsm.</p>", "images": [],'
+           ' "variants": [{"title": "M", "price": "35.00", "price_currency": "EUR", "sku": "HT-M"}]}}')
+
+
+class FetchCase(unittest.TestCase):
+    URL = "https://shop.example.com/products/heavy-tee"
+
+    def setUp(self):
+        safe_fetch.clear_cache()
+        self.addCleanup(safe_fetch.clear_cache)
+
+    def run_fetch(self, responses):
+        calls = []
+        def fake(url, **kw):
+            calls.append(url)
+            return responses[url].pop(0)
+        with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS), \
+                mock.patch.object(safe_fetch.requests, "get", side_effect=fake), \
+                mock.patch.object(safe_fetch.time, "sleep") as sleep:
+            r = client.post("/v1/extract", json={"url": self.URL})
+        return r, calls, sleep
+
+
+class FetchLimitTest(FetchCase):
+    """Rate-limited stores: Retry-After retry, page cache, robots 429, Shopify JSON fallback (all mocked)."""
+
+    def test_429_then_200_honours_retry_after_and_caches(self):
+        r, calls, sleep = self.run_fetch({
+            "https://shop.example.com/robots.txt": [resp(404)],
+            self.URL: [resp(429, headers={"retry-after": "2"}), resp(200, FIXTURE)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        sleep.assert_called_once_with(2.0)
+        self.assertEqual(calls.count(self.URL), 2)
+        r, calls, _ = self.run_fetch({})  # served from the 10-minute cache, no request
+        self.assertEqual((r.status_code, calls), (200, []))
+
+    def test_429_twice_gives_rate_limit_error(self):
+        r, calls, sleep = self.run_fetch({
+            "https://shop.example.com/robots.txt": [resp(404)],
+            "https://shop.example.com/products/heavy-tee.json": [resp(429), resp(429)],
+            self.URL: [resp(429, headers={"retry-after": "1"}), resp(429)]})
+        self.assertEqual(r.status_code, 502)
+        self.assertEqual(r.json()["detail"], "upstream HTTP 429")
+
+    def test_long_retry_after_not_waited(self):
+        r, _, sleep = self.run_fetch({
+            "https://shop.example.com/robots.txt": [resp(404)],
+            "https://shop.example.com/products/heavy-tee.json": [resp(404)],
+            self.URL: [resp(429, headers={"retry-after": "120"})]})
+        self.assertEqual(r.json()["detail"], "upstream HTTP 429")
+        sleep.assert_not_called()
+
+    def test_robots_429_is_retry_later(self):
+        r, calls, _ = self.run_fetch({"https://shop.example.com/robots.txt": [resp(429), resp(429)]})
+        self.assertEqual(r.json()["detail"], "upstream HTTP 429 (robots.txt)")
+        self.assertNotIn(self.URL, calls)
+
+    def test_robots_5xx_disallows_and_is_not_cached(self):
+        robots = "https://shop.example.com/robots.txt"
+        for code in (500, 502):
+            r, calls, _ = self.run_fetch({robots: [resp(code)]})
+            self.assertEqual(r.json()["detail"], f"upstream HTTP {code} (robots.txt): store temporarily unavailable")
+            self.assertNotIn(self.URL, calls)
+        r, calls, _ = self.run_fetch({robots: [resp(404)], self.URL: [resp(200, FIXTURE)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertIn(robots, calls)  # the 5xx answers were not cached
+
+    def test_shopify_json_fallback(self):
+        r, calls, _ = self.run_fetch({
+            "https://shop.example.com/robots.txt": [resp(200, "User-agent: *\nDisallow: /cart")],
+            "https://shop.example.com/products/heavy-tee.json": [resp(200, SHOPIFY)],
+            self.URL: [resp(429), resp(429)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        n = r.json()["normalized"]
+        self.assertEqual(n["commerce"]["price"], 35.0)
+        self.assertEqual(n["commerce"]["currency"], "EUR")
+        self.assertIn("Heavyweight", n["identity"]["product_name"])
+
+    def test_shopify_json_respects_robots(self):
+        r, calls, _ = self.run_fetch({
+            "https://shop.example.com/robots.txt": [resp(200, "User-agent: *\nDisallow: /products/*.json")],
+            self.URL: [resp(429), resp(429)]})
+        self.assertEqual(r.json()["detail"], "upstream HTTP 429")
+        self.assertNotIn("https://shop.example.com/products/heavy-tee.json", calls)
+
+
+class FetchErrorTest(FetchCase):
+    """Honest, coded reasons for pages we can't read (all mocked)."""
+    ROBOTS = "https://shop.example.com/robots.txt"
+
+    def detail(self, page, **extra):
+        r, calls, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: page, **extra})
+        return r.status_code, r.json().get("detail", ""), calls
+
+    def test_amazon_never_fetched(self):
+        for url in ("https://www.amazon.com/dp/B085WMXFP3", "https://amazon.co.uk/dp/X", "https://amzn.to/abc"):
+            with mock.patch.object(safe_fetch.requests, "get") as get, mock.patch.object(safe_fetch.socket, "getaddrinfo") as dns:
+                r = client.post("/v1/audit", json={"url": url})
+            self.assertEqual(r.status_code, 422)
+            self.assertTrue(r.json()["detail"].startswith("amazon_not_supported"), r.text)
+            get.assert_not_called()
+            dns.assert_not_called()
+
+    def test_redirect_to_amazon_not_followed(self):
+        hop = mock.MagicMock(is_redirect=True, headers={"location": "https://www.amazon.com/dp/B085WMXFP3"})
+        hop.__enter__.return_value = hop
+        short = "https://bit.ly/abc"
+        calls = []
+        def fake(url, **kw):
+            calls.append(url)
+            return {"https://bit.ly/robots.txt": resp(404), short: hop}[url]
+        with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS), \
+                mock.patch.object(safe_fetch.requests, "get", side_effect=fake):
+            r = client.post("/v1/audit", json={"url": short})
+        self.assertEqual(r.status_code, 422)
+        self.assertTrue(r.json()["detail"].startswith("amazon_not_supported"), r.text)
+        self.assertFalse(any("amazon" in u for u in calls), calls)
+
+    def test_dns_failure(self):
+        with mock.patch.object(safe_fetch.socket, "getaddrinfo", side_effect=safe_fetch.socket.gaierror):
+            r = client.post("/v1/extract", json={"url": self.URL})
+        self.assertEqual(r.status_code, 400)
+        self.assertTrue(r.json()["detail"].startswith("host_not_found"))
+        self.assertIn("does not resolve", r.json()["detail"])  # web/src/lib.tsx maps on this
+
+    def test_blocked(self):
+        page = "<html><head><title>Just a moment...</title></head><body>Checking your browser</body></html>"
+        for resp_ in (resp(403), resp(401), resp(200, page), resp(503, page)):
+            status, detail, _ = self.detail([resp_, resp_], **{self.URL + ".json": [resp(404)]})
+            self.assertEqual(status, 403)
+            self.assertTrue(detail.startswith("blocked_by_store"), detail)
+
+    def test_blocked_shopify_uses_json(self):
+        r, calls, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(403)],
+                                      self.URL + ".json": [resp(200, SHOPIFY)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["normalized"]["commerce"]["price"], 35.0)
+
+    def test_shopify_page_without_product_uses_json(self):
+        shell = '<html><head><script src="https://cdn.shopify.com/s/app.js"></script></head><body><div id="app"></div></body></html>'
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(200, shell)],
+                                  self.URL + ".json": [resp(200, SHOPIFY)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertIn("Heavyweight", r.json()["normalized"]["identity"]["product_name"])
+
+    def test_not_found(self):
+        status, detail, _ = self.detail([resp(404)])
+        self.assertEqual(status, 404)
+        self.assertTrue(detail.startswith("page_not_found"), detail)
+
+    def test_not_a_web_page(self):
+        for page in (resp(200, "\x89PNG....", {"content-type": "image/png"}), resp(200, "%PDF-1.7 ..."),
+                     resp(200, "x", {"content-type": "application/pdf"})):
+            status, detail, _ = self.detail([page])
+            self.assertEqual(status, 415)
+            self.assertTrue(detail.startswith("not_a_web_page"), detail)
+
+    def test_redirect_home_is_product_gone(self):
+        hop = mock.MagicMock(is_redirect=True, headers={"location": "https://shop.example.com/search?q=heavy-tee"})
+        hop.__enter__.return_value = hop
+        status, detail, _ = self.detail([hop], **{"https://shop.example.com/search?q=heavy-tee": [resp(200, FIXTURE)]})
+        self.assertEqual(status, 404)
+        self.assertTrue(detail.startswith("product_gone"), detail)
+
+    def test_charset_from_meta(self):
+        body = '<html><head><meta charset="iso-8859-1"><title>Camiseta algodón</title></head></html>'
+        r = resp(200)
+        r.iter_content.return_value = [body.encode("latin-1")]
+        with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS), \
+                mock.patch.object(safe_fetch.requests, "get", return_value=r):
+            self.assertIn("algodón", safe_fetch.get("https://shop.example.com/p")[2])
+
+
 class ApiTest(unittest.TestCase):
+    def setUp(self):
+        safe_fetch.clear_cache()
+
     def test_health(self):
         r = client.get("/v1/health")
         self.assertEqual(r.status_code, 200)

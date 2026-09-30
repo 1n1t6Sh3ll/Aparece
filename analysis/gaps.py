@@ -7,6 +7,7 @@ CLI: python -m analysis.gaps --data records.jsonl --product-id p_123 [--k 10]
 """
 import argparse
 import json
+import re
 import statistics
 import sys
 
@@ -50,6 +51,75 @@ def description_chars(rec):
     parts = [c.get("full_description") or "", c.get("short_description") or ""]
     parts += [b for b in (c.get("bullet_points") or []) if isinstance(b, str)]
     return sum(len(p) for p in parts)
+
+
+def description_text(rec):
+    c = rec.get("content") or {}
+    parts = [c.get("full_description") or "", c.get("short_description") or ""]
+    parts += [b for b in (c.get("bullet_points") or []) if isinstance(b, str)]
+    return "\n".join(p for p in parts if p)
+
+
+# Shopper questions a shirt description can answer (EN/ES), each tied to a VERIFIED fact of the same record:
+# an intent counts only when the description mentions it in prose AND the matching fact was extracted
+# (e.g. "organic" only when the material fact is organic; care words only with care facts). Claims we cannot
+# verify (certifications such as GOTS, "made in", size guides, "soft") never count. Each intent counts once.
+def _has(*fields):
+    return lambda r: any(_present(get(r, *f.split("."))) for f in fields)
+
+
+INTENTS = {
+    "material": (r"\b(?:cotton|polyester|linen|wool|merino|viscose|modal|lyocell|tencel|elastane|spandex|nylon|hemp|"
+                 r"bamboo|algod[oó]n|poli[eé]ster|lino|lana)\b", _has("materials.primary_material")),
+    "organic_material": (r"\borganic\b|\borg[aá]nic[oa]\b",
+                         lambda r: "organic" in str(get(r, "materials", "primary_material") or "")),
+    "composition": (r"\b\d{1,3}\s?%", _has("materials.material_percentages")),
+    "fabric": (r"\b(?:jersey|piqu[eé]|pique|oxford|poplin|popelina|twill|flannel|franela|rib|interlock|slub|knit|"
+               r"punto|gsm|oz|g/m)\b", _has("materials.fabric_type", "materials.fabric_weight_gsm")),
+    "stretch": (r"\bstretch(?:y)?\b|\bel[aá]stic[oa]?\b", _has("materials.stretch")),
+    "fit": (r"\b(?:slim|regular|relaxed|oversized?|boxy|classic|athletic|loose|tailored|holgad[oa]|ajustad[oa])\b"
+            r"|\bfit\b|\bcorte\b", _has("fit_and_style.fit")),
+    "neck_or_collar": (r"\b(?:crew|v-neck|neck|neckline|collar|henley|cuello|mock)\b",
+                       _has("fit_and_style.neckline", "fit_and_style.collar_type")),
+    "sleeve": (r"\bsleeves?\b|\bmangas?\b|\bsleeveless\b", _has("fit_and_style.sleeve_length")),
+    "care": (r"\b(?:wash|washing|washable|tumble|dry|iron|bleach|lavar|lavado|secadora|planchar)\b",
+             lambda r: bool(r.get("care"))),
+}
+FUNCTION_WORDS = {"the", "a", "an", "with", "and", "in", "of", "for", "is", "are", "to", "this", "our", "it", "its",
+                  "from", "on", "by", "de", "con", "y", "el", "la", "los", "las", "en", "para", "es", "un", "una",
+                  "del", "al", "que", "por"}
+REPEAT_FREE = 0.15  # share of repeated word 3-grams tolerated before the description score is reduced
+
+
+def prose(text):
+    """The parts of the text written as sentences: segments (split on . ! ? ; and new lines) that use a function
+    word, or short phrases of up to 4 words ('Regular fit, short sleeves'). Bare keyword lists are dropped."""
+    keep = []
+    for seg in re.split(r"[.!?;\n•|]+", text or ""):
+        words = re.findall(r"[^\W\d_]+", seg.lower())
+        if words and (len(words) <= 4 or FUNCTION_WORDS & set(words)):
+            keep.append(seg)
+    return "\n".join(keep)
+
+
+def repetition(text):
+    """Share of word 3-grams that repeat an earlier 3-gram (0 = no repetition, near 1 = the same text over again)."""
+    words = re.findall(r"\w+", (text or "").lower())
+    grams = list(zip(words, words[1:], words[2:]))
+    return round(1 - len(set(grams)) / len(grams), 3) if len(grams) >= 6 else 0.0
+
+
+def description_coverage(rec):
+    """Distinct shopper intents the description answers in prose and that match a verified fact (each once, so
+    stuffing adds nothing), times a repetition factor: full credit up to REPEAT_FREE repeated 3-grams, falling
+    linearly to 0 at REPEAT_FREE + 0.5."""
+    text = description_text(rec)
+    body = prose(text)
+    hits = sorted(k for k, (rx, verified) in INTENTS.items() if re.search(rx, body, re.I) and verified(rec))
+    rep = repetition(text)
+    factor = 1.0 if rep <= REPEAT_FREE else max(0.0, 1 - (rep - REPEAT_FREE) / 0.5)
+    return {"intents": hits, "covered": len(hits), "of": len(INTENTS), "repetition": rep,
+            "repetition_factor": round(factor, 3), "value": round(len(hits) / len(INTENTS) * factor, 4)}
 
 
 def _median(xs):

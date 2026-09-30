@@ -8,3 +8,9 @@ CLAUDE.md
 AGENTS.md
 scripts/
 *.pyc
+.env
+.venv/
+venv/
+*.db
+node_modules/
+web/dist/

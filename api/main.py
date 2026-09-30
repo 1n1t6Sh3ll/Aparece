@@ -34,6 +34,31 @@ try:  # governance/ may be missing from older images; the API still starts witho
     app.include_router(governance_api.router)
 except ModuleNotFoundError:
     pass
+try:  # optimizer/ may be missing from older images
+    import optimizer_api  # noqa: E402
+    app.include_router(optimizer_api.router)
+except ModuleNotFoundError:
+    pass
+try:  # experiments/ may be missing from older images; the API still starts without it
+    import experiments_api  # noqa: E402
+    app.include_router(experiments_api.router)
+except ModuleNotFoundError:
+    pass
+try:  # chat/ may be missing from older images
+    import chat_api  # noqa: E402
+    app.include_router(chat_api.router)
+except ModuleNotFoundError:
+    pass
+try:  # TEAM-47 shoot-out report route; optional like the others
+    import shootout_api  # noqa: E402
+    app.include_router(shootout_api.router)
+except ModuleNotFoundError:
+    pass
+try:  # TEAM-51 outgoing webhooks; webhooks/ may be missing from older images
+    import webhooks_api  # noqa: E402
+    app.include_router(webhooks_api.router)
+except ModuleNotFoundError:
+    pass
 app.mount("/dashboard", StaticFiles(directory=Path(__file__).resolve().parents[1] / "dashboard", html=True), name="dashboard")
 
 
