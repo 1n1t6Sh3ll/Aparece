@@ -89,7 +89,7 @@ for s in api/tests "analysis/tests -t ." "benchmark/tests -t ." "signals/tests -
 cd web && npm ci && npm test && npm run build
 ```
 
-All offline, no paid calls. CI runs them on every pull request.
+All offline, no paid calls. CI runs the Python suites and the web build (not `npm test`) on every pull request.
 
 ## Results
 
