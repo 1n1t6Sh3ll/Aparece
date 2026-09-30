@@ -3,7 +3,7 @@ import {
   ArrowLeft, BellRing, Bot, Check, ChevronDown, CircleHelp, ExternalLink, Eye, EyeOff, Gauge, ListChecks, Pencil,
   Quote, ScanSearch, ShieldCheck, Shirt, Sparkles, Tag, Trophy, Wand2,
 } from "lucide-react";
-import { api, cap, fieldLabel, fmtField, fmtValue, money, store, useI18n, type Lang, type T } from "../lib";
+import { api, cap, fieldLabel, fmtField, fmtValue, money, saveManageToken, store, useI18n, type Lang, type T } from "../lib";
 import type { Action, Audit, Label } from "../types";
 import { CompareTable, Leaderboard, RankCard } from "./RankParts";
 
@@ -202,7 +202,8 @@ function Enroll({ url }: { url: string }) {
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setMsg({ ok: false, text: t("mon.badEmail") });
     setBusy(true); setMsg(null);
     try {
-      const r = await api<{ created: boolean }>("/v1/enroll", { method: "POST", body: JSON.stringify({ url, email: email || null, plan }) });
+      const r = await api<{ created: boolean; product: { id: string }; manage_token: string | null }>("/v1/enroll", { method: "POST", body: JSON.stringify({ url, email: email || null, plan }) });
+      if (r.manage_token) saveManageToken(r.product.id, r.manage_token);
       setMsg({ ok: true, text: r.created ? t("mon.ok") : t("mon.exists") });
     } catch (e) {
       setMsg({ ok: false, text: t("err.generic", { detail: e instanceof Error ? e.message : String(e) }) });

@@ -5,6 +5,7 @@ MONITOR_DB: database path (default monitor/data/monitor.db).
 import hashlib
 import json
 import os
+import secrets
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -16,7 +17,8 @@ PLANS = ["free", "pro", "team"]  # labels only; no billing
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS merchants (id INTEGER PRIMARY KEY, email TEXT UNIQUE, plan TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, merchant_id INTEGER REFERENCES merchants(id),
-  url TEXT NOT NULL UNIQUE, enrolled_at TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1);
+  url TEXT NOT NULL UNIQUE, enrolled_at TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1,
+  public_id TEXT, token_hash TEXT);
 CREATE TABLE IF NOT EXISTS snapshots (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id),
   taken_at TEXT NOT NULL, content_hash TEXT NOT NULL, data TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS change_events (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id),
@@ -44,10 +46,31 @@ def connect():
     db.row_factory = sqlite3.Row
     try:
         db.executescript(SCHEMA)
+        migrate(db)
         with db:
             yield db
     finally:
         db.close()
+
+
+def migrate(db):
+    """Add public_id/token_hash to older databases and give every product a random public id."""
+    cols = {r["name"] for r in db.execute("PRAGMA table_info(products)")}
+    for c in ("public_id", "token_hash"):
+        if c not in cols:
+            db.execute(f"ALTER TABLE products ADD COLUMN {c} TEXT")
+    db.execute("CREATE UNIQUE INDEX IF NOT EXISTS products_public_id ON products(public_id)")
+    for r in db.execute("SELECT id FROM products WHERE public_id IS NULL").fetchall():
+        db.execute("UPDATE products SET public_id = ? WHERE id = ?", (new_public_id(), r["id"]))
+    db.commit()
+
+
+def new_public_id():
+    return secrets.token_urlsafe(12)
+
+
+def hash_token(token):
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def content_hash(content):
@@ -68,7 +91,8 @@ def enroll(url, email=None, plan="free"):
         if old:
             db.execute("UPDATE products SET active = 1 WHERE id = ?", (old["id"],))
         else:
-            db.execute("INSERT INTO products (merchant_id, url, enrolled_at) VALUES (?, ?, ?)", (mid, url, utcnow()))
+            db.execute("INSERT INTO products (merchant_id, url, enrolled_at, public_id) VALUES (?, ?, ?, ?)",
+                       (mid, url, utcnow(), new_public_id()))
     return product(url=url), old is None
 
 
@@ -79,13 +103,35 @@ def product(pid=None, url=None):
     return dict(row) if row else None
 
 
+def pid_for(public_id):
+    """Internal id for a public id, or None."""
+    with connect() as db:
+        row = db.execute("SELECT id FROM products WHERE public_id = ?", (public_id,)).fetchone()
+    return row["id"] if row else None
+
+
+def issue_token(pid):
+    """Return a new manage token (stored hashed) if the product has none yet; otherwise None (shown only once)."""
+    token = secrets.token_urlsafe(32)
+    with connect() as db:
+        n = db.execute("UPDATE products SET token_hash = ? WHERE id = ? AND token_hash IS NULL",
+                       (hash_token(token), pid)).rowcount
+    return token if n else None
+
+
+def check_token(pid, token):
+    with connect() as db:
+        row = db.execute("SELECT token_hash FROM products WHERE id = ?", (pid,)).fetchone()
+    return bool(row and row["token_hash"] and token and secrets.compare_digest(row["token_hash"], hash_token(token)))
+
+
 def unenroll(pid):
     with connect() as db:
         return db.execute("UPDATE products SET active = 0 WHERE id = ?", (pid,)).rowcount > 0
 
 
 def monitored(active_only=False):
-    q = ("SELECT p.id, p.url, p.enrolled_at, p.active, m.plan, "
+    q = ("SELECT p.id, p.public_id, p.url, p.enrolled_at, p.active, m.plan, "
          "(SELECT taken_at FROM snapshots s WHERE s.product_id = p.id ORDER BY s.id DESC LIMIT 1) AS last_snapshot_at, "
          "(SELECT content_hash FROM snapshots s WHERE s.product_id = p.id ORDER BY s.id DESC LIMIT 1) AS last_hash, "
          "(SELECT COUNT(*) FROM snapshots s WHERE s.product_id = p.id) AS snapshot_count, "

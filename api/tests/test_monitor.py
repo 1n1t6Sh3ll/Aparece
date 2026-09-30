@@ -3,6 +3,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 from unittest import mock
 
@@ -11,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from fastapi.testclient import TestClient  # noqa: E402
 
 import main  # noqa: E402
+import monitor_api  # noqa: E402
 import safe_fetch  # noqa: E402
 from monitor import changes, crawl, scheduler, store  # noqa: E402
 
@@ -36,19 +38,25 @@ class MonitorTest(unittest.TestCase):
             p.start()
             self.addCleanup(p.stop)
         self.addCleanup(self.tmp.cleanup)
+        monitor_api._hits.clear()
 
     def enroll(self, **kw):
         r = client.post("/v1/enroll", json={"url": URL, "email": "shop@example.com", **kw})
         self.assertEqual(r.status_code, 201, r.text)
         return r.json()
 
+    @staticmethod
+    def auth(body):
+        return {"X-Manage-Token": body["manage_token"]}
+
     def test_enroll_crawl_twice_emits_events(self):
         body = self.enroll(plan="pro")
-        pid = body["product"]["id"]
+        pid, h = body["product"]["id"], self.auth(body)
+        iid = store.pid_for(pid)
         self.assertEqual(body["crawl"]["status"], "ok")
         self.assertEqual(body["crawl"]["events"], [])  # first snapshot has no baseline
         self.page = PAGES["v2"]
-        res = client.post(f"/v1/monitored/{pid}/crawl").json()
+        res = client.post(f"/v1/monitored/{pid}/crawl", headers=h).json()
         types = {e["type"] for e in res["events"]}
         self.assertTrue({"PRICE_CHANGED", "DESCRIPTION_CHANGED", "ATTRIBUTE_ADDED", "LANGUAGE_PAGE_ADDED"} <= types, types)
         price = next(e for e in res["events"] if e["type"] == "PRICE_CHANGED")
@@ -66,12 +74,12 @@ class MonitorTest(unittest.TestCase):
         self.assertEqual((mon["plan"], mon["snapshot_count"], mon["active"]), ("pro", 2, 1))
 
         # unchanged page -> new snapshot, same hash, no events
-        again = client.post(f"/v1/monitored/{pid}/crawl").json()
+        again = client.post(f"/v1/monitored/{pid}/crawl", headers=h).json()
         self.assertEqual(again["events"], [])
-        self.assertEqual(store.last_snapshot(pid)["content_hash"], s2["content_hash"])
+        self.assertEqual(store.last_snapshot(iid)["content_hash"], s2["content_hash"])
 
     def test_snapshots_immutable(self):
-        pid = self.enroll()["product"]["id"]
+        pid = store.pid_for(self.enroll()["product"]["id"])
         with self.assertRaises(sqlite3.IntegrityError):
             with store.connect() as db:
                 db.execute("UPDATE snapshots SET data = '{}' WHERE product_id = ?", (pid,))
@@ -79,14 +87,56 @@ class MonitorTest(unittest.TestCase):
             with store.connect() as db:
                 db.execute("DELETE FROM snapshots")
 
+    def test_no_email_or_internal_id_leak(self):
+        body = self.enroll(crawl_now=False)
+        pid = body["product"]["id"]
+        self.assertGreaterEqual(len(pid), 16)
+        self.assertFalse(pid.isdigit())
+        for r in (body, client.get(f"/v1/products/{pid}/history").json(), client.get("/v1/monitored").json()):
+            text = str(r)
+            self.assertNotIn("shop@example.com", text)
+            self.assertNotIn("token_hash", text)
+            self.assertNotIn("merchant_id", text)
+        self.assertEqual(client.get("/v1/products/1/history").status_code, 404)  # internal ids are not addressable
+
+    def test_manage_token_required(self):
+        body = self.enroll(crawl_now=False)
+        pid, token = body["product"]["id"], body["manage_token"]
+        self.assertTrue(token)
+        self.assertNotIn(token, str(store.product(pid=store.pid_for(pid))))  # stored hashed only
+        self.assertIsNone(self.enroll(crawl_now=False)["manage_token"])  # shown once
+        self.assertEqual(client.delete(f"/v1/enroll/{pid}").status_code, 401)
+        self.assertEqual(client.delete(f"/v1/enroll/{pid}", headers={"X-Manage-Token": "wrong"}).status_code, 403)
+        self.assertEqual(client.post(f"/v1/monitored/{pid}/crawl").status_code, 401)
+        self.assertEqual(client.post(f"/v1/monitored/{pid}/crawl", headers={"X-Manage-Token": "wrong"}).status_code, 403)
+        self.assertEqual(client.get(f"/v1/products/{pid}/history").json()["product"]["active"], 1)
+        self.assertEqual(client.delete(f"/v1/enroll/{pid}", headers={"X-Manage-Token": token}).status_code, 204)
+
+    def test_rate_limit(self):
+        with mock.patch.dict(os.environ, {"MONITOR_RATE_LIMIT": "2"}):
+            self.enroll(crawl_now=False)
+            self.enroll(crawl_now=False)
+            r = client.post("/v1/enroll", json={"url": URL, "crawl_now": False})
+            self.assertEqual(r.status_code, 429)
+
+    def test_legacy_db_migrated(self):
+        with closing(sqlite3.connect(os.environ["MONITOR_DB"])) as db, db:
+            db.execute("CREATE TABLE products (id INTEGER PRIMARY KEY, merchant_id INTEGER, url TEXT NOT NULL UNIQUE, "
+                       "enrolled_at TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1)")
+            db.execute("INSERT INTO products (url, enrolled_at) VALUES (?, 'x')", (URL,))
+        (row,) = client.get("/v1/monitored").json()["results"]
+        self.assertFalse(row["id"].isdigit())
+        self.assertIsNotNone(self.enroll(crawl_now=False)["manage_token"])  # legacy product gets a token once
+
     def test_unenroll_and_reenroll(self):
-        pid = self.enroll()["product"]["id"]
-        self.assertEqual(client.delete(f"/v1/enroll/{pid}").json(), {"id": pid, "active": False})
+        body = self.enroll()
+        pid = body["product"]["id"]
+        self.assertEqual(client.delete(f"/v1/enroll/{pid}", headers=self.auth(body)).status_code, 204)
         self.assertEqual(crawl.crawl_all(), {})  # inactive products are not crawled
         self.assertEqual(client.get(f"/v1/products/{pid}/history").json()["product"]["active"], 0)
         again = self.enroll(crawl_now=False)
         self.assertEqual((again["product"]["id"], again["created"], again["product"]["active"]), (pid, False, 1))
-        self.assertEqual(client.delete("/v1/enroll/999").status_code, 404)
+        self.assertEqual(client.delete("/v1/enroll/999", headers=self.auth(body)).status_code, 404)
         self.assertEqual(client.get("/v1/products/999/history").status_code, 404)
 
     def test_validation(self):
@@ -101,7 +151,7 @@ class MonitorTest(unittest.TestCase):
                 REAL_CHECK(bad)
 
     def test_fetch_error_logged(self):
-        pid = self.enroll(crawl_now=False)["product"]["id"]
+        pid = store.pid_for(self.enroll(crawl_now=False)["product"]["id"])
         with mock.patch.object(safe_fetch, "fetch_page", side_effect=safe_fetch.FetchError(403, "robots.txt disallows this URL")):
             self.assertEqual(crawl.crawl(pid)["status"], "error")
         self.assertEqual(store.history(pid)["runs"][0]["detail"], "403 robots.txt disallows this URL")
@@ -114,7 +164,7 @@ class MonitorTest(unittest.TestCase):
         runner.assert_not_called()
 
     def test_visibility_changed(self):
-        pid = self.enroll()["product"]["id"]
+        pid = store.pid_for(self.enroll()["product"]["id"])
         runner = mock.Mock(return_value={URL: {"mentioned": 2, "queries": 10}})
         with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "k", "BENCHMARK_MAX_USD": "1.5"}):
             self.assertEqual(crawl.visibility_all(runner)["status"], "ok")
@@ -123,7 +173,7 @@ class MonitorTest(unittest.TestCase):
         self.assertEqual([e["type"] for e in ev], ["VISIBILITY_CHANGED"])
 
     def test_visibility_with_harness_mock_adapter(self):
-        pid = self.enroll()["product"]["id"]
+        pid = store.pid_for(self.enroll()["product"]["id"])
         env = {"ANTHROPIC_API_KEY": "unused", "BENCHMARK_MAX_USD": "0.5", "BENCHMARK_MODELS": "mock:mock-1",
                "BENCHMARK_MIN_INTERVAL": "0"}
         with mock.patch.dict(os.environ, env):

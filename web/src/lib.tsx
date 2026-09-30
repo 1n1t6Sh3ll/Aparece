@@ -78,6 +78,10 @@ export class ApiError extends Error {
   constructor(public status: number, public detail: string) { super(detail); }
 }
 
+/** Per-enrollment manage tokens (shown once by POST /v1/enroll), kept only in this browser. */
+export const saveManageToken = (id: string, token: string) => store.set(`pl.manage.${id}`, token);
+export const manageToken = (id: string) => store.get(`pl.manage.${id}`) || "";
+
 export async function api<R>(path: string, init?: RequestInit): Promise<R> {
   let r: Response;
   try {

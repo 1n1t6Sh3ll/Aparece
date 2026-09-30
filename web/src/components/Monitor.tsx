@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Camera, ExternalLink, History, Loader2, PauseCircle, RefreshCw, ScanSearch } from "lucide-react";
-import { api, cap, fieldLabel, fmtValue, useI18n } from "../lib";
+import { api, cap, fieldLabel, fmtValue, manageToken, useI18n } from "../lib";
 
-type Monitored = { id: number; url: string; enrolled_at: string; active: number; plan: string | null; last_snapshot_at: string | null;
+type Monitored = { id: string; url: string; enrolled_at: string; active: number; plan: string | null; last_snapshot_at: string | null;
   snapshot_count: number; event_count: number; demo?: boolean };
 type Event = { id: number; at: string; type: string; field: string | null; before: unknown; after: unknown };
 type Snapshot = { id: number; taken_at: string; data: { content?: { title?: string; price?: number; currency?: string } } };
@@ -21,15 +21,15 @@ export function ProductsPage() {
   const { t, lang } = useI18n();
   const [rows, setRows] = useState<Monitored[] | null>(null);
   const [err, setErr] = useState("");
-  const [busy, setBusy] = useState<number | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const load = useCallback(() => api<{ results: Monitored[] }>("/v1/monitored").then((r) => setRows(r.results)).catch((e) => setErr(t("err.generic", { detail: e.message }))), [t]);
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function act(id: number, kind: "crawl" | "stop") {
+  async function act(id: string, kind: "crawl" | "stop") {
     if (kind === "stop" && !window.confirm(t("prod.confirm"))) return;
     setBusy(id);
     try {
-      await api(kind === "crawl" ? `/v1/monitored/${id}/crawl` : `/v1/enroll/${id}`, { method: kind === "crawl" ? "POST" : "DELETE" });
+      await api(kind === "crawl" ? `/v1/monitored/${id}/crawl` : `/v1/enroll/${id}`, { method: kind === "crawl" ? "POST" : "DELETE", headers: { "X-Manage-Token": manageToken(id) } });
       await load();
     } catch (e) { setErr(t("err.generic", { detail: (e as Error).message })); }
     setBusy(null);
@@ -90,7 +90,7 @@ function show(field: string | null, v: unknown, t: (k: string, p?: Record<string
   return fmtValue(v);
 }
 
-export function HistoryPage({ id }: { id: number }) {
+export function HistoryPage({ id }: { id: string }) {
   const { t, lang } = useI18n();
   const [data, setData] = useState<{ product: Monitored; snapshots: Snapshot[]; events: Event[] } | null>(null);
   const [err, setErr] = useState("");
