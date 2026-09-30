@@ -153,7 +153,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
         </>}
         {step === 2 && <>
           <Field id="pr-urls" label={t("ob.urls")} hint={t("ob.urlHint")}>
-            <textarea id="pr-urls" rows={4} className="input font-mono text-sm" value={urls} placeholder="https://yourstore.com/products/..." onChange={(e) => setUrls(e.target.value)} />
+            <textarea id="pr-urls" rows={4} className="input font-mono text-sm" value={urls} placeholder={t("hero.placeholder")} onChange={(e) => setUrls(e.target.value)} />
           </Field>
           <div>
             <p className="text-sm font-medium">{t("ob.manual")}</p>

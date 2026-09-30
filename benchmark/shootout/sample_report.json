@@ -1421,7 +1421,7 @@
           "raw": {
             "title": "Camiseta Esqué Aaron",
             "tags": [],
-            "text": "(merchant description omitted from the committed sample)",
+            "text": "(descripción del comercio omitida en la muestra publicada)",
             "error": null
           },
           "visibility": {
@@ -1516,7 +1516,7 @@
               "para hombre",
               "180 gsm"
             ],
-            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Care: (merchant care text omitted from the sample).",
+            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: (instrucciones de cuidado del comercio omitidas en la muestra).",
             "error": null
           },
           "visibility": {
@@ -1593,7 +1593,7 @@
           "raw": {
             "title": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico",
             "tags": [],
-            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Care: (merchant care text omitted from the sample).",
+            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: (instrucciones de cuidado del comercio omitidas en la muestra).",
             "error": null
           },
           "visibility": {
@@ -1645,7 +1645,7 @@
           ]
         },
         "description": {
-          "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Care: (merchant care text omitted from the sample).",
+          "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: (instrucciones de cuidado del comercio omitidas en la muestra).",
           "from": "mock:mock-gen"
         }
       }
@@ -1720,7 +1720,7 @@
           "raw": {
             "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
             "tags": [],
-            "text": "(merchant description omitted from the committed sample)",
+            "text": "(descripción del comercio omitida en la muestra publicada)",
             "error": null
           },
           "visibility": {
@@ -1813,7 +1813,7 @@
               "para hombre",
               "rosa"
             ],
-            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Care: (merchant care text omitted from the sample).",
+            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Cuidado: (instrucciones de cuidado del comercio omitidas en la muestra).",
             "error": null
           },
           "visibility": {
@@ -1890,7 +1890,7 @@
           "raw": {
             "title": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
             "tags": [],
-            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Care: (merchant care text omitted from the sample).",
+            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Cuidado: (instrucciones de cuidado del comercio omitidas en la muestra).",
             "error": null
           },
           "visibility": {
@@ -1941,7 +1941,7 @@
           ]
         },
         "description": {
-          "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Care: (merchant care text omitted from the sample).",
+          "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Cuidado: (instrucciones de cuidado del comercio omitidas en la muestra).",
           "from": "mock:mock-gen"
         }
       }

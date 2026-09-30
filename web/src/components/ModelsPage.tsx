@@ -17,13 +17,21 @@ const ORDER = ["all_null_baseline", "base_qwen_0_5b", "base_zero_shot", "ft_qwen
 const COLORS = ["#94a3b8", "#0ea5e9", "#6366f1", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#14b8a6"];
 const BASELINE = "all_null_baseline";
 const pct = (v: number | undefined | null) => (v == null ? null : `${Math.round(v * 1000) / 10}%`);
+/** [answered, total] when a model answered fewer products than the test set (or the run marks it partial). */
+const partialOf = (m: Model, n?: number): [number, number] | null => {
+  const a = m.answered ?? m.n, tot = m.total ?? n;
+  return a != null && tot != null && (m.partial || a < tot) ? [a, tot] : null;
+};
+/** Run files may bake the status into the label ("Claude ... — partial: 87 of 200"); the translated chip shows it. */
+const tidy = (c: Comparison): Comparison => ({ ...c, models: Object.fromEntries(Object.entries(c.models || {}).map(([k, m]) =>
+  [k, partialOf(m, c.test?.products) ? { ...m, label: m.label.replace(/\s*(?:[—–-]\s*partial\b.*|\(partial\b[^)]*\))$/i, "") } : m])) });
 
 export default function ModelsPage() {
   const { t, lang } = useI18n();
   const [data, setData] = useState<Comparison | null>(null);
   const [err, setErr] = useState("");
   useEffect(() => {
-    api<Comparison>("/v1/model-comparison").then(setData).catch((e) => setErr(errorText(e, t).msg));
+    api<Comparison>("/v1/model-comparison").then((c) => setData(tidy(c))).catch((e) => setErr(errorText(e, t).msg));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const head = (
@@ -58,11 +66,7 @@ export default function ModelsPage() {
   const showLatency = ms.some(({ m }) => latency(m));
   const best = (f: (m: Model) => number | null | undefined) => Math.max(...contenders.map(({ m }) => f(m) ?? -1));
   const n = data.test.products;
-  /** [answered, total] when a model answered fewer products than the test set (or the run marks it partial). */
-  const partial = (m: Model): [number, number] | null => {
-    const a = m.answered ?? m.n, tot = m.total ?? n;
-    return a != null && tot != null && (m.partial || a < tot) ? [a, tot] : null;
-  };
+  const partial = (m: Model) => partialOf(m, n);
 
   const cell = (v: string | null, isBest = false) => v == null
     ? <span className="text-xs text-stone-400">{t("mod.notMeasured")}</span>

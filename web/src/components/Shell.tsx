@@ -110,7 +110,7 @@ export default function Shell({ page, children }: { page: string; children: Reac
 
   const active = (to: string) => page === to || (to === "audit" && (page === "bulk" || page === "report"));
   const nav = (
-    <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5 px-3">
+    <nav aria-label={t("nav.menu")} className="flex flex-1 flex-col gap-0.5 px-3">
       {NAV.filter((n) => !("auth" in n) || signedIn).map(({ to, key, label, Icon }) => (
         <a key={to} href={`#/${to}`} aria-current={active(to) ? "page" : undefined}
           className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${active(to) ? "bg-white/10 text-white" : "text-[var(--sidebar-ink)] hover:bg-white/5 hover:text-white"}`}>
