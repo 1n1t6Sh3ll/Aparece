@@ -672,6 +672,11 @@
   "err.upstreamPlain": "La tienda no respondió con normalidad. Comprueba que la página abre en tu navegador o pégala como borrador.",
   "err.denied": "No tienes acceso a esto.",
   "err.notFound": "No lo encontramos.",
+  "err.tooMany": "Has hecho muchas auditorías desde esta red en el último minuto. Espera un minuto y vuelve a intentarlo.",
+  "err.empty": "Pega el enlace de un producto que empiece por https://, o abre \"Borrador de ficha\" y añade el título del producto.",
+  "ws.notSaved": "No se guardó en el historial (límite alcanzado; reintenta en {n} s).",
+  "ws.unranked": "Por ahora solo comparamos camisetas y camisas. Esto parece un producto de tipo «{type}» (leímos en {from}: «{read}»), así que te mostramos la calidad de la ficha y las mejoras sin posición.",
+  "ws.unrankedNoType": "Por ahora solo comparamos camisetas y camisas. Esto no parece una camiseta ni una camisa (leímos en {from}: «{read}»), así que te mostramos la calidad de la ficha y las mejoras sin posición.",
   "err.invalid": "Algún dato no es válido. Revisa los campos e inténtalo de nuevo.",
   "err.unknown": "Algo falló por nuestra parte. Inténtalo de nuevo en un momento.",
   "err.loadProfile": "No pudimos cargar tu perfil. Revisa tu conexión y recarga.",
@@ -720,5 +725,12 @@
   "mod.origEn": "texto original en inglés",
   "pd.enterToken": "Clave de gestión",
   "pd.useToken": "Abrir historial",
-  "nav.closeMenu": "Cerrar menú"
+  "nav.closeMenu": "Cerrar menú",
+  "sug.reward": "Puntuación de recompensa",
+  "sug.accuracy": "Precisión de los datos",
+  "sug.rw.grounding": "Fundamentación",
+  "sug.rw.hallucination": "Alucinación",
+  "sug.rw.coverage": "Cobertura",
+  "sug.rwMax": "máx. {n}",
+  "sug.rewardNote": "La recompensa puntúa solo el texto sugerido: 1 punto por un título y una descripción válidos, más la fundamentación (proporción de frases respaldadas por datos de tu página), menos 2 por cada frase sin respaldo, más la cobertura (proporción de tus datos verificados que menciona, hasta 2). La precisión de los datos es la proporción de afirmaciones respaldadas por datos verificados: tu texto actual → la sugerencia."
 }

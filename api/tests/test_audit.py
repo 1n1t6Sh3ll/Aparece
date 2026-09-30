@@ -34,15 +34,18 @@ class AuditTest(unittest.TestCase):
         b = self.audit(html=HTML, url=URL)
         self.assertEqual(b["product"]["title"], "Heavyweight Oversized Tee - Black | Example Shop")
         self.assertFalse(b["product"]["draft"])
-        # 4 comparable en/EUR t-shirts in band (p_de other language, p_hood other type, p_boxy out of the +/-30% band)
+        # 4 comparable en/EUR t-shirts in band (p_de other language, p_hood other type); fewer than 10, so the match is
+        # widened step by step: without the price band p_boxy (out of the +/-30% band) joins
         rk = b["rank"]
-        self.assertEqual((rk["position"], rk["total"]), (1, 5))  # the peer fixtures have no description text
+        self.assertEqual((rk["position"], rk["total"]), (1, 6))  # the peer fixtures have no description text
+        self.assertEqual(rk["match_step"], "any_shirt_type")  # never reaches 10 in the fixture: the widest step
+        self.assertTrue(any("without the price band" in n for n in b["notes"]))
         self.assertEqual(rk["components"]["facts_stated"], 11)  # 22 facts: the description is scored once, not as a fact
         pts = rk["components"]["points"]
         self.assertAlmostEqual(rk["score"], pts["facts"] + pts["description"] + pts["structured_data"], places=1)
         self.assertIn("not an AI-visibility or search rank", rk["formula"])
         board = b["leaderboard"]
-        self.assertEqual(len(board), 5)
+        self.assertEqual(len(board), 6)
         self.assertEqual(sum(r["is_you"] for r in board), 1)
         self.assertTrue(board[rk["position"] - 1]["is_you"])
         self.assertEqual([r["score"] for r in board], sorted((r["score"] for r in board), reverse=True))
@@ -72,7 +75,7 @@ class AuditTest(unittest.TestCase):
         miss = [a for a in acts if a["kind"] == "missing_attribute"]
         self.assertEqual([a["field"] for a in miss[:3]], ["identity.audience", "fit_and_style.pattern", "variants.sizes"])
         self.assertTrue(all("if you can verify it" in a["title"] for a in miss))
-        self.assertEqual((miss[0]["evidence"]["peers_with_attribute"], miss[0]["evidence"]["of"]), (4, 4))
+        self.assertEqual((miss[0]["evidence"]["peers_with_attribute"], miss[0]["evidence"]["of"]), (5, 5))
         # price 35 EUR vs signals group t_shirt|en|EUR|observed p25-p75 24-29 -> above
         self.assertEqual(b["price_position"]["position"], "above")
         self.assertEqual(b["price_position"]["source"], "signals")
@@ -172,17 +175,64 @@ class AuditTest(unittest.TestCase):
             re.sub(r'<html lang="[^"]*"', '<html lang="EN-us"', HTML, count=1)
         self.assertEqual(self.audit(html=page, url=URL)["context"]["language"], "en")
 
-    def test_not_a_shirt_is_not_ranked(self):
-        """#72: non-shirts get a clear 422 instead of 'rank 1 of 1'."""
+    def test_not_a_shirt_is_audited_without_rank(self):
+        """Non-shirts get the full audit (facts, score, fixes) with no rank and a notice saying what we read."""
         for body in ({"title": "Stainless steel water bottle 750ml", "description": "Double-wall insulated"},
                      {"title": "123456", "description": "789 1011"},
                      {"html": '<html lang="en"><head><title>Men\'s Tree Runners</title><script type="application/ld+json">'
                               '{"@type":"Product","name":"Men\'s Tree Runners","offers":{"@type":"Offer","price":"98",'
                               '"priceCurrency":"USD"}}</script></head><body><h1>Men\'s Tree Runners</h1>'
                               '<p>Breathable sneakers.</p></body></html>', "url": "https://shoes.example.com/p/runner"}):
-            r = client.post("/v1/audit", json=body)
-            self.assertEqual(r.status_code, 422, body)
-            self.assertTrue(r.json()["detail"].startswith("not_a_shirt"), r.text)
+            b = self.audit(**body)
+            self.assertEqual(b["unranked"]["reason"], "not_a_shirt", body)
+            self.assertIsNone(b["rank"]["position"])
+            self.assertFalse(b["rank"]["ranked"])
+            self.assertEqual(b["leaderboard"][0]["is_you"], True)
+            self.assertIsInstance(b["rank"]["score"], float)
+            self.assertTrue(any(n.startswith("We rank against shirts only for now") for n in b["notes"]), b["notes"])
+        self.assertEqual(b["unranked"]["type"], "shoes")
+        self.assertIn("Tree Runners", b["unranked"]["read_text"])
+
+    def page(self, title, url, crumbs="", desc="Soft and durable. Made to last.", name=None):
+        name = name or title
+        html = (f'<html lang="en"><head><title>{title}</title><script type="application/ld+json">{{"@type":"Product",'
+                f'"name":"{name}","description":"{desc}","offers":{{"@type":"Offer","price":"30","priceCurrency":"EUR"}}}}'
+                f'</script></head><body>{crumbs}<h1>{name}</h1><p>{desc}</p></body></html>')
+        with mock.patch.object(safe_fetch, "fetch_page", return_value=(url, html)):
+            return self.audit(url=url)
+
+    def test_shirt_word_outside_the_title(self):
+        """The shirt type is read from breadcrumbs, the URL slug or the start of the description (EN/ES/FR/DE/IT)."""
+        crumbs = '<nav class="breadcrumb"><a href="/">Home</a><a href="/men">Men</a><a href="/t">T-Shirts</a></nav>'
+        cases = [("breadcrumbs", self.page("Delvik Black", "https://s.example.com/products/delvik-black", crumbs=crumbs)),
+                 ("URL", self.page("Delvik Black", "https://s.example.com/products/camiseta-delvik-negra")),
+                 ("description", self.page("Delvik Black", "https://s.example.com/products/delvik-black",
+                                           desc="A heavyweight cotton tee with a relaxed fit."))]
+        for where, b in cases:
+            self.assertIsNone(b["unranked"], where)
+            self.assertEqual(b["product"]["product_type"], "t_shirt", where)
+            self.assertTrue(b["rank"]["ranked"], where)
+        for word in ("Maglietta Delvik", "Chemise Delvik", "Poloshirt Delvik", "Tee-shirt Delvik", "Hemd Delvik"):
+            b = self.page(word, "https://s.example.com/products/x")
+            self.assertIsNone(b["unranked"], word)
+
+    def test_non_shirt_page_still_unranked(self):
+        """A sweatshirt stays unranked even when its description mentions a t-shirt."""
+        b = self.page("Sudadera Delvik Negra | Mos Mosh", "https://riveraspain.example/products/sudadera-delvik-negra-mos-mosh",
+                      desc="Sudadera de algodón. Combínala con una camiseta blanca.")
+        self.assertEqual((b["unranked"]["type"], b["unranked"]["read_from"]), ("sweatshirt", "title"))
+        self.assertIsNone(b["rank"]["position"])
+        self.assertEqual(b["peers"], [])
+        self.assertTrue(b["actions"])  # fixes still come from the best-listed shirts
+        self.assertIn('"Sudadera Delvik Negra | Mos Mosh"', next(n for n in b["notes"] if n.startswith("We rank")))
+
+    def test_small_peer_sets_are_widened_with_one_formula(self):
+        """Fewer than 10 exact matches: widen (price band, sleeve, shirt type); one weight set for the whole ranking."""
+        b = self.audit(html=HTML, url=URL)
+        w = b["rank"]["weights"]
+        self.assertIn(b["rank"]["match_step"], ("no_price_band", "no_sleeve", "any_shirt_type"))
+        self.assertTrue(all(r["points"]["structured_data"] == 0 or w["structured_data"] for r in b["leaderboard"]))
+        self.assertEqual(len({(r["points"]["facts"] >= 0, tuple(sorted(w))) for r in b["leaderboard"]}), 1)
 
     def test_product_never_ranked_against_itself(self):
         """The dataset row of the audited page (same URL up to www/slash/query/case) is not a peer."""

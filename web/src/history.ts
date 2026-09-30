@@ -40,8 +40,9 @@ export const history = {
     if (r.manage_token) saveManageToken(r.product.id, r.manage_token);
     return r.product.id;
   },
-  chat: (productId: string | null, message: string, past: { role: "user" | "assistant"; content: string }[]) =>
-    api<ChatAnswer>("/v1/chat", { method: "POST", body: JSON.stringify({ product_id: productId, message, history: past.slice(-20) }) }),
+  /** Grounded chat about monitored product `id`: sends its public id and manage token so answers use its snapshots. */
+  chat: (id: string, message: string, past: { role: "user" | "assistant"; content: string }[]) =>
+    api<ChatAnswer>("/v1/chat", { method: "POST", ...h(id), body: JSON.stringify({ product_id: id, message, history: past.slice(-20) }) }),
 };
 
 /** A number from a metrics value, or null (visibility may be an object per model; only a plain number is charted). */

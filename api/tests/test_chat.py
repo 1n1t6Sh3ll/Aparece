@@ -170,6 +170,23 @@ class ChatApiTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertTrue(any(c.startswith("trend:") for c in r.json()["context"]), r.json())
 
+    def test_product_detail_canned_question_is_cited(self):
+        """#115: the product-detail chat sends the monitored public id + X-Manage-Token (web/src/history.ts), so its
+        canned question is answered from this product's snapshots/trends; without them there is no monitor data."""
+        q = "What changed and what's required now?"
+        r = self.mpost(message=q).json()
+        self.assertFalse(r["refused"], r)
+        self.assertTrue(any(c["type"] in ("trend", "snapshot", "snapshot_diff", "change_event") for c in r["citations"]), r)
+        anon = self.post(product_id=None, message=q).json()  # what the old client sent
+        self.assertFalse(any(c.startswith(("snapshot", "trend")) for c in anon["context"]), anon)
+
+    def test_spanish_canned_question_is_cited(self):
+        """The ES product-detail canned question retrieves the same trend records as the EN one (was refused)."""
+        r = self.mpost(message="¿Qué ha cambiado y qué hace falta ahora?").json()
+        self.assertFalse(r["refused"], r)
+        self.assertTrue(any(c["type"] == "trend" for c in r["citations"]), r)
+        self.assertEqual(main.chat_api.search_question("What changed?"), "What changed?")  # EN untouched
+
     def test_monitor_context_has_snapshots_diff_trends(self):
         by_type = {}
         for x in main.chat_api.collect(self.pid, self.internal):
