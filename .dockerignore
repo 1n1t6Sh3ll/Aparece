@@ -22,6 +22,7 @@ monitor/data/*
 governance/data/*
 !governance/data/.gitignore
 experiments/data/*
+optimizer/data/*
 api/tests/
 **/tests/
 **/__pycache__

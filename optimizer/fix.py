@@ -83,8 +83,8 @@ def _log_pairs(truth, language, backend, best, candidates):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with _pairs_lock, open(path, "a", encoding="utf-8") as f:
             f.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in rows)
-    except OSError:  # logging preference data must never fail a suggestion
-        pass
+    except OSError as e:  # logging preference data must never fail a suggestion
+        logging.getLogger(__name__).warning("could not append preference pairs to %s: %s", path, e)
 
 
 def generate(record, language="en", gaps=None, backend=None, candidates=None):
