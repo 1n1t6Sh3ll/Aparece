@@ -29,9 +29,27 @@ def compute(snap):
         tc = gm["attribute_completeness_pct"]["target"]
         m["attribute_completeness_pct"] = tc
         m["peer_median_completeness_pct"] = gm["attribute_completeness_pct"]["peer_median"]
-        m["completeness_rank"] = {"position": 1 + sum(completeness(p) > tc for p in peers), "of": len(peers) + 1,
-                                  "by": "attribute_completeness_pct"}
+        m["completeness_rank"] = audit_rank(rec) or {"position": 1 + sum(completeness(p) > tc for p in peers),
+                                                      "of": len(peers) + 1, "by": "attribute_completeness_pct"}
     return m
+
+
+def audit_rank(rec):
+    """The same listing-quality rank the audit shows (api/audit_api: same peers, widening and formula), so Monitor
+    and the audit never disagree (#116). None when the audit module is not importable (monitor used outside the API)."""
+    try:
+        import audit_api
+        import dashboard_api
+    except ImportError:
+        return None
+    target = dashboard_api.adapt(rec)
+    if not target:
+        return None
+    recs = audit_api.not_self(target)
+    key, _ = audit_api.peer_key(target, recs)
+    rk, _ = audit_api.rank(target, recs, match=key)
+    return {"position": rk["position"], "position_from": rk.get("position_from"), "position_to": rk.get("position_to"),
+            "of": rk["total"], "score": rk["score"], "by": "listing_quality"}
 
 
 def metrics(snap):
