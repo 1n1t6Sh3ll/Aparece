@@ -26,6 +26,21 @@ from monitor import history as snapshot_history, store  # noqa: E402
 
 router = APIRouter(prefix="/v1", tags=["chat"])
 
+# chat/engine retrieval matches English keywords; Spanish question stems -> the English terms the records use.
+ES_TERMS = [("cambi", "change trend"), ("tendenc", "trend"), ("histori", "history"), ("evoluci", "trend history"),
+            ("aument", "increased"), ("subi", "increased"), ("baj", "decreased"), ("dismin", "decreased"),
+            ("precio", "price"), ("visibilidad", "visibility"), ("menci", "mention"), ("descripci", "description"),
+            ("complet", "completeness"), ("atribut", "attribute"), ("posici", "rank position"),
+            ("clasific", "rank"), ("competidor", "competitors"), ("instantan", "snapshot"), ("experiment", "experiment")]
+
+
+def search_question(message):
+    """The question plus English search terms for Spanish words, so a Spanish question retrieves the same records
+    (e.g. the product-detail canned question "¿Qué ha cambiado...?" -> change/trend records)."""
+    low = message.lower()
+    extra = list(dict.fromkeys(en for es, en in ES_TERMS if es in low))
+    return f"{message}\n(search terms: {' '.join(extra)})" if extra else message
+
 
 class Turn(BaseModel):
     role: str = Field(..., pattern="^(user|assistant)$")
@@ -201,7 +216,7 @@ async def chat(req: ChatRequest, x_manage_token: str | None = Header(None)):
     monitor_id = await run_in_threadpool(monitor_pid, req.product_id, x_manage_token)
     records = await run_in_threadpool(collect, req.product_id, monitor_id)
     try:
-        result = await run_in_threadpool(engine.answer, records, req.message, backend,
+        result = await run_in_threadpool(engine.answer, records, search_question(req.message), backend,
                                          [t.model_dump() for t in req.history])
     except Exception as e:  # noqa: BLE001 -- backend/network errors
         raise HTTPException(502, f"chat backend error: {type(e).__name__}")

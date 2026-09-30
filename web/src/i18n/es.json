@@ -725,5 +725,12 @@
   "mod.origEn": "texto original en inglés",
   "pd.enterToken": "Clave de gestión",
   "pd.useToken": "Abrir historial",
-  "nav.closeMenu": "Cerrar menú"
+  "nav.closeMenu": "Cerrar menú",
+  "sug.reward": "Puntuación de recompensa",
+  "sug.accuracy": "Precisión de los datos",
+  "sug.rw.grounding": "Fundamentación",
+  "sug.rw.hallucination": "Alucinación",
+  "sug.rw.coverage": "Cobertura",
+  "sug.rwMax": "máx. {n}",
+  "sug.rewardNote": "La recompensa puntúa solo el texto sugerido: 1 punto por un título y una descripción válidos, más la fundamentación (proporción de frases respaldadas por datos de tu página), menos 2 por cada frase sin respaldo, más la cobertura (proporción de tus datos verificados que menciona, hasta 2). La precisión de los datos es la proporción de afirmaciones respaldadas por datos verificados: tu texto actual → la sugerencia."
 }
