@@ -76,7 +76,7 @@ git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens
 
 ### Run the whole project, including live AI comparison
 
-1. **Start the app** with `./run.sh --skip-tests` (Windows: `.un.ps1 -SkipTests`), or Docker as above. Open http://127.0.0.1:8000. Check `http://127.0.0.1:8000/v1/health` returns `{"status":"ok"}`. Change the port with `PORT=8001`.
+1. **Start the app** with `./run.sh --skip-tests` (Windows: `.\run.ps1 -SkipTests`), or Docker as above. Open http://127.0.0.1:8000. Check `http://127.0.0.1:8000/v1/health` returns `{"status":"ok"}`. Change the port with `PORT=8001`.
 2. **Audit a product:** paste a public product link on the home page. You get the facts with evidence, the rank, and the top 3 fixes. Click *Generate Fix* for a checked title and description.
 3. **Turn on live AI comparison** (optional, paid): copy `.env.example` to `.env`, uncomment `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY`, and restart. `run.sh` then installs the provider packages (`benchmark/requirements.txt`) itself. Without a key, only the free writers run; the paid ones are skipped and the page says so.
    - Spending is capped: `SHOOTOUT_LIVE_MAX_USD` per request (default `0.05`) and `SHOOTOUT_LIVE_DAILY_USD` per server run (default `1`). One product costs about a tenth of a cent to a few tenths of a cent.

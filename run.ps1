@@ -22,7 +22,7 @@ if (Test-Path .env) {
 
 # Paid AI comparison needs the provider SDKs; install them only when a key is set.
 if ($env:OPENAI_API_KEY -or $env:ANTHROPIC_API_KEY) {
-  & $py -m pip install -q -r benchmarkequirements.txt
+  & $py -m pip install -q -r benchmark\requirements.txt
 }
 
 if (-not $SkipTests) {
