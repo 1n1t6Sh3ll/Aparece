@@ -10,6 +10,7 @@
 !governance/
 !optimizer/
 !experiments/
+!profile/
 !train/common.py
 !web/
 web/node_modules/
@@ -19,6 +20,8 @@ monitor/data/*
 governance/data/*
 !governance/data/.gitignore
 experiments/data/*
+profile/data/*
+!profile/data/.gitignore
 api/tests/
 **/tests/
 **/__pycache__
