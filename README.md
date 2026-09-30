@@ -45,6 +45,8 @@ python -m benchmark.harness report --results runs.jsonl --catalog benchmark/exam
 python -m unittest discover -s benchmark/tests -t .
 ```
 
+Claim check (hallucination detection, `benchmark/claims.py`): `report` also parses the sentences around each matched product with the `dataset/collect/normalize.py` rules (composition %, fit, sleeve, neckline, gsm, price+currency, colors, sizes, audience, origin, certifications) and compares them with that product's non-null ground truth in the catalog (normalized records with evidence). Each claim is SUPPORTED, CONTRADICTED, or UNVERIFIABLE (gold unknown; never counted wrong). Per model/language: claim accuracy = supported/(supported+contradicted), hallucination rate = contradicted/(supported+contradicted), unverifiable share; examples quote the answer, gold value and evidence. Origin/certifications are checked against page text; a certification absent from the page stays unverifiable. Prices in a currency other than the gold currency are unverifiable. Sentences naming several products are skipped.
+
 ## Review and price signals (`signals/`)
 Deterministic per-product signals keyed by `product_id`, written to `dataset/output/signals/` (git-ignored).
 ```sh
