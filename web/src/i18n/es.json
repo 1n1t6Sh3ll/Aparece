@@ -733,5 +733,9 @@
   "pr.auditCompetitor": "Auditar competidor",
   "res.ccArchived": "Cargado desde el archivo público de Common Crawl (capturado el {date}) porque {store} no permite la lectura directa.",
   "land.checks": "Qué revisa cada auditoría",
-  "land.checks.note": "Tu auditoría marca cada uno como Encontrado o No encontrado, con el texto exacto de tu página."
+  "land.checks.note": "Tu auditoría marca cada uno como Encontrado o No encontrado, con el texto exacto de tu página.",
+  "vis.siteRate": "Tu tienda apareció en el {rate} de {n} respuestas reales de compra de {models}.",
+  "vis.allRate": "Las tiendas de nuestro benchmark aparecieron en el {rate} de {n} respuestas reales de compra de {models}.",
+  "vis.named": "Marcas que nombraron los asistentes de IA en su lugar (respuestas):",
+  "vis.note": "Respuestas reales a 384 preguntas sobre camisetas en inglés y español (30 sep 2026). Resultados observados, no cómo funcionan los modelos por dentro."
 }

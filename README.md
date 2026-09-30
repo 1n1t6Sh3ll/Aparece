@@ -185,7 +185,7 @@ Attribute extraction on 200 fixed test products from 63 stores (`train/runs/comp
 
 Caveats: exact-match scoring on the ProductLens label vocabulary favours the fine-tuned models; API models saw the format only in the prompt, so this is not a general quality ranking. Claude Sonnet ran on 87 of 200 records only. The 1.5B v1 was trained without the 7 newer fields and scores about 0 on them by construction. Local models: greedy decoding, 4-bit NF4, RTX 3080 8GB.
 
-Other results appear only when their files exist locally: `train/runs/eval.json` (`GET /v1/eval`), `benchmark/reports/report.json` (`GET /v1/visibility`), `dataset/output/final/stats.json`. Files under `api/tests/fixtures/` are fixtures, not results.
+Other results appear only when their files exist locally: `train/runs/eval.json` (`GET /v1/eval`), `benchmark/reports/report.json` (`GET /v1/visibility`; without it, the committed real run in `benchmark/results/visibility-2026-09-30/` is served: gpt-4o-mini and claude-haiku-4-5, 384 EN/ES answers, 0% mention rate for the catalog shops, big brands named instead, $0.60 API spend), `dataset/output/final/stats.json`. Files under `api/tests/fixtures/` are fixtures, not results.
 
 ## Data provenance and licensing
 

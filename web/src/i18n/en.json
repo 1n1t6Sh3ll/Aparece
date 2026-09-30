@@ -733,5 +733,9 @@
   "pr.auditCompetitor": "Audit competitor",
   "res.ccArchived": "Loaded from the Common Crawl public archive (captured {date}) because {store} doesn't allow direct fetching.",
   "land.checks": "What every audit checks",
-  "land.checks.note": "Your audit marks each of these Found or Not found, with the exact text from your page."
+  "land.checks.note": "Your audit marks each of these Found or Not found, with the exact text from your page.",
+  "vis.siteRate": "Your store was named in {rate} of {n} real shopping answers from {models}.",
+  "vis.allRate": "The shops in our benchmark were named in {rate} of {n} real shopping answers from {models}.",
+  "vis.named": "Brands the AI assistants named instead (answers):",
+  "vis.note": "Real answers to 384 English and Spanish t-shirt questions (30 Sep 2026). Observed outputs, not how the models work inside."
 }
