@@ -206,9 +206,12 @@ def _prepare(payload):
 def _run(payload):
     """Run /v1/audit once and return (audit, normalized record for /v1/optimize)."""
     import main
+    from_url = bool(payload.get("url")) and not (payload.get("html") or payload.get("text") or audit_api.is_draft(payload))
     payload, req = _prepare(payload)
     try:
         result = audit_api.audit(payload)
+        if from_url:
+            audit_api.mark_archive(result, req.url)
     except ValidationError as e:
         raise HTTPException(422, e.errors()[0]["msg"])
     except TypeError as e:

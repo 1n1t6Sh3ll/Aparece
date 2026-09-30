@@ -205,8 +205,11 @@ def fetch_archived(url, timeout_total=10):
         for crawl_id in crawls(deadline)[:MAX_CRAWLS]:
             for u in variants(url):
                 try:
-                    row = lookup(crawl_id, u, deadline)
-                except (requests.HTTPError, TooLarge):  # index overloaded (5xx) or oversized answer: next crawl
+                    try:
+                        row = lookup(crawl_id, u, deadline)
+                    except requests.HTTPError:  # the index often answers 502/504 once: try the same lookup again
+                        row = lookup(crawl_id, u, deadline)
+                except (requests.HTTPError, TooLarge):  # index still overloaded (5xx) or oversized answer: next crawl
                     break
                 if not row:
                     continue

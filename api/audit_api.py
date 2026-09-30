@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse
 from pydantic import ValidationError
 
 import dashboard_api as dash
+import safe_fetch
 from analysis.gaps import ATTRIBUTES, INTENTS, analyze, attributes_present, description_chars, description_coverage, description_text
 from analysis.peers import SLEEVE_FILL, find_peers, get, price, unknown_sleeve
 from normalize import PRODUCT_TYPE, SHIRT_TYPES, lang_code, match_lookup, shirt_type  # dataset/collect (on path via dashboard_api)
@@ -561,6 +562,16 @@ def not_self(target):
             and not ({url_key(get(r, "source", k)) for k in ("url", "canonical_url")} & own)]
 
 
+def mark_archive(result, url):
+    """If url was read from a Common Crawl copy (not the live page), say so: result["archive"] and a note (additive)."""
+    a = safe_fetch.archive_of(url) if url else None
+    if a:
+        result["archive"] = a
+        result["notes"] = [f"Read from a Common Crawl archive copy captured {a['capture_date']}, not the live page; "
+                           "facts such as price or stock may be out of date."] + result["notes"]
+    return result
+
+
 @router.post("/v1/audit")
 def audit(payload: dict = Body(...)):
     import main  # lazy: main imports this module
@@ -641,7 +652,7 @@ def audit(payload: dict = Body(...)):
                          "predicted": pred.get(f)} for f, ok in attributes_present(target).items() if not ok),
                        key=lambda x: -x["peers_with"])
     facts_found = sum(attributes_present(target).values())
-    return {
+    result = {
         "product": {**dash.summary(target), "url": get(target, "source", "url"),
                     "image": (raw.get("image_urls") or [None])[0], "draft": draft,
                     "description": description_text(target)},
@@ -676,6 +687,7 @@ def audit(payload: dict = Body(...)):
         "notes": notes,
         "unranked": unranked,
     }
+    return mark_archive(result, req.url) if not (draft or req.html or req.text) else result
 
 
 NEW_FIELDS = ["materials.fabric_type", "materials.texture", "fit_and_style.shirt_length", "fit_and_style.style",

@@ -89,6 +89,12 @@ class CommonCrawlTest(unittest.TestCase):
             self.assertFalse(redirects)
             self.assertTrue(url.startswith(("https://index.commoncrawl.org/", "https://data.commoncrawl.org/")))
 
+    def test_transient_index_error_retried_once(self):
+        get, _ = network({})
+        with mock.patch.object(cc.requests, "get", side_effect=get),                 mock.patch.object(cc, "lookup", side_effect=[requests.HTTPError("index 504"), ROW]) as look:
+            res = cc.fetch_archived(URL)
+        self.assertEqual((res["crawl_id"], look.call_count), (NEWEST, 2))
+
     def test_older_crawl_and_overloaded_index(self):
         bare = "https://www.allbirds.com/products/mens-strider-medium-grey"
         res, _ = self.run_with({(NEWEST, URL): 504, (SECOND, bare): CDX})

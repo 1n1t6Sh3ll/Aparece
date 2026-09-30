@@ -36,8 +36,10 @@ class FetchCase(unittest.TestCase):
     def setUp(self):
         safe_fetch.clear_cache()
         self.addCleanup(safe_fetch.clear_cache)
+        self.archive = mock.patch.object(safe_fetch.commoncrawl, "fetch_archived", return_value=None).start()
+        self.addCleanup(mock.patch.stopall)
 
-    def run_fetch(self, responses):
+    def run_fetch(self, responses, path="/v1/extract"):
         calls = []
         def fake(url, **kw):
             calls.append(url)
@@ -45,7 +47,7 @@ class FetchCase(unittest.TestCase):
         with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS), \
                 mock.patch.object(safe_fetch.requests, "get", side_effect=fake), \
                 mock.patch.object(safe_fetch.time, "sleep") as sleep:
-            r = client.post("/v1/extract", json={"url": self.URL})
+            r = client.post(path, json={"url": self.URL})
         return r, calls, sleep
 
 
@@ -68,14 +70,14 @@ class FetchLimitTest(FetchCase):
             "https://shop.example.com/products/heavy-tee.json": [resp(429), resp(429)],
             self.URL: [resp(429, headers={"retry-after": "1"}), resp(429)]})
         self.assertEqual(r.status_code, 502)
-        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED_HELP)
 
     def test_long_retry_after_not_waited(self):
         r, _, sleep = self.run_fetch({
             "https://shop.example.com/robots.txt": [resp(404)],
             "https://shop.example.com/products/heavy-tee.json": [resp(404)],
             self.URL: [resp(429, headers={"retry-after": "120"})]})
-        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED_HELP)
         sleep.assert_not_called()
 
     def test_robots_429_is_retry_later(self):
@@ -108,8 +110,92 @@ class FetchLimitTest(FetchCase):
         r, calls, _ = self.run_fetch({
             "https://shop.example.com/robots.txt": [resp(200, "User-agent: *\nDisallow: /products/*.json")],
             self.URL: [resp(429), resp(429)]})
-        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED_HELP)
         self.assertNotIn("https://shop.example.com/products/heavy-tee.json", calls)
+
+
+class ArchiveFallbackTest(FetchCase):
+    """Blocked/rate-limited store: Common Crawl copy, honestly labelled (Common Crawl and the store are mocked)."""
+    ROBOTS = "https://shop.example.com/robots.txt"
+    CAPTURE = {"html": FIXTURE, "capture_date": "2026-08-14", "crawl_id": "CC-MAIN-2026-33",
+               "warc_url": "https://data.commoncrawl.org/x.warc.gz"}
+    @property
+    def LIMITED(self):
+        return {"https://shop.example.com/products/heavy-tee.json": [resp(429), resp(429)]}
+
+    def test_429_uses_archive_and_says_so(self):
+        self.archive.return_value = self.CAPTURE
+        r, calls, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED},
+                                     "/v1/audit")
+        self.assertEqual(r.status_code, 200, r.text)
+        a = r.json()
+        self.assertEqual(a["archive"], {"source": "common_crawl", "capture_date": "2026-08-14",
+                                        "crawl_id": "CC-MAIN-2026-33", "warc_url": self.CAPTURE["warc_url"]})
+        self.assertIn("archive copy captured 2026-08-14, not the live page", a["notes"][0])
+        self.assertEqual(self.archive.call_args.args[0], self.URL)
+        _, calls, _ = self.run_fetch({}, "/v1/audit")  # cached copy stays labelled
+        self.assertEqual(calls, [])
+        self.assertEqual(safe_fetch.archive_of(self.URL)["capture_date"], "2026-08-14")
+
+    def test_blocked_403_uses_archive(self):
+        self.archive.return_value = self.CAPTURE
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(403), resp(403)],
+                                  "https://shop.example.com/products/heavy-tee.json": [resp(403)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(safe_fetch.archive_of(self.URL)["crawl_id"], "CC-MAIN-2026-33")
+
+    def test_429_without_archive_is_actionable(self):
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        self.assertEqual(r.status_code, 502)
+        self.assertTrue(r.json()["detail"].startswith("store_rate_limited: upstream HTTP 429"))
+        self.assertIn("Paste the page HTML or text as a draft instead.", r.json()["detail"])
+        self.archive.assert_called_once()
+
+    def test_blocked_without_archive_is_actionable(self):
+        status, detail = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(403), resp(403)],
+                                         "https://shop.example.com/products/heavy-tee.json": [resp(403)]})[0].status_code, safe_fetch.BLOCKED
+        self.assertEqual(status, 403)
+        self.assertTrue(detail.startswith("blocked_by_store: This store blocks automated reading from our server."))
+
+    def test_archived_bot_check_page_refused(self):
+        self.archive.return_value = {**self.CAPTURE, "html": "<html><head><title>Just a moment...</title></head></html>"}
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        self.assertEqual(r.status_code, 502)
+
+    def test_shopify_json_wins_over_archive(self):
+        self.archive.return_value = self.CAPTURE
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)],
+                                  "https://shop.example.com/products/heavy-tee.json": [resp(200, SHOPIFY)]}, "/v1/audit")
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertNotIn("archive", r.json())
+        self.archive.assert_not_called()
+
+    def test_robots_disallow_never_reaches_archive(self):
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(200, "User-agent: *\nDisallow: /products/")]})
+        self.assertEqual(r.status_code, 403)
+        self.archive.assert_not_called()
+
+    def test_robots_429_never_reaches_archive(self):
+        self.run_fetch({self.ROBOTS: [resp(429), resp(429)]})
+        self.archive.assert_not_called()
+
+    def test_amazon_never_reaches_archive(self):
+        r = client.post("/v1/audit", json={"url": "https://www.amazon.com/dp/B085WMXFP3"})
+        self.assertEqual(r.status_code, 422)
+        self.archive.assert_not_called()
+
+    def test_live_success_has_no_archive(self):
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(200, FIXTURE)]}, "/v1/audit")
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertNotIn("archive", r.json())
+        self.assertFalse(any("archive" in n for n in r.json()["notes"]))
+        self.archive.assert_not_called()
+
+    def test_pasted_html_with_url_is_not_labelled_archived(self):
+        safe_fetch.remember(("archive", self.URL), {"source": "common_crawl", "capture_date": "2026-01-01"}, 600)
+        r = client.post("/v1/audit", json={"url": self.URL, "html": FIXTURE})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertNotIn("archive", r.json())
 
 
 class FetchErrorTest(FetchCase):

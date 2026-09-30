@@ -288,7 +288,8 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
           </div>
           {p.draft && <p className="mt-1.5 text-xs muted">{t("draft.note")}</p>}
           {p.draft && p.product_type === "unknown" && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{t("draft.unknownType")}</p>}
-          {lang === "en" && (audit.notes || []).map((n) => <p key={n} className="mt-1 text-xs muted">{n}</p>)}
+          {audit.archive && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{t("res.archive", { date: audit.archive.capture_date })}</p>}
+          {lang === "en" && (audit.notes || []).filter((n) => !audit.archive || !n.startsWith("Read from a Common Crawl")).map((n) => <p key={n} className="mt-1 text-xs muted">{n}</p>)}
         </div>
         <div className="no-print flex flex-wrap items-center gap-2">
           <CompareLink productId={p.product_id} record={record} reportId={reportId} />
