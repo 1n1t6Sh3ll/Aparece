@@ -26,6 +26,11 @@ Run: `docker compose up --build` (port 8000 on localhost) or `pip install -r api
 Read-only routes: `GET /v1/products?q=`, `/v1/products/{id}`, `/v1/products/{id}/gaps`, `/v1/stats`, `/v1/eval`. Data from `PRODUCTLENS_DATA` (normalized JSONL, default `dataset/output/final/train.jsonl`) and `PRODUCTLENS_EVAL` (`train/eval.py` JSON, default `train/runs/eval.json`); missing files give empty results.
 Try with fixtures: `cd api && PRODUCTLENS_DATA=tests/fixtures/dashboard_records.jsonl PRODUCTLENS_EVAL=tests/fixtures/dashboard_eval.json uvicorn main:app`, then open `http://127.0.0.1:8000/dashboard/`.
 
+## Monitoring (`monitor/`)
+Enroll product URLs; each crawl (safe_fetch -> extract/normalize -> gaps) stores an immutable SQLite snapshot (content SHA-256) and change events: `DESCRIPTION_CHANGED`, `PRICE_CHANGED`, `ATTRIBUTE_ADDED/REMOVED`, `SCHEMA_CHANGED`, `LANGUAGE_PAGE_ADDED` (hreflang), `VISIBILITY_CHANGED`. Plans are labels only (no billing, no email).
+Routes: `POST /v1/enroll {url, email?, plan?, crawl_now?}`, `GET /v1/monitored`, `DELETE /v1/enroll/{id}`, `POST /v1/monitored/{id}/crawl`, `GET /v1/products/{id}/history`, `GET /v1/plans`.
+`MONITOR_DB` (default `monitor/data/monitor.db`, a compose volume). `MONITOR_ENABLED=1` starts APScheduler: daily crawl 03:00 UTC, weekly visibility Mon 04:00 UTC, which runs only with an API key, `BENCHMARK_MAX_USD` and a benchmark runner, else logs `skipped`. Cron alternative: `python -m monitor crawl|visibility`.
+
 ## Chrome extension
 `extension/` is a no-build MV3 popup that audits the current product page via `POST /v1/extract`. See `extension/README.md` to load it unpacked or preview it with mock data.
 
