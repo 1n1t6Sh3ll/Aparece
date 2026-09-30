@@ -82,6 +82,23 @@ Open http://127.0.0.1:8000 (API docs `/docs`, health `/v1/health`, port via `POR
 
 Other settings: `MODEL_BACKEND`/`QWEN_ADAPTER_PATH`, `OPTIMIZER_BACKEND`, `MONITOR_ENABLED`, `GOVERNANCE_TOKEN`, `CHAT_TOKEN`; full list in [docs/REFERENCE.md](docs/REFERENCE.md).
 
+## Deploy (Fly.io)
+
+```sh
+fly auth login
+fly launch --copy-config --no-deploy      # uses fly.toml; pick a free app name and a region
+fly secrets set OPENAI_API_KEY=... ANTHROPIC_API_KEY=...    # optional, enables the paid features
+fly deploy
+```
+
+In PowerShell you can pass keys from your environment without typing them: `fly secrets set OPENAI_API_KEY=$env:OPENAI_API_KEY ANTHROPIC_API_KEY=$env:ANTHROPIC_API_KEY`. The image (built from `Dockerfile`) includes the OpenAI and Anthropic packages; `docker-compose.yml` passes the same keys and caps to a local container.
+
+- **Keys** live only in the host's secrets, never in git and never in a website's public environment (for example a Vercel `VITE_` variable). Use dedicated keys with a monthly spend limit set at OpenAI and Anthropic.
+- **The paid routes have no login.** Anyone who can reach the site can spend up to the caps (0.05 USD per request, 1 USD per day per running server) at a limited rate. Put the site behind your host's password protection or a proxy if it is public.
+- **State is not persistent in this config.** Stored audits and share links, monitoring, governance and webhooks use SQLite files that are lost on redeploy. To keep them, mount a writable volume and point `PROFILE_DB`, `MONITOR_DB`, `GOVERNANCE_DB`, `WEBHOOKS_DB` and `EXPERIMENTS_DB` at it.
+- **Peer data is not in the image.** Until `PRODUCTLENS_DATA` points at a peer file on the server, audits show rank "1 of 1" and no fixes.
+- **Vercel** can host only the web app (`web/`), with `/v1/*` rewritten to the API. The API needs a long-running host (slow requests, SQLite, in-memory caps).
+
 ## Tests
 
 ```sh
