@@ -75,3 +75,117 @@ For 5 products, we compared the shop's original text, Aparece's text and text wr
 | Model training | `train/` |
 
 Full technical detail: [REFERENCE.md](REFERENCE.md). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). Product vision: [VISION.md](VISION.md).
+
+## Technical details (for developers)
+
+The exact rules, formulas and code locations behind each step.
+
+**1. Matching (which shirts count as comparable).** `analysis/peers.py` keeps a candidate only if it has:
+- the same product type, language and audience (adult or kids),
+- the same pack size and sleeve length,
+- a live link,
+- a price in the same band when the currency is known.
+
+Candidates are ordered by how many soft facts match (audience, price band, subcategory, fit, pattern, main material), then by closeness in price. With fewer than 10 matches, `api/audit_api.py` widens the match step by step: first without the price band, then without the sleeve, then any shirt type. The page says which step was used. The product itself is never its own peer.
+
+**2. Scoring (the rank).** Every shirt in one ranking is scored with the same formula:
+
+```
+score = 60 × (key facts stated ÷ 22) + 20 × (shopper questions answered ÷ 9) + 20 × (Product/Offer markup ÷ 2)
+rank  = 1 + number of comparable shirts with a higher score        (markup unknown → weights 75 / 25)
+```
+
+A shopper question counts only if a description sentence answers it and matches a verified fact. Keyword lists don't count. This is a listing-quality rank, not a Google or AI rank.
+
+**3. Recommended fixes (the action plan).** `api/audit_api.py` → `build_actions` compares your page with the 10 best-ranked similar shirts and builds the list in this order:
+
+| Priority | Fix | When it appears | Evidence shown |
+|---|---|---|---|
+| 1 | Add a missing fact (or make it machine-readable if it's usually visible, like price) | You don't state it but some top shirts do; sorted by how many of the 10 state it | "8 of the 10 top-ranked similar shirts state it" |
+| 2 | Describe the product in more detail | Your description is under half the top shirts' median length | Your length vs their median |
+| 3 | Add schema.org markup | No Product markup; or no Offer / ProductGroup markup when over half the top shirts have it | How many of them have it |
+| 4 | Check your price | Your price is outside the middle half (25th–75th percentile) of comparable listings | The range; not a recommended price |
+| 5 | Declare your page language | No `<html lang>` was found | — |
+
+The first 3 are shown as "the 3 fixes to make first". Each one is labelled as an observed fact, never as a promise of better ranking.
+
+**4. How the new title and description are written (Generate Fix).** `optimizer/fix.py` → `generate`:
+1. **Facts only.** `optimizer/truth.py` turns the verified facts into short sentences, for example "Material: 95% viscose, 5% elastane." It needs at least 2 facts and a verified brand or product name, or it refuses.
+2. **Write N candidates** (default 3, max 5). The writer is the template (no model), gpt-4o-mini, Claude or Qwen (`OPTIMIZER_BACKEND`). It sees only those fact sentences.
+3. **Fact-check every sentence** (`optimizer/guard.py`). A sentence is flagged if any word isn't backed by the facts, or any number isn't that field's verified value. Flagged sentences are shown to the writer in the next round, up to 2 more rounds.
+4. **Score each candidate** (`train/reward.py` → `copy_reward`):
+   ```
+   reward = 1 (valid title ≤ 90 chars + description) + 1 × share of sentences that pass − 2 × flagged sentences + 2 × share of verified facts covered
+   ```
+5. **Pick the winner.** It's the highest reward among candidates with no flagged sentence. A flagged candidate can never win.
+6. **Safety net.** Any leftover flagged sentence is removed. If nothing is left, the fact sentences themselves are used as the description. The final text is checked once more and never returned if it fails.
+7. **Report before and after.** The response shows `accuracy_before` (your current text) and `accuracy_after` (the suggestion), plus every candidate's reward breakdown. The merchant accepts or dismisses it; nothing is published automatically.
+
+**How the recommended version in the AI comparison is built.** The same fact-check decides who is eligible. Then `benchmark/shootout/report.py` → `merged` takes:
+- the winning **title**;
+- the winning **description**;
+- up to 8 **tags** that pass the fact-check, starting with the winning tag set and adding passing tags from the others, without duplicates.
+
+The page shows which writer each part came from.
+
+**5. Matching AI answers.** For the visibility benchmark, `benchmark/match.py` counts a product as mentioned when its exact URL appears, one of its aliases appears, or its brand and name appear on the same line. The metrics are mention rate, top-3 rate and MRR (average of 1 ÷ position of the first mention).
+
+**6. The AI comparison: how the versions are ranked.** Five writers get the same verified facts (`benchmark/shootout/run.py` → `generate`):
+- **Aparece (no AI model)**: text built from templates;
+- **Aparece + gpt-4o-mini**: the model writes inside Aparece's fact-check and reward;
+- **gpt-4o-mini alone** and **claude-haiku-4-5 alone**;
+- **the shop's original text**.
+
+Each part is then scored as follows. `score.py` is `benchmark/shootout/score.py`, and `report.py` is `benchmark/shootout/report.py`.
+
+| Step | Formula | Code |
+|---|---|---|
+| Fact-check (gate) | A part is **eligible** only if no sentence has an unbacked word or a wrong number | `optimizer/guard.py` → `check_sentence`, `_number_problems` |
+| Title score | (brand in title + product type + material + fit + length 15–90 chars) ÷ checks that apply | `score.py` → `title_audit` |
+| Tags score | mean(fact relevance, intent relevance, language match) × unique tags ÷ tags × passing tags ÷ unique tags | `score.py` → `tags_audit` |
+| Description | attribute coverage = facts stated correctly ÷ facts available; intent coverage = shopper questions addressed ÷ questions; readability = Flesch (EN) or Fernández-Huerta (ES) | `score.py` → `attribute_coverage`, `intent_coverage`, `readability` |
+| Simulated shopping test (saved run only) | Each description is placed as the target page among its 4 real competitors. Judges (gpt-4o-mini and claude-haiku, one held out) answer shopping questions. Mention rate, top-3 rate and MRR are computed, with 95% bootstrap intervals over (product, question) | `run.py` → `context`; `score.py` → `metrics`, `with_ci` |
+| Winner of each part | Among eligible parts: title = highest title score (tie: closest to 60 chars); tags = highest tags score; description = highest MRR, else highest attribute coverage | `report.py` → `part_winners` |
+| Recommended version | Winning title + winning description + passing tags merged (up to 8, no duplicates) | `report.py` → `merged` |
+| Overall ranking | Generators whose parts pass on every product, sorted by MRR, then mention rate. The leader is **decisive** only if the paired-difference interval against the runner-up is above 0; otherwise it's a tie | `report.py` → `build`; `score.py` → `paired_diff` |
+| Live run (any product) | Same generators, fact-check, scores and winners, with no shopping test and no visibility numbers | `benchmark/shootout/live.py` → `compare` |
+
+
+### Vision and where it is in the code
+
+The goal ([VISION.md](VISION.md)) is a platform that helps small shops understand, improve and track how search and AI shopping assistants see their products. It runs a loop: **measure → compare → recommend → track → experiment → learn**, where every recommendation is backed by evidence. It answers five questions:
+
+| Vision question | What Aparece does | Code | Status |
+|---|---|---|---|
+| 1. How does AI or search see my product? | Reads the page into verified facts, each with evidence, plus markup signals | `api/safe_fetch.py`, `dataset/collect/normalize.py`, `api/main.py` | Done |
+| 2. Where does my product appear? | Asks real AI assistants shopping questions and measures mention rate, top-3 and MRR | `benchmark/harness.py`, `benchmark/match.py`, `benchmark/metrics.py` | Done (2 models, 384 answers) |
+| 3. What information or intents am I missing? | Ranks against comparable shirts; finds the facts and shopper questions the page misses | `analysis/peers.py`, `analysis/gaps.py`, `api/audit_api.py` | Done |
+| 4. What truthful changes should I test? | Top 3 fixes, plus fact-checked text written only from verified facts | `api/audit_api.py` → `build_actions`, `optimizer/fix.py`, `optimizer/guard.py` | Done |
+| 5. Did the change actually help? | Snapshots and diffs over time; experiments with control products and adjusted lift | `monitor/`, `experiments/`, `api/experiments_api.py` | Built; no real before/after experiment run yet |
+
+The vision's key rules, and where each is enforced:
+
+| Rule | Where |
+|---|---|
+| Product truth: facts need evidence, nothing is invented | `optimizer/truth.py`, `optimizer/guard.py` |
+| No magic score: the formula is shown, and so is every part of it | `api/audit_api.py` → `quality`, `formula` |
+| Accuracy guardrail: a change must never make the facts less accurate | `optimizer/fix.py` (`accuracy_before` ≤ `accuracy_after`), `experiments/` |
+| Benchmark protection: optimizers never see the hidden question set | `benchmark/prompts/hidden.jsonl`, `benchmark/harness.py` |
+| Deterministic first, AI only where it helps | Rules in `dataset/collect/`; the model only fills empty fields (`train/`) |
+| Human approval before anything is published | `governance/`, `POST /v1/optimize/publish` |
+| Multilingual (EN/ES) | Rules, fact sentences, questions and the UI all in both languages |
+
+Scope choice: the vision says to start with one category. We chose shirts and T-shirts.
+
+### Human in the loop (fine-tuning)
+
+People stay in control at every step, and their decisions are recorded as training signal:
+
+| Step | What the human does | Where it's stored | Code |
+|---|---|---|---|
+| Label check | Reviews a diverse sample of dataset labels | `dataset/output/final/human_review.csv` | `dataset/build/make_ground_truth.py` |
+| Model predictions | The model's guesses are shown as "predicted", never "verified"; a merchant confirms a value, which needs approval, before it counts as a fact | Append-only audit log | `governance/hooks.py`, `POST /v1/predictions/confirm` |
+| Generate Fix | The merchant accepts or dismisses each suggestion; nothing is published without approval | Merchant profile | `api/profile_api.py` |
+| Preference pairs | Each winning candidate vs a lower-scoring one, facts only | `optimizer/data/pairs.jsonl` | `optimizer/fix.py` |
+
+Training so far is supervised fine-tuning on the verified labels (`train/train.py`). Retraining on the pairs and confirmations (best-of-N and DPO, scored with `train/reward.py`) is designed but not yet run; see [train/README.md](../train/README.md).

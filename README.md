@@ -2,129 +2,72 @@
 
 **See your product page the way AI shopping assistants do, and fix what they can't read.**
 
-We asked gpt-4o-mini and Claude Haiku 384 real shopping questions (English and Spanish). None of the 103 small shirt shops we tested was named once; Everlane, Uniqlo and Patagonia were. Aparece shows a shop which facts machines can verify on its product page, ranks the page against similar shirts, and writes fixes that only state what the page proves.
+## In plain words
 
-## Install and run
+- **The problem.** Shoppers now ask AI assistants what to buy. We asked gpt-4o-mini and Claude Haiku 384 real shopping questions, in English and Spanish. None of the 103 small shirt shops we tested was named once. Big brands (Everlane, Uniqlo, Patagonia) were.
+- **What Aparece does.** You paste a link to your product page. Aparece shows what machines can and cannot read on it, compares it with similar shirts from real stores, and tells you the 3 things to fix first.
+- **What you get.** A rank, the fixes with the evidence for each, and a new title and description that only say what your page can prove. You approve everything; nothing changes on your store by itself.
+- **What it won't do.** Invent facts, get around a website's blocks, or promise that a fix will raise your ranking.
+
+## Try it
 
 ```sh
-docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/powerlens:latest      # or, from source:
-git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens && ./run.sh   # Windows: .\run.ps1
+docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/powerlens:latest
 ```
 
-Open http://127.0.0.1:8000, paste a product URL and click **Audit**. You need Python 3.12+ and Node 22 to run from source. No API keys are needed; AI calls run only when you add a key.
+Then open http://127.0.0.1:8000 and paste a product link. To run from source instead, use `git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens && ./run.sh` (on Windows, `.\run.ps1`). That needs Python 3.12+ and Node 22. No API keys are needed.
 
-To rank against real shirts, point the app at the dataset: `PRODUCTLENS_DATA=dataset/output/final/train.jsonl ./run.sh`. The dataset isn't in git because it contains third-party page text; build it with `dataset/collect/wdc.py` and then `dataset/build/make_ground_truth.py`. Model weights are on [weights-v1](https://github.com/1n1t6Sh3ll/powerlens/releases/tag/weights-v1).
+To rank against real shirts, set `PRODUCTLENS_DATA=dataset/output/final/train.jsonl`. The dataset isn't in git because it contains other stores' page text; build it with `dataset/collect/wdc.py` and then `dataset/build/make_ground_truth.py`. The model weights are in the [weights-v1 release](https://github.com/1n1t6Sh3ll/powerlens/releases/tag/weights-v1).
 
-## What we built
+## What we built, and where the code is
 
-1. **A dataset of 20,037 shirts** from Common Crawl (Web Data Commons) and Amazon Reviews 2023. Every fact is stored with the exact text that proves it.
-2. **A fine-tuned extraction model**: Qwen2.5-0.5B with QLoRA gets 85.8% of facts right, versus 27.2% for GPT-4.1 and 4.7% for untuned Qwen.
-3. **The audit**: verified facts, a rank against comparable shirts, and the top 3 fixes.
-4. **Generate Fix**: grounded text. Every sentence is fact-checked, and a reward picks the best candidate.
-5. **The AI comparison**: the shop's text vs Aparece vs AI models, live for any audited product.
-6. **The AI-visibility benchmark**: real model answers to realistic shopping questions.
-7. **Monitoring, chat, webhooks, approvals**, plus a Chrome extension for pages we can't fetch, such as Amazon.
-
-## How it works
-
-**1. Matching (which shirts count as comparable).** `analysis/peers.py` keeps a candidate only if it has:
-- the same product type, language and audience (adult or kids),
-- the same pack size and sleeve length,
-- a live link,
-- a price in the same band when the currency is known.
-
-Candidates are ordered by how many soft facts match (audience, price band, subcategory, fit, pattern, main material), then by closeness in price. With fewer than 10 matches, `api/audit_api.py` widens the match step by step: first without the price band, then without the sleeve, then any shirt type. The page says which step was used. The product itself is never its own peer.
-
-**2. Scoring (the rank).** Every shirt in one ranking is scored with the same formula:
-
-```
-score = 60 × (key facts stated ÷ 22) + 20 × (shopper questions answered ÷ 9) + 20 × (Product/Offer markup ÷ 2)
-rank  = 1 + number of comparable shirts with a higher score        (markup unknown → weights 75 / 25)
-```
-
-A shopper question counts only if a description sentence answers it and matches a verified fact. Keyword lists don't count. This is a listing-quality rank, not a Google or AI rank.
-
-**3. Fixes.** The fixes list the facts you don't state, most-stated first among the 10 best-ranked similar shirts, then description, markup, price and language. Each fix shows its evidence.
-
-**4. Generate Fix and the fact-check.** Candidates are written only from verified facts. `optimizer/guard.py` rejects a sentence if any word isn't backed by the facts, or if any number isn't that field's verified value. `train/reward.py` scores each candidate:
-
-```
-reward = 1 + share of sentences that pass − 2 × flagged sentences + 2 × share of verified facts covered
-```
-
-A flagged candidate can never win.
-
-**5. Matching AI answers.** For the visibility benchmark, `benchmark/match.py` counts a product as mentioned when its exact URL appears, one of its aliases appears, or its brand and name appear on the same line. The metrics are mention rate, top-3 rate and MRR (average of 1 ÷ position of the first mention).
-
-**6. The AI comparison: how the versions are ranked.** Five writers get the same verified facts (`benchmark/shootout/run.py` → `generate`):
-- **Aparece (no AI model)**: text built from templates;
-- **Aparece + gpt-4o-mini**: the model writes inside Aparece's fact-check and reward;
-- **gpt-4o-mini alone** and **claude-haiku-4-5 alone**;
-- **the shop's original text**.
-
-Each part is then scored as follows. `score.py` is `benchmark/shootout/score.py`, and `report.py` is `benchmark/shootout/report.py`.
-
-| Step | Formula | Code |
+| Part | What it does | Code |
 |---|---|---|
-| Fact-check (gate) | A part is **eligible** only if no sentence has an unbacked word or a wrong number | `optimizer/guard.py` → `check_sentence`, `_number_problems` |
-| Title score | (brand in title + product type + material + fit + length 15–90 chars) ÷ checks that apply | `score.py` → `title_audit` |
-| Tags score | mean(fact relevance, intent relevance, language match) × unique tags ÷ tags × passing tags ÷ unique tags | `score.py` → `tags_audit` |
-| Description | attribute coverage = facts stated correctly ÷ facts available; intent coverage = shopper questions addressed ÷ questions; readability = Flesch (EN) or Fernández-Huerta (ES) | `score.py` → `attribute_coverage`, `intent_coverage`, `readability` |
-| Simulated shopping test (saved run only) | Each description is placed as the target page among its 4 real competitors. Judges (gpt-4o-mini and claude-haiku, one held out) answer shopping questions. Mention rate, top-3 rate and MRR are computed, with 95% bootstrap intervals over (product, question) | `run.py` → `context`; `score.py` → `metrics`, `with_ci` |
-| Winner of each part | Among eligible parts: title = highest title score (tie: closest to 60 chars); tags = highest tags score; description = highest MRR, else highest attribute coverage | `report.py` → `part_winners` |
-| Recommended version | Winning title + winning description + passing tags merged (up to 8, no duplicates) | `report.py` → `merged` |
-| Overall ranking | Generators whose parts pass on every product, sorted by MRR, then mention rate. The leader is **decisive** only if the paired-difference interval against the runner-up is above 0; otherwise it's a tie | `report.py` → `build`; `score.py` → `paired_diff` |
-| Live run (any product) | Same generators, fact-check, scores and winners, with no shopping test and no visibility numbers | `benchmark/shootout/live.py` → `compare` |
+| Dataset | 20,037 shirts from Common Crawl and Amazon Reviews 2023; every fact keeps the text that proves it | `dataset/collect/`, `dataset/build/make_ground_truth.py` |
+| Fetch | Downloads a page politely: respects robots.txt, never fetches Amazon | `api/safe_fetch.py` |
+| Verified facts | Rules read the page into facts with evidence (EN/ES) | `dataset/collect/normalize.py`, `api/main.py` |
+| Fine-tuned model | Qwen2.5-0.5B fills facts the rules missed, labelled "predicted" | `train/train.py`, `train/eval.py` |
+| Matching | Finds comparable shirts: same type, language, audience, sleeve, price band | `analysis/peers.py` |
+| Score and rank | Scores every shirt with one visible formula (below) | `api/audit_api.py` → `quality`, `rank` |
+| Top 3 fixes | Missing facts the best similar shirts state, then description, markup, price, language | `api/audit_api.py` → `build_actions` |
+| Fact-check | Rejects any sentence with a word or number the facts don't back | `optimizer/guard.py` |
+| Generate Fix | Writes several candidates from facts only; the reward picks the best one that passes | `optimizer/fix.py`, `train/reward.py` |
+| AI comparison | Shop's text vs Aparece vs AI models on title, tags and description | `benchmark/shootout/` (`live.py` for any product) |
+| AI visibility | Asks real AI assistants shopping questions; measures who gets named | `benchmark/harness.py`, `benchmark/match.py` |
+| Monitoring and chat | Re-checks products over time and shows what changed; the chat cites only stored data | `monitor/`, `chat/` |
+| Web app and extension | The site, and a Chrome extension for pages we can't fetch | `web/src/`, `extension/` |
 
-All formulas, in plain words: the site's **How it works** page (`#/docs`) and [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
+## How it works (the key formulas)
 
-## Human in the loop (fine-tuning)
+```
+listing score = 60 × (key facts stated ÷ 22) + 20 × (shopper questions answered ÷ 9) + 20 × (markup found ÷ 2)
+rank          = 1 + number of comparable shirts with a higher score
+reward        = 1 + share of sentences that pass the fact-check − 2 × flagged sentences + 2 × share of facts covered
+```
 
-People stay in control at every step, and their decisions are recorded as training signal:
+In the AI comparison, a title, tag set or description can only win if it passes the fact-check. The winners are:
+- **title:** the best title score;
+- **tags:** the best tag score;
+- **description:** the most AI mentions, or the most facts covered when mentions weren't measured.
 
-| Step | What the human does | Where it's stored | Code |
-|---|---|---|---|
-| Label check | Reviews a diverse sample of dataset labels | `dataset/output/final/human_review.csv` | `dataset/build/make_ground_truth.py` |
-| Model predictions | The model's guesses are shown as "predicted", never "verified"; a merchant confirms a value, which needs approval, before it counts as a fact | Append-only audit log | `governance/hooks.py`, `POST /v1/predictions/confirm` |
-| Generate Fix | The merchant accepts or dismisses each suggestion; nothing is published without approval | Merchant profile | `api/profile_api.py` |
-| Preference pairs | Each winning candidate vs a lower-scoring one, facts only | `optimizer/data/pairs.jsonl` | `optimizer/fix.py` |
+In the visibility test, a shop counts as "named" when an AI answer shows its link, or its brand and product name together.
 
-Training so far is supervised fine-tuning on the verified labels (`train/train.py`). Retraining on the pairs and confirmations (best-of-N and DPO, scored with `train/reward.py`) is designed but not yet run; see [train/README.md](train/README.md).
+Full explanation, every formula with its code location, and the vision mapping: the site's **How it works** page, or [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
 
-## Main files to read
+## Model comparisons
 
-| Problem | File |
+| What's compared | Result |
 |---|---|
-| Read a page into verified facts | `dataset/collect/normalize.py`, `api/main.py` |
-| Fetch politely (robots.txt, SSRF guard, no Amazon) | `api/safe_fetch.py` |
-| Match comparable shirts | `analysis/peers.py` |
-| Score, rank and pick the fixes | `api/audit_api.py` |
-| Fact-check (guardrail) | `optimizer/guard.py`, `benchmark/claims.py` |
-| Write grounded fixes | `optimizer/fix.py`, `optimizer/truth.py` |
-| Reward | `train/reward.py` |
-| Fine-tune and evaluate the model | `train/build_examples.py`, `train/train.py`, `train/eval.py`, `train/api_eval.py` |
-| AI comparison | `benchmark/shootout/run.py`, `score.py`, `report.py`, `live.py` |
-| AI visibility benchmark | `benchmark/harness.py`, `benchmark/match.py`, `benchmark/metrics.py` |
-| Build the dataset | `dataset/collect/wdc.py`, `dataset/build/make_ground_truth.py` |
-| Monitoring and chat | `monitor/`, `chat/` |
-| Web app and extension | `web/src/`, `extension/` |
+| Reading product pages (200 products, 63 stores) | Aparece Qwen2.5-0.5B **85.8%** · GPT-4.1 27.2% · untuned Qwen 4.7% |
+| Writing product copy (same facts for all) | Aparece best on title, tags and description with no unsupported claims; visibility a statistical tie |
+| Which shops AI names (384 questions, 2 models) | 0% for the 103 small shops; big brands named instead |
 
-## How we compare models (and results)
+The extraction test uses our own label format, which favours our model. The judges in the copy test are also AI models.
 
-We compare models in three ways. Each test gives every model the same input and scores it the same way.
+## Human in the loop
 
-| What's compared | Models | Same test for all | Result | Report |
-|---|---|---|---|---|
-| **Reading product pages** (fact extraction) | Aparece Qwen2.5-0.5B / 1.5B (fine-tuned), untuned Qwen, GPT-4.1, Claude Sonnet | The same 200 test products from 63 stores, scored against the answer key | Aparece 0.5B 85.8% · GPT-4.1 27.2% · untuned 4.7% | Models page `#/models`; `train/eval.py`, `train/api_eval.py` |
-| **Writing product copy** (AI comparison) | Aparece (no AI model), Aparece + gpt-4o-mini, gpt-4o-mini alone, Claude Haiku alone, the shop's original | The same verified facts; every part goes through the same fact-check and scores | Aparece best on title, tags and description with no unsupported claims; visibility a statistical tie | Compare page `#/compare`; `benchmark/shootout/` |
-| **Which shops AI assistants recommend** (AI visibility) | gpt-4o-mini, Claude Haiku | The same 384 shopping questions (192 EN, 192 ES) | 0% mention rate for the 103 small shops with both models; big brands named instead | Audit page panel; `benchmark/harness.py`, `benchmark/results/visibility-2026-09-30/` |
+People review dataset labels and must confirm the model's guesses before they count as facts. They accept or dismiss every suggested fix. Each winning vs losing text pair is saved as future training data (`optimizer/data/pairs.jsonl`). The model has been trained on verified labels only so far; retraining on this feedback is designed but not run yet.
 
-Caveats:
-- The extraction scores are exact matches on our own label format, which favours the model trained on it. Claude Sonnet ran on only 87 of the 200 products.
-- In the saved copy comparison, gpt-4o-mini and Claude Haiku also act as the judges in the simulated shopping test, with one held out as a check. That held-out judge disagreed on the visibility winner.
-- The live comparison on the Compare page doesn't run the shopping test, so it has no visibility numbers.
-- In the visibility test, both models gave 0% for small shops. It shows small shops versus big brands, not one model beating the other.
+## Learn more
 
-Every setting, API route and caveat: [docs/REFERENCE.md](docs/REFERENCE.md). Tests: `python -m unittest discover -s api/tests` and `cd web && npm test`. They are offline, with no paid calls.
-
-The code is MIT-licensed. The data and model adapters are for research use; the data is not redistributed here.
+[How it works](docs/HOW_IT_WORKS.md) · [Reference: settings and API](docs/REFERENCE.md) · [Vision](docs/VISION.md) · [User stories](docs/USER_STORIES.md). Tests: `python -m unittest discover -s api/tests` and `cd web && npm test`; they run offline. The code is MIT-licensed; the data and model adapters are for research use.
