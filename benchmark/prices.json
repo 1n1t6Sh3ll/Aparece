@@ -1,0 +1,47 @@
+{
+  "_note": "USD per 1M tokens. Verified by reviewer on PR #40 (2026-09-29); re-check sources before large runs. Paid runs refuse models missing from this table.",
+  "models": {
+    "mock-1": {
+      "input": 0,
+      "output": 0,
+      "source": "local mock adapter",
+      "verified": true
+    },
+    "claude-sonnet-4-5": {
+      "input": 3.0,
+      "output": 15.0,
+      "source": "https://www.anthropic.com/pricing#api",
+      "verified": true
+    },
+    "claude-haiku-4-5": {
+      "input": 1.0,
+      "output": 5.0,
+      "source": "https://www.anthropic.com/pricing#api",
+      "verified": true
+    },
+    "claude-haiku-4-5-20251001": {
+      "input": 1.0,
+      "output": 5.0,
+      "source": "https://www.anthropic.com/pricing#api",
+      "verified": true
+    },
+    "claude-sonnet-5-5": {
+      "input": 2.0,
+      "output": 10.0,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "verified": true
+    },
+    "gpt-4.1": {
+      "input": 2.0,
+      "output": 8.0,
+      "source": "https://openai.com/api/pricing/",
+      "verified": true
+    },
+    "gpt-4o-mini": {
+      "input": 0.15,
+      "output": 0.6,
+      "source": "https://openai.com/api/pricing/",
+      "verified": true
+    }
+  }
+}

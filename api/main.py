@@ -12,16 +12,34 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "dataset" / "collec
 from bs4 import BeautifulSoup  # noqa: E402
 from fastapi import FastAPI, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel, Field, model_validator  # noqa: E402
 
 from extract import as_list, build_raw, json_ld_nodes, ld_type  # noqa: E402
 from normalize import build_normalized  # noqa: E402
 import safe_fetch  # noqa: E402
+import dashboard_api  # noqa: E402
+import monitor_api  # noqa: E402
+import audit_api  # noqa: E402
 
 VERSION = "0.1.0"
 app = FastAPI(title="ProductLens API", version=VERSION)
 app.add_middleware(CORSMiddleware, allow_origin_regex=r"^chrome-extension://[a-p]{32}$",
                    allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
+app.include_router(dashboard_api.router)
+app.include_router(monitor_api.router)
+app.include_router(audit_api.router)  # also serves the web UI at "/" and "/assets/*" (exact routes, no catch-all)
+try:  # governance/ may be missing from older images; the API still starts without it
+    import governance_api  # noqa: E402
+    app.include_router(governance_api.router)
+except ModuleNotFoundError:
+    pass
+try:  # experiments/ may be missing from older images; the API still starts without it
+    import experiments_api  # noqa: E402
+    app.include_router(experiments_api.router)
+except ModuleNotFoundError:
+    pass
+app.mount("/dashboard", StaticFiles(directory=Path(__file__).resolve().parents[1] / "dashboard", html=True), name="dashboard")
 
 
 class ExtractRequest(BaseModel):
@@ -59,8 +77,8 @@ def rules_backend(raw):
 
 
 def qwen_backend(raw):
-    """Placeholder: fine-tuned Qwen (train/) will take a raw record and return a normalized record."""
-    raise HTTPException(501, "MODEL_BACKEND=qwen is not implemented yet")
+    import model_backend  # lazy: needs train/ + dataset/schema, which the rules-only Docker image does not ship
+    return model_backend.qwen_backend(raw)
 
 
 BACKENDS = {"rules": rules_backend, "qwen": qwen_backend}
@@ -100,5 +118,7 @@ def extract(req: ExtractRequest):
     if req.language:
         raw["page_language"] = req.language
     norm = normalize(raw)
+    model = norm.pop("_model", {})  # qwen only: {predicted, model_status}, kept out of the schema-bound record
     return {"product_id": raw["product_id"], "language": raw["page_language"], "raw": raw, "normalized": norm,
-            "evidence": norm["evidence"], "conflicts": norm["conflicts"], "quality_status": norm["quality_status"]}
+            "evidence": norm["evidence"], "conflicts": norm["conflicts"], "quality_status": norm["quality_status"],
+            **model}

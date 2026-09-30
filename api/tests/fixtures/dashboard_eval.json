@@ -1,0 +1,52 @@
+{
+ "all_null_baseline": {
+  "n": 20,
+  "json_valid": 1.0,
+  "field_exact": {
+   "fit": 0.35,
+   "primary_material": 0.1
+  },
+  "mean_field_exact": 0.22
+ },
+ "finetuned": {
+  "n": 20,
+  "json_valid": 0.95,
+  "field_exact": {
+   "fit": 0.8,
+   "primary_material": 0.9
+  },
+  "mean_field_exact": 0.85,
+  "per_language": {
+   "en": {
+    "n": 12,
+    "field_exact": {
+     "fit": 0.83,
+     "primary_material": 0.92
+    }
+   },
+   "de": {
+    "n": 8,
+    "field_exact": {
+     "fit": 0.75,
+     "primary_material": 0.88
+    }
+   }
+  },
+  "per_source": {
+   "wdc": {
+    "n": 14,
+    "field_exact": {
+     "fit": 0.79,
+     "primary_material": 0.93
+    }
+   },
+   "amazon-reviews-2023": {
+    "n": 6,
+    "field_exact": {
+     "fit": 0.83,
+     "primary_material": 0.83
+    }
+   }
+  }
+ }
+}

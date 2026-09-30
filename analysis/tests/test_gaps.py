@@ -46,13 +46,21 @@ class PeerTests(unittest.TestCase):
         c = rec("c", price=None, audience=None)
         self.assertEqual([r["product_id"] for _, r in find_peers(TARGET, [c])], ["c"])
 
-    def test_currency_mismatch_skips_price(self):
+    def test_known_currency_keeps_same_currency_only(self):
+        inr = rec("inr", price=1500, currency="INR")
+        nocur = rec("nocur", price=1500, currency=None)
+        usd = rec("usd", price=21)
+        self.assertEqual([r["product_id"] for _, r in find_peers(TARGET, [inr, nocur, usd])], ["usd"])
+        unpriced = rec("t2", price=None)  # currency known, price unknown: still same currency only
+        self.assertEqual([r["product_id"] for _, r in find_peers(unpriced, [inr, nocur, rec("usd_far", price=1500)])], ["usd_far"])
+
+    def test_currency_unknown_skips_price(self):
+        target = rec("t3", currency=None)
         inr = rec("inr", price=1500, currency="INR")  # far outside band if compared
         nocur = rec("nocur", price=1500, currency=None)
-        usd_far = rec("usd_far", price=1500)
-        got = find_peers(TARGET, [inr, nocur, usd_far])
+        got = find_peers(target, [inr, nocur])
         self.assertEqual(sorted(r["product_id"] for _, r in got), ["inr", "nocur"])
-        out = analyze(TARGET, got)
+        out = analyze(target, got)
         i = next(x for x in out["issues"] if x["field"] == "price_band")
         self.assertEqual(i["type"], "UNKNOWN")
         self.assertEqual(sorted(i["evidence"]["peer_ids"]), ["inr", "nocur"])

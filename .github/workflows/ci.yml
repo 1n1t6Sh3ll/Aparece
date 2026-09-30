@@ -15,7 +15,15 @@ jobs:
           python-version: "3.12"
       - run: pip install -r dataset/requirements.txt
       - run: python -m unittest discover -s dataset/tests -v
+      - run: python -m unittest discover -s signals/tests -t . -v
       - run: python -m py_compile train/*.py
       - run: pip install -r api/requirements.txt
       - run: python -m unittest discover -s api/tests -v
       - run: python -m unittest discover -s analysis/tests -t .
+      - run: python -m unittest discover -s benchmark/tests -t .
+      - run: python -m unittest discover -s train/tests -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci && npm run build
+        working-directory: web

@@ -6,9 +6,6 @@ import sys
 import time
 from collections import defaultdict
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-
 from common import FIELDS
 
 NEW_FIELDS = ["materials.fabric_type", "materials.texture", "fit_and_style.collar_type",
@@ -45,6 +42,8 @@ def summarize(preds, golds, fields=FIELDS):
 
 def generate(model, tok, rows, max_new, batch):
     """Greedy decoding, left-padded batches. Returns one parsed dict (or None) per row."""
+    import torch  # lazy: parse/summarize stay importable without torch (api_eval.py, CI)
+
     tok.padding_side = "left"
     preds = []
     for i in range(0, len(rows), batch):
@@ -98,6 +97,8 @@ def main():
     ap.add_argument("--skip_base", action="store_true")
     ap.add_argument("--out", help="also write the results JSON here")
     args = ap.parse_args()
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     rows = [json.loads(l) for l in open(args.data, encoding="utf-8") if l.strip()]
     if args.ids:  # reuse a saved subset (one product_id per line)
