@@ -94,13 +94,33 @@ CI (`.github/workflows/ci.yml`) runs these on every pull request.
 
 ## Results
 
-| Test (same input for every model) | Result |
-|---|---|
-| Reading product pages (200 products, 63 stores) | Aparece Qwen2.5-0.5B **85.8%** · GPT-4.1 27.2% · untuned Qwen 4.7% |
-| Writing copy, 5 products (`benchmark/shootout/results/2026-09-29`) | Aparece won title, tags and description; the visibility gap to the runner-up is not decisive (its interval includes 0) |
-| Which shops AI names (`benchmark/results/visibility-2026-09-30`) | 384 answers: none of the 103 small shops named; big brands named instead |
+**Model ranking: reading product pages** (200 products, 63 stores, same input for every system; share of filled fields that exactly match the label):
 
-Caveats: the extraction test uses our own label format (figures are from [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md); the raw run files are not committed). The copy-test judges are also AI models, and the test context is simulated. Nothing here predicts how a real assistant will rank your page.
+| # | System | Accuracy |
+|---|---|---|
+| 1 | Aparece Qwen2.5-0.5B, fine-tuned | **85.8%** |
+| 2 | Aparece Qwen2.5-1.5B, fine-tuned (16k shirts) | 81.2% |
+| 3 | GPT-4.1 | 27.2% |
+| 4 | Claude Sonnet 5.5 (answered 87 of 200 only, not comparable) | 8.1% |
+| 5 | Qwen2.5-0.5B, no fine-tuning | 4.7% |
+
+Scored on our own label format, which favours the fine-tuned models. These figures come from a local run (`train/runs/comparison.json`, not committed); see [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
+
+**Comparison on real product pages** ([`benchmark/results/live-real-2026-09-30`](benchmark/results/live-real-2026-09-30/report.md)): 25 pages fetched live, 22 with enough facts, total cost $0.04. Each version is fact-checked against the page's own verified facts.
+
+| Version | Passed fact check | Flagged sentences |
+|---|---|---|
+| Aparece (no AI model) | **22 / 22** | 0 |
+| Aparece + GPT-4o-mini | **22 / 22** | 0 |
+| Shop's original text | 1 / 22 | 417 |
+| GPT-4o-mini alone | 0 / 22 | 82 |
+| Claude Haiku 4.5 alone | 0 / 21 | 75 |
+
+Aparece won the description on all 22 pages, the title on 19 and the tags on 18. Flagged sentences are claims the page's facts do not support, such as "vibrant" or "perfect for casual wear". Repeat it with `python -m benchmark.shootout.live_batch run --out <file> --max-usd 0.5` (needs a running API and API keys). Three pages could not be fetched (400, 404, 502). Position "1 of 1" in the run is not a ranking, because that machine had no peer dataset.
+
+**Other tests**: the 5-product copy test (`benchmark/shootout/results/2026-09-29`) found no decisive visibility gap (interval includes 0). In 384 AI shopping answers (`benchmark/results/visibility-2026-09-30`), none of 103 small shops was named; Everlane, Uniqlo and Patagonia were.
+
+Caveats: the checks measure facts and listing quality, not how a real assistant will rank your page. Judges in the copy test are also AI models, and its context is simulated.
 
 ## Project layout
 
