@@ -97,7 +97,7 @@ class HarnessTests(unittest.TestCase):
             for k in ("run_id", "model", "model_version", "timestamp", "settings", "raw_response", "canonical_intent"):
                 self.assertIn(k, rec)
             rep = harness.main(["report", "--results", out, "--catalog", CATALOG, "--out-dir", d])
-            m = rep["models"]["mock:mock-1"]
+            m = rep["models"]["mock-1"]
             self.assertEqual(m["responses"], 16)
             self.assertEqual(set(m["languages"]), {"en", "es"})
             self.assertIsNotNone(m["stability"])
@@ -151,10 +151,11 @@ class HarnessTests(unittest.TestCase):
                                             "--prices", str(prices), "--max-usd", "1"))
             self.assertEqual(res["calls"], 32)
             rep = harness.main(["report", "--results", str(d / "r.jsonl"), "--catalog", CATALOG, "--out-dir", str(d)])
-            self.assertEqual(list(rep["models"]), sorted(models))
+            ids = sorted(m.split(":")[1] for m in models)  # bare model ids: backward-compatible keys
+            self.assertEqual(list(rep["models"]), ids)
             self.assertTrue(all(m["responses"] == 8 for m in rep["models"].values()))
             md = (d / "report.md").read_text(encoding="utf-8")
-            self.assertIn("| site | " + " | ".join(sorted(models)) + " |", md)
+            self.assertIn("| site | " + " | ".join(ids) + " |", md)
         self._mocked(body)
 
     def test_qwen_free_by_default_capped_when_priced(self):
@@ -201,6 +202,11 @@ class HarnessTests(unittest.TestCase):
 
 
 class MetricTests(unittest.TestCase):
+    def test_same_model_id_under_two_providers_stays_distinct(self):
+        recs = [{"provider": p, "model": "x", "language": "en", "prompt_id": "q", "variant": "original",
+                 "response_text": "NW Classic Tee"} for p in ("openai", "qwen")]
+        self.assertEqual(sorted(build_report(recs, load_catalog(CATALOG))["models"]), ["openai:x", "qwen:x"])
+
     def test_rates_and_markdown(self):
         products = load_catalog(CATALOG)
         recs = [{"model": "m", "language": "en", "prompt_id": "q", "variant": "original",

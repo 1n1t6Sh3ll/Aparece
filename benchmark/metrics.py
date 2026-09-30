@@ -5,9 +5,10 @@ from itertools import combinations
 from .match import match_response
 
 
-def model_key(r):
-    """provider:model, so the same model id under two providers stays distinct."""
-    return f"{r['provider']}:{r['model']}" if r.get("provider") else r["model"]
+def model_key(r, ambiguous=()):
+    """Report key: the model id (backward compatible), or provider:model when that
+    id appears under more than one provider in the same results."""
+    return f"{r['provider']}:{r['model']}" if r["model"] in ambiguous else r["model"]
 
 
 def _entity_rows(matched, entity_of, cited_key, k):
@@ -33,7 +34,7 @@ def stability(records, matched):
     """Mean pairwise Jaccard of mentioned-product sets across repeats of one prompt."""
     groups = defaultdict(list)
     for r, m in zip(records, matched):
-        groups[(model_key(r), r["prompt_id"], r["variant"])].append(set(m["mentions"]))
+        groups[(r.get("provider"), r["model"], r["prompt_id"], r["variant"])].append(set(m["mentions"]))
     scores = []
     for sets in groups.values():
         for a, b in combinations(sets, 2):
@@ -54,9 +55,13 @@ def _summary(records, matched, products, k):
 
 def build_report(records, products, k=3):
     matched = [match_response(r.get("response_text", ""), products) for r in records]
+    providers = defaultdict(set)
+    for r in records:
+        providers[r["model"]].add(r.get("provider"))
+    ambiguous = {mid for mid, provs in providers.items() if len(provs) > 1}
     by_model = defaultdict(list)
     for r, m in zip(records, matched):
-        by_model[model_key(r)].append((r, m))
+        by_model[model_key(r, ambiguous)].append((r, m))
     models = {}
     for model, pairs in sorted(by_model.items()):
         recs, ms = [p[0] for p in pairs], [p[1] for p in pairs]
