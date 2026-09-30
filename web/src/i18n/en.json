@@ -47,7 +47,7 @@
   "res.headline0.d": "Your page states the facts most similar products state. Keep it accurate and check back after you change it.",
   "res.sentence": "We found {facts} of {of} key facts on your page. The top-ranked similar shirts state {median}.",
   "res.sentenceNoPeers": "We found {facts} of {of} key facts on your page. We found no similar products to compare with yet.",
-  "res.trust": "Ranked among {peers} comparable shirts in our dataset by listing completeness. We have not tested AI assistants for your product yet, and we can't promise any change in rankings or sales.",
+  "res.trust": "Ranked among {peers} comparable shirts in our dataset by listing completeness. Whether AI assistants recommend this product is measured only when you press Check now above, on a small set of questions. We can't promise any change in rankings or sales.",
   "res.ctx.lang": "Language",
   "res.ctx.currency": "Currency",
   "res.ctx.peers": "Compared with",
