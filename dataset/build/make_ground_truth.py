@@ -42,14 +42,39 @@ APPAREL_CUE = re.compile(r"sleeve|\bfit(ted)?\b|relaxed|oversized?|youth|boyfrie
                          r"ladies|\bkids\b|\btalla\b|\bsize\b|\btee\s*$|\btee\s+[-(]", re.I)
 
 
+# Rejected even when the title also says "shirt": hardware, and shirt+CD bundles.
+ALWAYS_REJECT = re.compile(r"propane|adapter|splitter|pipe fitting|connector|\bcd\s*[&+]|[&+]\s*cd\b|"
+                           r"\bcd\s+bundle|\bbundle\b", re.I)
+TANK = re.compile(r"tank\s*tops?|\btanks?\b|sleeveless|camisole|\bcami\b|singlet|racerback", re.I)
+
+
 def non_apparel(raw):
     """True if the title names a non-shirt item (tea, candle, trousers...). Hard shirt words override."""
     title = " ".join(filter(None, [raw.get("raw_title"), raw.get("raw_product_name")]))
+    if ALWAYS_REJECT.search(title):
+        return True
     if STRONG_SHIRT.search(title):
         return False
     if HARD_REJECT.search(title):
         return True
     return bool(NON_APPAREL.search(title)) and not APPAREL_CUE.search(title)
+
+
+def mark_tank(norm, raw):
+    """Tank tops / sleeveless shirts stay, typed 'other' with the title word as evidence. True if changed."""
+    for key in ("raw_product_name", "raw_title"):
+        m = TANK.search(raw.get(key) or "")
+        if m:
+            break
+    else:
+        return False
+    f = "identity.product_type"
+    norm["identity"]["product_type"] = "other"
+    norm["evidence"] = [e for e in norm["evidence"] if e["field"] != f] + [{
+        "field": f, "value": "other", "source_text": m.group(0), "source_location": key,
+        "source_url": norm["source"]["url"], "method": "rule", "confidence": 0.8,
+        "note": "tank top / sleeveless override"}]
+    return True
 
 
 EN_WORDS = {"the", "and", "with", "for", "of", "this", "is", "our", "made", "cotton", "shirt", "fit", "wash"}
@@ -156,29 +181,35 @@ def dedupe_keys(n):
     return [(k, v) for k, v in keys if v]
 
 
+class UnionFind(dict):
+    def find(self, x):
+        self.setdefault(x, x)
+        while self[x] != x:
+            self[x] = self[self[x]]
+            x = self[x]
+        return x
+
+    def union(self, a, b):
+        a, b = self.find(a), self.find(b)
+        if a != b:
+            self[max(a, b)] = min(a, b)  # smallest name is the root: deterministic labels
+        return a != b
+
+
 def dedupe(items):
     """Union-find over shared keys; keep the best record per cluster."""
-    parent = list(range(len(items)))
-
-    def find(i):
-        while parent[i] != i:
-            parent[i] = parent[parent[i]]
-            i = parent[i]
-        return i
-
-    seen, why = {}, {}
+    uf, seen, why = UnionFind(), {}, {}
     for i, it in enumerate(items):
+        uf.find(i)
         for key in dedupe_keys(it["norm"]):
             if key in seen:
-                a, b = find(i), find(seen[key])
-                if a != b:
-                    parent[a] = b
+                if uf.union(i, seen[key]):
                     why.setdefault(i, key[0])
             else:
                 seen[key] = i
     clusters = collections.defaultdict(list)
     for i in range(len(items)):
-        clusters[find(i)].append(i)
+        clusters[uf.find(i)].append(i)
     kept, removed = [], collections.Counter()
     for members in clusters.values():
         best = max(members, key=lambda i: (QUALITY_RANK.get(items[i]["norm"]["quality_status"], 0),
@@ -192,10 +223,50 @@ def dedupe(items):
     return kept, removed
 
 
-def group_of(source, norm):
-    if source == "amazon":
-        return "brand:" + (norm_words(norm["identity"].get("brand")) or "unknown")
-    return "domain:" + norm["source"]["merchant_domain"]
+# Print-on-demand platforms and placeholders, not real brands: never used to link groups.
+GENERIC_BRANDS = {"printify", "customcat", "printful", "trendsi", "my store", "ave shops", "teespring", "spreadshirt",
+                  "gelato", "shopify", "default", "unknown", "none", "n a", "brand", "no brand", "generic"}
+SLD = {"com", "co", "org", "net", "gov", "edu", "ac", "or", "ne"}
+HOSTS = {"myshopify", "wixsite", "bigcartel", "square", "storenvy", "tictail", "ecwid", "webflow", "blogspot"}
+
+
+def merchant_base(domain):
+    """Registrable domain minus public suffix: shop.modalova.co.uk / modalova.de -> modalova."""
+    labels = domain.lower().removeprefix("www.").split(".")
+    # two-label public suffix like co.uk / com.au / com.uy (no PSL dependency)
+    n = 2 if len(labels) > 2 and len(labels[-1]) == 2 and labels[-2] in SLD else 1
+    rest = labels[:-n] or labels
+    if len(rest) > 1 and rest[-1] in HOSTS:  # x.myshopify.com -> x
+        return rest[-2]
+    return rest[-1]
+
+
+def text_key(raw):
+    title = norm_words(raw.get("raw_title") or raw.get("raw_product_name"))
+    desc = norm_words(raw.get("raw_full_description") or (raw.get("raw_description") or {}).get("combined_text")
+                      or " ".join(raw.get("raw_bullet_points") or []))
+    return f"{title}|{desc}" if title else None
+
+
+def assign_groups(items):
+    """Leakage groups: domain (WDC/Shopify) or brand (Amazon), linked by shared brand and by identical
+    title+description, so none of these can span splits. Different domain endings of one merchant stay
+    separate groups (human decision); merchant_base records the shared name."""
+    uf = UnionFind()
+    for it in items:
+        n = it["norm"]
+        brand = norm_words(n["identity"].get("brand"))
+        domain = n["source"]["merchant_domain"]
+        base = ("brand:" + (brand or "unknown")) if it["source"] == "amazon" else "domain:" + domain
+        it["group"] = base
+        it["merchant_base"] = merchant_base(domain)
+        if brand and brand not in GENERIC_BRANDS:
+            uf.union(base, "brand:" + brand)
+        tk = text_key(it["raw"])
+        if tk:
+            uf.union(base, "text:" + tk)
+    for it in items:
+        it["group"] = uf.find(it["group"])
 
 
 def assign_splits(items, seed):
@@ -207,12 +278,14 @@ def assign_splits(items, seed):
     for g, its in groups.items():
         ptype = collections.Counter(str(it["gold"]["identity.product_type"]) for it in its).most_common(1)[0][0]
         lang = collections.Counter(it["language"] for it in its).most_common(1)[0][0]
-        strata[(its[0]["source"], ptype, lang)].append(g)
+        src = collections.Counter(it["source"] for it in its).most_common(1)[0][0]
+        strata[(src, ptype, lang)].append(g)
     rng = random.Random(seed)
     split_of = {}
     for key in sorted(strata):
         gs = sorted(strata[key])
         rng.shuffle(gs)
+        gs.sort(key=lambda g: -len(groups[g]))  # largest first (stable, so ties stay shuffled)
         total = sum(len(groups[g]) for g in gs)
         have = dict.fromkeys(SPLITS, 0)
         for g in gs:  # greedy: give the group to the split furthest below its target
@@ -222,6 +295,31 @@ def assign_splits(items, seed):
     for it in items:
         it["split"] = split_of[it["group"]]
     return split_of
+
+
+def leakage(items):
+    """Keys found in more than one split. group/domain/brand/title_description must be 0. Same merchant on
+    different domain endings (modalova.com vs .es) may span splits by human decision: those records get
+    it["cross_tld_split"] = True so eval can report them separately."""
+    keys = {"group": lambda it: it["group"],
+            "domain": lambda it: None if it["source"] == "amazon" else it["norm"]["source"]["merchant_domain"],
+            "brand": lambda it: (lambda b: b if b and b not in GENERIC_BRANDS else None)(
+                norm_words(it["norm"]["identity"].get("brand"))),
+            "title_description": lambda it: text_key(it["raw"]),
+            "merchant_base_allowed": lambda it: None if it["source"] == "amazon" else it["merchant_base"]}
+    out = {}
+    for name, fn in keys.items():
+        splits = collections.defaultdict(set)
+        for it in items:
+            k = fn(it)
+            if k:
+                splits[k].add(it["split"])
+        out[name] = sum(len(s) > 1 for s in splits.values())
+        if name == "merchant_base_allowed":
+            for it in items:
+                it["cross_tld_split"] = it["source"] != "amazon" and len(splits[it["merchant_base"]]) > 1
+            out["merchant_base_allowed_records"] = sum(it["cross_tld_split"] for it in items)
+    return out
 
 
 def pick_review(test, n, seed):
@@ -255,7 +353,8 @@ def main(argv=None):
 
     schema = json.loads((ROOT / "dataset" / "schema" / "normalized_record.schema.json").read_text("utf-8"))
     validator = Draft202012Validator(schema, format_checker=Draft202012Validator.FORMAT_CHECKER)
-    st = {"input": {}, "dropped": collections.Counter(), "bad_lines": collections.Counter()}
+    st = {"input": {}, "dropped": collections.Counter(), "bad_lines": collections.Counter(),
+          "retyped": collections.Counter()}
     ev_drops = collections.Counter()
     items, seen_ids = [], set()
     for source, d in sorted(inputs.items()):
@@ -284,14 +383,16 @@ def main(argv=None):
                 st["dropped"][f"{source}:non_apparel_title"] += 1
                 continue
             seen_ids.add(pid)
+            if mark_tank(n, raw):
+                st["retyped"][f"{source}:tank_or_sleeveless->other"] += 1
             vn = verify(n, raw, ev_drops)
             items.append({"source": source, "norm": vn, "raw": raw, "gold": target(vn),
                           "language": language_of(n, raw), "extra_provenance": extra_prov})
 
     items, removed = dedupe(items)
-    for it in items:
-        it["group"] = group_of(it["source"], it["norm"])
+    assign_groups(items)
     assign_splits(items, args.seed)
+    leak = leakage(items)
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -303,6 +404,7 @@ def main(argv=None):
                 n, raw = it["norm"], it["raw"]
                 row = {"product_id": n["product_id"], "source": it["source"], "group": it["group"],
                        "split": s, "language": it["language"], "domain": n["source"]["merchant_domain"],
+                       "merchant_base": it["merchant_base"], "cross_tld_split": it["cross_tld_split"],
                        "provenance": {"url": n["source"]["url"], "scraped_at": n["source"]["scraped_at"],
                                       "quality_status": n["quality_status"], "raw": raw.get("provenance"),
                                       "normalized": it["extra_provenance"]},
@@ -337,7 +439,7 @@ def main(argv=None):
                 "field_coverage": {f: round(sum(it["gold"][f] is not None for it in its) / c, 4) for f in FIELDS}}
 
     stats = {"seed": args.seed, "input": st["input"], "bad_lines": dict(st["bad_lines"]),
-             "dropped": dict(st["dropped"]), "dupes_removed": dict(removed),
+             "leakage": leak, "dropped": dict(st["dropped"]), "retyped": dict(st["retyped"]), "dupes_removed": dict(removed),
              "dupes_removed_total": sum(removed.values()),
              "evidence_check_drops": dict(ev_drops), "evidence_check_drops_total": sum(ev_drops.values()),
              "total": summary(items), "splits": {s: summary(by_split[s]) for s in SPLITS},
@@ -346,7 +448,7 @@ def main(argv=None):
              "human_review_rows": len(review),
              "human_review_by_source": dict(collections.Counter(it["source"] for it in review))}
     (out / "stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    print(json.dumps({"splits": {s: len(v) for s, v in by_split.items()}, "dupes_removed": sum(removed.values()),
+    print(json.dumps({"splits": {s: len(v) for s, v in by_split.items()}, "leakage": stats["leakage"], "dupes_removed": sum(removed.values()),
                       "evidence_check_drops": sum(ev_drops.values()), "dropped": dict(st["dropped"])}))
     return stats
 

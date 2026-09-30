@@ -45,6 +45,55 @@ class GuardTest(unittest.TestCase):
         self.assertFalse(gt.non_apparel({"raw_title": "Luxury Heavy Tee Oversize (240g/m2)"}))
 
 
+    def test_hardware_and_cd_bundles_dropped(self):
+        self.assertTrue(gt.non_apparel({"raw_title": "Propane Tank Y Splitter Adapter Tee Connector"}))
+        self.assertTrue(gt.non_apparel({"raw_title": "Love This City CD + T-Shirt"}))
+        self.assertFalse(gt.non_apparel({"raw_title": "Album Cover T-Shirt Black"}))
+
+    def test_tank_top_kept_as_other(self):
+        raw = {"raw_title": "Women's Racerback Tank Top", "raw_product_name": "Women's Racerback Tank Top"}
+        self.assertFalse(gt.non_apparel(raw))
+        norm = copy.deepcopy(NORM)
+        self.assertTrue(gt.mark_tank(norm, raw))
+        self.assertEqual(norm["identity"]["product_type"], "other")
+        self.assertEqual(gt.target(gt.verify(norm, raw, gt.collections.Counter()))["identity.product_type"], "other")
+        self.assertFalse(gt.mark_tank(copy.deepcopy(NORM), {"raw_title": "Classic Crew Tee"}))
+
+
+def item(source, domain, brand, title, desc="d"):
+    return {"source": source, "language": "en", "gold": {"identity.product_type": "t_shirt"},
+            "norm": {"identity": {"brand": brand}, "source": {"merchant_domain": domain}},
+            "raw": {"raw_title": title, "raw_full_description": desc}}
+
+
+class GroupingTest(unittest.TestCase):
+    def test_merchant_base(self):
+        for d in ("modalova.de", "us.modalova.com", "modalova.co.uk", "www.modalova.com.au"):
+            self.assertEqual(gt.merchant_base(d), "modalova")
+        self.assertEqual(gt.merchant_base("mundotrabajo.com.uy"), "mundotrabajo")
+        self.assertEqual(gt.merchant_base("cool.myshopify.com"), "cool")
+
+    def test_brand_and_text_link_groups_but_tlds_stay_separate(self):
+        items = [item("amazon", "amazon.com", "Under Armour", "UA Tech Tee"),
+                 item("wdc", "shopa.com", "Under Armour", "UA Tech 2.0"),
+                 item("wdc", "shopb.de", "Other", "Exact Dup Tee", "same text"),
+                 item("wdc", "shopc.fr", "Third", "Exact  dup tee", "Same text"),
+                 item("wdc", "wearmedicine.com", None, "A"),
+                 item("wdc", "wearmedicine.com.au", None, "B")]
+        gt.assign_groups(items)
+        g = [it["group"] for it in items]
+        self.assertEqual(g[0], g[1])  # Under Armour on Amazon + WDC -> one group
+        self.assertEqual(g[2], g[3])  # identical title+description -> one group
+        self.assertNotEqual(g[4], g[5])  # human decision: domain endings stay separate groups
+        self.assertEqual(items[4]["merchant_base"], items[5]["merchant_base"])
+        for i, it in enumerate(items):
+            it["split"] = "test" if i == 5 else "train"
+        leak = gt.leakage(items)
+        self.assertEqual([leak[k] for k in ("group", "domain", "brand", "title_description")], [0, 0, 0, 0])
+        self.assertTrue(items[5]["cross_tld_split"] and items[4]["cross_tld_split"])
+        self.assertFalse(items[0]["cross_tld_split"])
+
+
 class SplitLeakageTest(unittest.TestCase):
     def test_no_group_in_two_splits(self):
         items = []
