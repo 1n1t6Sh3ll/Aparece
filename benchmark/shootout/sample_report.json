@@ -1,0 +1,1961 @@
+{
+  "label": "Controlled evaluation (simulated shopping context); not proof of real-world ranking.",
+  "sample": true,
+  "generated_at": "2026-09-30T02:50:17+00:00",
+  "setup": {
+    "products": 5,
+    "languages": [
+      "en",
+      "es"
+    ],
+    "generators": [
+      "original",
+      "productlens",
+      "mock:mock-gen"
+    ],
+    "judges": [
+      "mock:mock-1",
+      "mock:mock-2"
+    ],
+    "holdout_judge": "mock:mock-2",
+    "prompts_per_product": 6,
+    "repeats": 3,
+    "splits": [
+      "dev",
+      "val"
+    ],
+    "competitors_per_context": 4,
+    "primary_metric": "mrr",
+    "bootstrap": 1000,
+    "judge_temperature": 0.7,
+    "gen_temperature": 0.0,
+    "free_providers": [
+      "mock",
+      "qwen"
+    ],
+    "instructions": "optimizer/fix.py SYSTEM + _prompt (LLMs also asked for tags)"
+  },
+  "overall": {
+    "ranking": [
+      "productlens"
+    ],
+    "winner": "productlens",
+    "holdout_judge": {
+      "judge": "mock:mock-2",
+      "winner": "productlens",
+      "agrees": true
+    },
+    "by_language": {
+      "en": "productlens",
+      "es": "productlens"
+    },
+    "parts": {
+      "title": {
+        "wins": {
+          "productlens": 4,
+          "original": 1
+        },
+        "winner": "productlens"
+      },
+      "tags": {
+        "wins": {
+          "productlens": 5
+        },
+        "winner": "productlens"
+      },
+      "description": {
+        "wins": {
+          "productlens": 3,
+          "mock:mock-gen": 2
+        },
+        "winner": "productlens"
+      }
+    }
+  },
+  "generators": {
+    "original": {
+      "candidates": 5,
+      "qualified_products": 0,
+      "qualified": false,
+      "flagged": 27,
+      "unsupported_claims": 19,
+      "title": {
+        "score": 0.55,
+        "chars": 44.4,
+        "passes": 5
+      },
+      "tags": {
+        "score": 0.0,
+        "n": 0.0,
+        "false": 0,
+        "duplicates": 0,
+        "language_match": null
+      },
+      "description": {
+        "attribute_coverage": 0.6162,
+        "intent_coverage": 0.1167,
+        "readability": 56.82,
+        "words": 91.8,
+        "jsonld_completeness": null,
+        "passes": 0
+      },
+      "visibility": {
+        "n": 90,
+        "units": 30,
+        "mention_rate": {
+          "value": 0.4889,
+          "lo": 0.3778,
+          "hi": 0.6
+        },
+        "top3_rate": {
+          "value": 0.4889,
+          "lo": 0.3778,
+          "hi": 0.6
+        },
+        "mrr": {
+          "value": 0.3833,
+          "lo": 0.2944,
+          "hi": 0.4833
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 54,
+          "units": 18,
+          "mention_rate": {
+            "value": 0.5556,
+            "lo": 0.4074,
+            "hi": 0.7037
+          },
+          "top3_rate": {
+            "value": 0.5556,
+            "lo": 0.4074,
+            "hi": 0.7037
+          },
+          "mrr": {
+            "value": 0.4722,
+            "lo": 0.3426,
+            "hi": 0.5926
+          }
+        },
+        "es": {
+          "n": 36,
+          "units": 12,
+          "mention_rate": {
+            "value": 0.3889,
+            "lo": 0.25,
+            "hi": 0.5278
+          },
+          "top3_rate": {
+            "value": 0.3889,
+            "lo": 0.25,
+            "hi": 0.5278
+          },
+          "mrr": {
+            "value": 0.25,
+            "lo": 0.1528,
+            "hi": 0.3472
+          }
+        }
+      },
+      "by_judge": {
+        "mock:mock-1": {
+          "n": 90,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.4889,
+            "lo": 0.3778,
+            "hi": 0.6
+          },
+          "top3_rate": {
+            "value": 0.4889,
+            "lo": 0.3778,
+            "hi": 0.6
+          },
+          "mrr": {
+            "value": 0.3833,
+            "lo": 0.2944,
+            "hi": 0.4833
+          }
+        },
+        "mock:mock-2": {
+          "n": 90,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.4889,
+            "lo": 0.3778,
+            "hi": 0.6
+          },
+          "top3_rate": {
+            "value": 0.4889,
+            "lo": 0.3778,
+            "hi": 0.6
+          },
+          "mrr": {
+            "value": 0.3833,
+            "lo": 0.2944,
+            "hi": 0.4833
+          }
+        }
+      }
+    },
+    "productlens": {
+      "candidates": 5,
+      "qualified_products": 5,
+      "qualified": true,
+      "flagged": 0,
+      "unsupported_claims": 0,
+      "title": {
+        "score": 0.86,
+        "chars": 75.6,
+        "passes": 5
+      },
+      "tags": {
+        "score": 0.8984,
+        "n": 7.2,
+        "false": 0,
+        "duplicates": 0,
+        "language_match": 1.0
+      },
+      "description": {
+        "attribute_coverage": 0.9667,
+        "intent_coverage": 0.0354,
+        "readability": 53.6,
+        "words": 29.4,
+        "jsonld_completeness": 0.6223,
+        "passes": 5
+      },
+      "visibility": {
+        "n": 90,
+        "units": 30,
+        "mention_rate": {
+          "value": 0.4222,
+          "lo": 0.3444,
+          "hi": 0.5111
+        },
+        "top3_rate": {
+          "value": 0.4222,
+          "lo": 0.3444,
+          "hi": 0.5111
+        },
+        "mrr": {
+          "value": 0.3111,
+          "lo": 0.2444,
+          "hi": 0.3833
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 54,
+          "units": 18,
+          "mention_rate": {
+            "value": 0.4444,
+            "lo": 0.3333,
+            "hi": 0.5741
+          },
+          "top3_rate": {
+            "value": 0.4444,
+            "lo": 0.3333,
+            "hi": 0.5741
+          },
+          "mrr": {
+            "value": 0.3519,
+            "lo": 0.2593,
+            "hi": 0.4537
+          }
+        },
+        "es": {
+          "n": 36,
+          "units": 12,
+          "mention_rate": {
+            "value": 0.3889,
+            "lo": 0.2778,
+            "hi": 0.5
+          },
+          "top3_rate": {
+            "value": 0.3889,
+            "lo": 0.2778,
+            "hi": 0.5
+          },
+          "mrr": {
+            "value": 0.25,
+            "lo": 0.1806,
+            "hi": 0.3194
+          }
+        }
+      },
+      "by_judge": {
+        "mock:mock-1": {
+          "n": 90,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.4222,
+            "lo": 0.3444,
+            "hi": 0.5111
+          },
+          "top3_rate": {
+            "value": 0.4222,
+            "lo": 0.3444,
+            "hi": 0.5111
+          },
+          "mrr": {
+            "value": 0.3111,
+            "lo": 0.2444,
+            "hi": 0.3833
+          }
+        },
+        "mock:mock-2": {
+          "n": 90,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.4222,
+            "lo": 0.3444,
+            "hi": 0.5111
+          },
+          "top3_rate": {
+            "value": 0.4222,
+            "lo": 0.3444,
+            "hi": 0.5111
+          },
+          "mrr": {
+            "value": 0.3111,
+            "lo": 0.2444,
+            "hi": 0.3833
+          }
+        }
+      }
+    },
+    "mock:mock-gen": {
+      "candidates": 5,
+      "qualified_products": 4,
+      "qualified": false,
+      "flagged": 1,
+      "unsupported_claims": 0,
+      "title": {
+        "score": 0.86,
+        "chars": 75.6,
+        "passes": 5
+      },
+      "tags": {
+        "score": 0.0,
+        "n": 0.0,
+        "false": 0,
+        "duplicates": 0,
+        "language_match": null
+      },
+      "description": {
+        "attribute_coverage": 1.0,
+        "intent_coverage": 0.0354,
+        "readability": 54.9,
+        "words": 30.6,
+        "jsonld_completeness": null,
+        "passes": 4
+      },
+      "visibility": {
+        "n": 90,
+        "units": 30,
+        "mention_rate": {
+          "value": 0.3333,
+          "lo": 0.2222,
+          "hi": 0.4444
+        },
+        "top3_rate": {
+          "value": 0.3333,
+          "lo": 0.2222,
+          "hi": 0.4444
+        },
+        "mrr": {
+          "value": 0.2389,
+          "lo": 0.1556,
+          "hi": 0.3222
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 54,
+          "units": 18,
+          "mention_rate": {
+            "value": 0.2407,
+            "lo": 0.1296,
+            "hi": 0.3519
+          },
+          "top3_rate": {
+            "value": 0.2407,
+            "lo": 0.1296,
+            "hi": 0.3519
+          },
+          "mrr": {
+            "value": 0.1759,
+            "lo": 0.0926,
+            "hi": 0.2593
+          }
+        },
+        "es": {
+          "n": 36,
+          "units": 12,
+          "mention_rate": {
+            "value": 0.4722,
+            "lo": 0.3056,
+            "hi": 0.6667
+          },
+          "top3_rate": {
+            "value": 0.4722,
+            "lo": 0.3056,
+            "hi": 0.6667
+          },
+          "mrr": {
+            "value": 0.3333,
+            "lo": 0.2083,
+            "hi": 0.4722
+          }
+        }
+      },
+      "by_judge": {
+        "mock:mock-1": {
+          "n": 90,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.3333,
+            "lo": 0.2222,
+            "hi": 0.4444
+          },
+          "top3_rate": {
+            "value": 0.3333,
+            "lo": 0.2222,
+            "hi": 0.4444
+          },
+          "mrr": {
+            "value": 0.2389,
+            "lo": 0.1556,
+            "hi": 0.3222
+          }
+        },
+        "mock:mock-2": {
+          "n": 90,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.3333,
+            "lo": 0.2222,
+            "hi": 0.4444
+          },
+          "top3_rate": {
+            "value": 0.3333,
+            "lo": 0.2222,
+            "hi": 0.4444
+          },
+          "mrr": {
+            "value": 0.2389,
+            "lo": 0.1556,
+            "hi": 0.3222
+          }
+        }
+      }
+    }
+  },
+  "products": [
+    {
+      "group": "g01",
+      "product_id": "p_598bfa88ba8a99c6",
+      "language": "en",
+      "brand": "Wear The Hope",
+      "name": "Terry Unisex Oversized T-Shirt White (TORN24-33)",
+      "url": "https://www.wearthehope.com/product-page/terry-unisex-oversized-t-shirt-white-torn24-33",
+      "verified_facts": 6,
+      "prompts": [
+        "INTENT_003_en",
+        "INTENT_009_en",
+        "INTENT_015_en",
+        "INTENT_021_en",
+        "INTENT_034_en",
+        "INTENT_071_en"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 48,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": false,
+              "fit": true
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.6
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 6,
+              "unsupported_claims": 1,
+              "accuracy": 0.4167,
+              "flagged": []
+            },
+            "passes": false,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.0521,
+            "readability": 42.8,
+            "words": 108,
+            "chars": 672,
+            "jsonld_completeness": null
+          },
+          "flagged": 6,
+          "unsupported_claims": 1,
+          "qualified": false,
+          "raw": {
+            "title": "Terry Unisex Oversized T-Shirt White (TORN24-33)",
+            "tags": [],
+            "text": "(merchant description not included in the committed sample)",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.5,
+              "lo": 0.2222,
+              "hi": 0.7778
+            },
+            "top3_rate": {
+              "value": 0.5,
+              "lo": 0.2222,
+              "hi": 0.7778
+            },
+            "mrr": {
+              "value": 0.4444,
+              "lo": 0.1944,
+              "hi": 0.6944
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 90,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": true
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 8,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "cotton",
+              "polyester",
+              "oversized fit",
+              "printed",
+              "unisex",
+              "white",
+              "280 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.875,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.9583
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0312,
+            "readability": 21.5,
+            "words": 15,
+            "chars": 107,
+            "jsonld_completeness": 0.6667
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Wear The Hope Terry Unisex Oversized T-Shirt White (TORN24-33) - 90% cotton, 10% polyester",
+            "tags": [
+              "t-shirt",
+              "cotton",
+              "polyester",
+              "oversized fit",
+              "printed",
+              "unisex",
+              "white",
+              "280 gsm"
+            ],
+            "text": "Material: 90% cotton, 10% polyester. Fabric weight: 280 gsm. Oversized fit. Printed. Unisex. Colors: white.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.5556,
+              "lo": 0.4444,
+              "hi": 0.6667
+            },
+            "top3_rate": {
+              "value": 0.5556,
+              "lo": 0.4444,
+              "hi": 0.6667
+            },
+            "mrr": {
+              "value": 0.5,
+              "lo": 0.3889,
+              "hi": 0.6111
+            }
+          },
+          "cost_usd": 0
+        },
+        "mock:mock-gen": {
+          "title": {
+            "chars": 90,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": true
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0312,
+            "readability": 21.5,
+            "words": 15,
+            "chars": 107,
+            "jsonld_completeness": null
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Wear The Hope Terry Unisex Oversized T-Shirt White (TORN24-33) - 90% cotton, 10% polyester",
+            "tags": [],
+            "text": "Material: 90% cotton, 10% polyester. Fabric weight: 280 gsm. Oversized fit. Printed. Unisex. Colors: white.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.1667,
+              "lo": 0.0556,
+              "hi": 0.2778
+            },
+            "top3_rate": {
+              "value": 0.1667,
+              "lo": 0.0556,
+              "hi": 0.2778
+            },
+            "mrr": {
+              "value": 0.1111,
+              "lo": 0.0278,
+              "hi": 0.1944
+            }
+          },
+          "cost_usd": 0
+        }
+      },
+      "part_winners": {
+        "title": "productlens",
+        "tags": "productlens",
+        "description": "productlens"
+      },
+      "visibility_winner": "productlens",
+      "recommended": {
+        "title": {
+          "text": "Wear The Hope Terry Unisex Oversized T-Shirt White (TORN24-33) - 90% cotton, 10% polyester",
+          "from": "productlens"
+        },
+        "tags": {
+          "list": [
+            "t-shirt",
+            "cotton",
+            "polyester",
+            "oversized fit",
+            "printed",
+            "unisex",
+            "white",
+            "280 gsm"
+          ],
+          "from": [
+            "productlens"
+          ]
+        },
+        "description": {
+          "text": "Material: 90% cotton, 10% polyester. Fabric weight: 280 gsm. Oversized fit. Printed. Unisex. Colors: white.",
+          "from": "productlens"
+        }
+      }
+    },
+    {
+      "group": "g02",
+      "product_id": "p_6e17d9bce1d8a817",
+      "language": "en",
+      "brand": "Merch Monger",
+      "name": "Green Line Short-Sleeve Unisex T-Shirt",
+      "url": "https://merchmonger.com/products/green-line-short-sleeve-unisex-t-shirt",
+      "verified_facts": 6,
+      "prompts": [
+        "INTENT_012_en",
+        "INTENT_024_en",
+        "INTENT_032_en",
+        "INTENT_063_en",
+        "INTENT_095_en",
+        "INTENT_117_en"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 38,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": false,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.5
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 6,
+              "unsupported_claims": 7,
+              "accuracy": 0.1875,
+              "flagged": []
+            },
+            "passes": false,
+            "attribute_coverage": 0.6,
+            "intent_coverage": 0.1979,
+            "readability": 60.9,
+            "words": 106,
+            "chars": 566,
+            "jsonld_completeness": null
+          },
+          "flagged": 6,
+          "unsupported_claims": 7,
+          "qualified": false,
+          "raw": {
+            "title": "Green Line Short-Sleeve Unisex T-Shirt",
+            "tags": [],
+            "text": "(merchant description not included in the committed sample)",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.6111,
+              "lo": 0.3333,
+              "hi": 0.8889
+            },
+            "top3_rate": {
+              "value": 0.6111,
+              "lo": 0.3333,
+              "hi": 0.8889
+            },
+            "mrr": {
+              "value": 0.5,
+              "lo": 0.2778,
+              "hi": 0.6667
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 65,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 6,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "cotton",
+              "short sleeves",
+              "unisex",
+              "green",
+              "142 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.8333,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.9444
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0104,
+            "readability": 56.8,
+            "words": 14,
+            "chars": 100,
+            "jsonld_completeness": 0.6667
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% cotton",
+            "tags": [
+              "t-shirt",
+              "cotton",
+              "short sleeves",
+              "unisex",
+              "green",
+              "142 gsm"
+            ],
+            "text": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Colors: green.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.5,
+              "lo": 0.3333,
+              "hi": 0.7222
+            },
+            "top3_rate": {
+              "value": 0.5,
+              "lo": 0.3333,
+              "hi": 0.7222
+            },
+            "mrr": {
+              "value": 0.3889,
+              "lo": 0.2778,
+              "hi": 0.5
+            }
+          },
+          "cost_usd": 0
+        },
+        "mock:mock-gen": {
+          "title": {
+            "chars": 65,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0104,
+            "readability": 56.8,
+            "words": 14,
+            "chars": 100,
+            "jsonld_completeness": null
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% cotton",
+            "tags": [],
+            "text": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Colors: green.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.1667,
+              "lo": 0.0,
+              "hi": 0.3889
+            },
+            "top3_rate": {
+              "value": 0.1667,
+              "lo": 0.0,
+              "hi": 0.3889
+            },
+            "mrr": {
+              "value": 0.1111,
+              "lo": 0.0,
+              "hi": 0.2222
+            }
+          },
+          "cost_usd": 0
+        }
+      },
+      "part_winners": {
+        "title": "productlens",
+        "tags": "productlens",
+        "description": "productlens"
+      },
+      "visibility_winner": "productlens",
+      "recommended": {
+        "title": {
+          "text": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% cotton",
+          "from": "productlens"
+        },
+        "tags": {
+          "list": [
+            "t-shirt",
+            "cotton",
+            "short sleeves",
+            "unisex",
+            "green",
+            "142 gsm"
+          ],
+          "from": [
+            "productlens"
+          ]
+        },
+        "description": {
+          "text": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Colors: green.",
+          "from": "productlens"
+        }
+      }
+    },
+    {
+      "group": "g03",
+      "product_id": "p_7606b0d8b0a4cb9b",
+      "language": "en",
+      "brand": "Mercharoo",
+      "name": "Kawartha short sleeve women's organic V-neck t-shirt - 38017",
+      "url": "https://mercharoo.com/products/kawartha-short-sleeve-womens-organic-v-neck-t-shirt-38017",
+      "verified_facts": 6,
+      "prompts": [
+        "INTENT_030_en",
+        "INTENT_060_en",
+        "INTENT_073_en",
+        "INTENT_104_en",
+        "INTENT_114_en",
+        "INTENT_115_en"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 60,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 8,
+              "flagged_sentences": 6,
+              "unsupported_claims": 11,
+              "accuracy": 0.2609,
+              "flagged": []
+            },
+            "passes": false,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.2396,
+            "readability": 55.4,
+            "words": 108,
+            "chars": 647,
+            "jsonld_completeness": null
+          },
+          "flagged": 6,
+          "unsupported_claims": 11,
+          "qualified": false,
+          "raw": {
+            "title": "Kawartha short sleeve women's organic V-neck t-shirt - 38017",
+            "tags": [],
+            "text": "(merchant description not included in the committed sample)",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.5556,
+              "lo": 0.3333,
+              "hi": 0.7778
+            },
+            "top3_rate": {
+              "value": 0.5556,
+              "lo": 0.3333,
+              "hi": 0.7778
+            },
+            "mrr": {
+              "value": 0.4722,
+              "lo": 0.2778,
+              "hi": 0.6389
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 104,
+            "length_ok": false,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "organic cotton",
+              "elastane",
+              "short sleeves",
+              "v-neck",
+              "for women",
+              "200 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.5714,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.8571
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0625,
+            "readability": 47.4,
+            "words": 17,
+            "chars": 116,
+            "jsonld_completeness": 0.5556
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Mercharoo Kawartha short sleeve women's organic V-neck t-shirt - 38017 - 95% organic cotton, 5% elastane",
+            "tags": [
+              "t-shirt",
+              "organic cotton",
+              "elastane",
+              "short sleeves",
+              "v-neck",
+              "for women",
+              "200 gsm"
+            ],
+            "text": "Material: 95% organic cotton, 5% elastane. Fabric weight: 200 gsm. Stretch fabric. Short sleeves. V-neck. For women.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.2778,
+              "lo": 0.1111,
+              "hi": 0.4444
+            },
+            "top3_rate": {
+              "value": 0.2778,
+              "lo": 0.1111,
+              "hi": 0.4444
+            },
+            "mrr": {
+              "value": 0.1667,
+              "lo": 0.0556,
+              "hi": 0.3056
+            }
+          },
+          "cost_usd": 0
+        },
+        "mock:mock-gen": {
+          "title": {
+            "chars": 104,
+            "length_ok": false,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0625,
+            "readability": 47.4,
+            "words": 17,
+            "chars": 116,
+            "jsonld_completeness": null
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Mercharoo Kawartha short sleeve women's organic V-neck t-shirt - 38017 - 95% organic cotton, 5% elastane",
+            "tags": [],
+            "text": "Material: 95% organic cotton, 5% elastane. Fabric weight: 200 gsm. Stretch fabric. Short sleeves. V-neck. For women.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.3889,
+              "lo": 0.2222,
+              "hi": 0.5556
+            },
+            "top3_rate": {
+              "value": 0.3889,
+              "lo": 0.2222,
+              "hi": 0.5556
+            },
+            "mrr": {
+              "value": 0.3056,
+              "lo": 0.1667,
+              "hi": 0.4444
+            }
+          },
+          "cost_usd": 0
+        }
+      },
+      "part_winners": {
+        "title": "original",
+        "tags": "productlens",
+        "description": "mock:mock-gen"
+      },
+      "visibility_winner": "mock:mock-gen",
+      "recommended": {
+        "title": {
+          "text": "Kawartha short sleeve women's organic V-neck t-shirt - 38017",
+          "from": "original"
+        },
+        "tags": {
+          "list": [
+            "t-shirt",
+            "organic cotton",
+            "elastane",
+            "short sleeves",
+            "v-neck",
+            "for women",
+            "200 gsm"
+          ],
+          "from": [
+            "productlens"
+          ]
+        },
+        "description": {
+          "text": "Material: 95% organic cotton, 5% elastane. Fabric weight: 200 gsm. Stretch fabric. Short sleeves. V-neck. For women.",
+          "from": "mock:mock-gen"
+        }
+      }
+    },
+    {
+      "group": "g14",
+      "product_id": "p_c510d6fc5a1bf5b0",
+      "language": "es",
+      "brand": "Thinking MU",
+      "name": "Camiseta Esqué Aaron",
+      "url": "https://thinkingmu.com/products/esque-blue-aaron-tee",
+      "verified_facts": 13,
+      "prompts": [
+        "INTENT_047_es",
+        "INTENT_050_es",
+        "INTENT_068_es",
+        "INTENT_069_es",
+        "INTENT_096_es",
+        "INTENT_115_es"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 20,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": false,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.4
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 9,
+              "flagged_sentences": 6,
+              "unsupported_claims": 0,
+              "accuracy": 0.4545,
+              "flagged": []
+            },
+            "passes": false,
+            "attribute_coverage": 0.7143,
+            "intent_coverage": 0.0833,
+            "readability": 70.9,
+            "words": 94,
+            "chars": 537,
+            "jsonld_completeness": null
+          },
+          "flagged": 6,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Camiseta Esqué Aaron",
+            "tags": [],
+            "text": "(merchant description not included in the committed sample)",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.3333,
+              "lo": 0.1111,
+              "hi": 0.5556
+            },
+            "top3_rate": {
+              "value": 0.3333,
+              "lo": 0.1111,
+              "hi": 0.5556
+            },
+            "mrr": {
+              "value": 0.2222,
+              "lo": 0.0833,
+              "hi": 0.3611
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 56,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.8
+          },
+          "tags": {
+            "n": 8,
+            "duplicates": 0,
+            "passing": [
+              "camiseta",
+              "algodón orgánico",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "estampado",
+              "para hombre",
+              "180 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.625,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.875
+          },
+          "description": {
+            "guard": {
+              "sentences": 13,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0729,
+            "readability": 69.9,
+            "words": 53,
+            "chars": 344,
+            "jsonld_completeness": 0.6667
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico",
+            "tags": [
+              "camiseta",
+              "algodón orgánico",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "estampado",
+              "para hombre",
+              "180 gsm"
+            ],
+            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidado: NO USAR LEJIA. Cuidado: NO USAR SECADORA. Cuidado: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidado: PERMITE LIMPIEZA EN SECO.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.3333,
+              "lo": 0.1667,
+              "hi": 0.5
+            },
+            "top3_rate": {
+              "value": 0.3333,
+              "lo": 0.1667,
+              "hi": 0.5
+            },
+            "mrr": {
+              "value": 0.1944,
+              "lo": 0.1111,
+              "hi": 0.2778
+            }
+          },
+          "cost_usd": 0
+        },
+        "mock:mock-gen": {
+          "title": {
+            "chars": 56,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.8
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 13,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0729,
+            "readability": 69.9,
+            "words": 53,
+            "chars": 344,
+            "jsonld_completeness": null
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico",
+            "tags": [],
+            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidado: NO USAR LEJIA. Cuidado: NO USAR SECADORA. Cuidado: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidado: PERMITE LIMPIEZA EN SECO.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.5556,
+              "lo": 0.3333,
+              "hi": 0.7778
+            },
+            "top3_rate": {
+              "value": 0.5556,
+              "lo": 0.3333,
+              "hi": 0.7778
+            },
+            "mrr": {
+              "value": 0.3611,
+              "lo": 0.2222,
+              "hi": 0.5
+            }
+          },
+          "cost_usd": 0
+        }
+      },
+      "part_winners": {
+        "title": "productlens",
+        "tags": "productlens",
+        "description": "mock:mock-gen"
+      },
+      "visibility_winner": "mock:mock-gen",
+      "recommended": {
+        "title": {
+          "text": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico",
+          "from": "productlens"
+        },
+        "tags": {
+          "list": [
+            "camiseta",
+            "algodón orgánico",
+            "corte holgado",
+            "manga corta",
+            "cuello redondo",
+            "estampado",
+            "para hombre",
+            "180 gsm"
+          ],
+          "from": [
+            "productlens"
+          ]
+        },
+        "description": {
+          "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidado: NO USAR LEJIA. Cuidado: NO USAR SECADORA. Cuidado: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidado: PERMITE LIMPIEZA EN SECO.",
+          "from": "mock:mock-gen"
+        }
+      }
+    },
+    {
+      "group": "g15",
+      "product_id": "p_a74337767f05936a",
+      "language": "es",
+      "brand": "Sepiia",
+      "name": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
+      "url": "https://sepiia.com/products/camiseta-hombre-cuello-redondo-estampado-rayas-rosa-palo-soft",
+      "verified_facts": 11,
+      "prompts": [
+        "INTENT_002_es",
+        "INTENT_021_es",
+        "INTENT_022_es",
+        "INTENT_054_es",
+        "INTENT_060_es",
+        "INTENT_073_es"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 56,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.5
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 3,
+              "unsupported_claims": 0,
+              "accuracy": 0.25,
+              "flagged": []
+            },
+            "passes": false,
+            "attribute_coverage": 0.1667,
+            "intent_coverage": 0.0104,
+            "readability": 54.1,
+            "words": 43,
+            "chars": 274,
+            "jsonld_completeness": null
+          },
+          "flagged": 3,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
+            "tags": [],
+            "text": "(merchant description not included in the committed sample)",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.4444,
+              "lo": 0.2222,
+              "hi": 0.6111
+            },
+            "top3_rate": {
+              "value": 0.4444,
+              "lo": 0.2222,
+              "hi": 0.6111
+            },
+            "mrr": {
+              "value": 0.2778,
+              "lo": 0.1389,
+              "hi": 0.3889
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 63,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "camiseta",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "de rayas",
+              "para hombre",
+              "rosa"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.5714,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.8571
+          },
+          "description": {
+            "guard": {
+              "sentences": 11,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 0.8333,
+            "intent_coverage": 0.0,
+            "readability": 72.4,
+            "words": 48,
+            "chars": 318,
+            "jsonld_completeness": 0.5556
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
+            "tags": [
+              "camiseta",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "de rayas",
+              "para hombre",
+              "rosa"
+            ],
+            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Cuidado: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidado: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidado: LAVAR EN FRÍO O MÁX 30º. Cuidado: LAVAR Y COLGAR.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.4444,
+              "lo": 0.3333,
+              "hi": 0.5556
+            },
+            "top3_rate": {
+              "value": 0.4444,
+              "lo": 0.3333,
+              "hi": 0.5556
+            },
+            "mrr": {
+              "value": 0.3056,
+              "lo": 0.2222,
+              "hi": 0.3889
+            }
+          },
+          "cost_usd": 0
+        },
+        "mock:mock-gen": {
+          "title": {
+            "chars": 63,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 12,
+              "flagged_sentences": 1,
+              "unsupported_claims": 0,
+              "accuracy": 0.9091,
+              "flagged": [
+                {
+                  "sentence": "Tallas: S, M, L, XL, 2XL.",
+                  "problems": [
+                    "number 2 is not the verified value of the field it describes"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0,
+            "readability": 78.9,
+            "words": 54,
+            "chars": 344,
+            "jsonld_completeness": null
+          },
+          "flagged": 1,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
+            "tags": [],
+            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Cuidado: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidado: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidado: LAVAR EN FRÍO O MÁX 30º. Cuidado: LAVAR Y COLGAR.",
+            "error": null
+          },
+          "visibility": {
+            "n": 18,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.3889,
+              "lo": 0.1111,
+              "hi": 0.6667
+            },
+            "top3_rate": {
+              "value": 0.3889,
+              "lo": 0.1111,
+              "hi": 0.6667
+            },
+            "mrr": {
+              "value": 0.3056,
+              "lo": 0.1111,
+              "hi": 0.5556
+            }
+          },
+          "cost_usd": 0
+        }
+      },
+      "part_winners": {
+        "title": "productlens",
+        "tags": "productlens",
+        "description": "productlens"
+      },
+      "visibility_winner": "productlens",
+      "recommended": {
+        "title": {
+          "text": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
+          "from": "productlens"
+        },
+        "tags": {
+          "list": [
+            "camiseta",
+            "corte holgado",
+            "manga corta",
+            "cuello redondo",
+            "de rayas",
+            "para hombre",
+            "rosa"
+          ],
+          "from": [
+            "productlens"
+          ]
+        },
+        "description": {
+          "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Cuidado: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidado: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidado: LAVAR EN FRÍO O MÁX 30º. Cuidado: LAVAR Y COLGAR.",
+          "from": "productlens"
+        }
+      }
+    }
+  ],
+  "cost": {
+    "judge_calls": 540,
+    "judge_usd": 0.0,
+    "generation_usd": 0
+  },
+  "caveats": [
+    "Simulated context: 5 product pages chosen by us, not a real search index or live assistant.",
+    "Small n: 5 products x 6 prompts x 3 repeats; CIs are cluster bootstrap over (product, prompt).",
+    "Judges are from the same model families as the AI generators (OpenAI, Anthropic); self-preference is possible.",
+    "Winner chosen on judges other than the held-out one (mock:mock-2); nothing was tuned on these results.",
+    "Guardrail is a strict allowlist: harmless paraphrases can be flagged, which disqualifies that part.",
+    "Title and tag winners are deterministic audit scores, not measured visibility.",
+    "The merchant original is judged against the same Product Truth; the dataset has no merchant tags."
+  ]
+}

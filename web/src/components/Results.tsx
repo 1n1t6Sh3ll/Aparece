@@ -269,6 +269,7 @@ export default function Results({ audit, onReset }: { audit: Audit; onReset: () 
         {live && (
           <a href={p.url!} target="_blank" rel="noopener noreferrer" className="btn-ghost self-start sm:self-center"><ExternalLink className="size-4" aria-hidden /> <span className="sr-only sm:not-sr-only">{p.merchant}</span></a>
         )}
+        <a href={`#/compare/${encodeURIComponent(pid)}`} className="btn-ghost no-print self-start sm:self-center"><Bot className="size-4" aria-hidden /> {t("cmp.cta")}</a>
       </section>
 
       {/* 2. Where you rank */}
