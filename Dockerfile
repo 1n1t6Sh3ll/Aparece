@@ -4,12 +4,9 @@ WORKDIR /app
 COPY dataset/requirements.txt dataset/requirements.txt
 COPY api/requirements.txt api/requirements.txt
 RUN pip install --no-cache-dir -r api/requirements.txt
-COPY dataset/collect dataset/collect
-COPY api api
-COPY analysis analysis
-COPY dashboard dashboard
-COPY monitor monitor
-COPY benchmark benchmark
+# Source set is controlled by the .dockerignore allowlist (optional dirs such as
+# governance/ or a web build are included when present, skipped otherwise).
+COPY . .
 RUN useradd --create-home --uid 10001 app && mkdir -p monitor/data && chown app monitor/data
 USER app
 EXPOSE 8000
