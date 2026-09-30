@@ -5,11 +5,15 @@ as in crawl.gaps_for) and are cached per snapshot in snapshot_metrics. Snapshots
 fall back to the snapshot content (completeness from its attribute list; no peer rank). No composite score.
 """
 import difflib
+import logging
 import re
 
 from analysis.gaps import ATTRIBUTES, analyze, completeness
 from analysis.peers import get
 from monitor import crawl, store
+
+log = logging.getLogger(__name__)
+RANK_VERSION = 2  # 2 = the audit's listing-quality rank (#116)
 
 METRICS = ["completeness_rank", "attribute_completeness_pct", "peer_median_completeness_pct", "description_chars",
            "price", "currency", "structured_data_present", "language", "visibility"]
@@ -22,21 +26,36 @@ def compute(snap):
          "attribute_completeness_pct": round(100 * len(c["attributes"]) / len(ATTRIBUTES), 1),
          "description_chars": c["description_chars"], "price": c["price"], "currency": c["currency"],
          "structured_data_present": any(c["schema"].values()), "language": c["language"],
-         "visibility": c.get("visibility")}
+         "visibility": c.get("visibility"), "rank_version": RANK_VERSION}
     if rec is not None:
         peers = crawl.peers_for(rec)
         gm = analyze(rec, peers)["metrics"]
         tc = gm["attribute_completeness_pct"]["target"]
         m["attribute_completeness_pct"] = tc
         m["peer_median_completeness_pct"] = gm["attribute_completeness_pct"]["peer_median"]
-        m["completeness_rank"] = {"position": 1 + sum(completeness(p) > tc for p in peers), "of": len(peers) + 1,
-                                  "by": "attribute_completeness_pct"}
+        m["completeness_rank"] = audit_rank(rec) or {"position": 1 + sum(completeness(p) > tc for p in peers),
+                                                      "of": len(peers) + 1, "by": "attribute_completeness_pct"}
     return m
+
+
+def audit_rank(rec):
+    """The listing-quality rank a URL audit shows for this record (api/audit_api.record_rank: same peers, widening
+    and formula), so Monitor and the audit agree (#116). Non-shirts are unranked, as in the audit."""
+    try:
+        import audit_api
+    except ImportError:  # monitor used outside the API process: say so rather than show a different scale silently
+        log.warning("audit_api not importable; snapshot rank falls back to attribute completeness")
+        return None
+    rk = audit_api.record_rank(rec)
+    if rk is None:
+        return {"position": None, "of": None, "by": "listing_quality", "unranked": True}
+    return {"position": rk["position"], "position_from": rk.get("position_from"), "position_to": rk.get("position_to"),
+            "of": rk["total"], "score": rk["score"], "match_step": rk.get("match_step"), "by": "listing_quality"}
 
 
 def metrics(snap):
     m = store.cached_metrics(snap["id"])
-    if m is None:
+    if m is None or m.get("rank_version") != RANK_VERSION:  # older caches used another rank scale: recompute
         m = compute(snap)
         store.cache_metrics(snap["id"], m)
     return m

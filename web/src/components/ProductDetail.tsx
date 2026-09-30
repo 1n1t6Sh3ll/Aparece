@@ -272,7 +272,7 @@ export default function ProductDetail({ id }: { id: string }) {
                       <p className="text-xs muted">{when(s.crawled_at, lang)} · #{s.id}</p>
                       <p className="text-sm">
                         {m.attribute_completeness_pct != null && <><b className="tabular-nums">{Math.round(m.attribute_completeness_pct)}%</b> {t("pd.facts")}</>}
-                        {m.completeness_rank && <> · #{m.completeness_rank.position}/{m.completeness_rank.of}</>}
+                        {m.completeness_rank?.position != null && <> · #{m.completeness_rank.position}/{m.completeness_rank.of}</>}
                         {m.price != null && <> · {money(m.price, m.currency, lang)}</>}
                       </p>
                       {evs.map((e) => <p key={e.id} className="mt-0.5 text-xs"><span className="chip bg-[var(--surface-2)]">{t(`hist.ev.${e.type}`)}</span> {e.field ? fieldLabel(lang, e.field) : ""}{e.after != null && <span className="muted"> → {fmtValue(e.after)}</span>}</p>)}

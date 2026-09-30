@@ -91,7 +91,11 @@ class MonitorTest(unittest.TestCase):
         m1, m2 = snaps[0]["metrics"], snaps[1]["metrics"]
         self.assertLess(m1["attribute_completeness_pct"], m2["attribute_completeness_pct"])
         self.assertEqual((m1["price"], m2["price"], m2["currency"]), (30.0, 25.0, "EUR"))
-        self.assertEqual(m2["completeness_rank"]["by"], "attribute_completeness_pct")
+        self.assertEqual(m2["completeness_rank"]["by"], "listing_quality")
+        import audit_api  # #116: Monitor shows the audit's own rank for the same record
+        rec = store.last_snapshot(store.pid_for(pid))["data"]["record"]
+        rk = audit_api.record_rank(rec)
+        self.assertEqual((m2["completeness_rank"]["position"], m2["completeness_rank"]["of"]), (rk["position"], rk["total"]))
         self.assertLessEqual(m2["completeness_rank"]["position"], m2["completeness_rank"]["of"])
         a, b = snaps[0]["id"], snaps[1]["id"]
         self.assertIsNotNone(store.cached_metrics(b))  # cached
