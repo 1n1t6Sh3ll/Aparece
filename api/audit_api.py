@@ -19,6 +19,7 @@ from pydantic import ValidationError
 import dashboard_api as dash
 from analysis.gaps import ATTRIBUTES, analyze, attributes_present, description_chars
 from analysis.peers import find_peers, get, price
+from tools.linkcheck import status as link
 
 router = APIRouter()
 WEB = Path(__file__).resolve().parents[1] / "web" / "dist"  # Vite build output (npm run build in web/)
@@ -140,7 +141,7 @@ def rank(target, recs, with_sd=True, match=None):
     scored = sorted(((quality(x, ref, with_sd), x) for x in group), key=lambda q: -q[0]["score"])
     tq = quality(target, ref, with_sd)
     pos = 1 + sum(q["score"] > tq["score"] for q, _ in scored)
-    board = [{**dash.summary(x), "url": get(x, "source", "url"), "is_you": False, **q} for q, x in scored]
+    board = [{**dash.summary(x), "url": get(x, "source", "url"), **link.flag(x), "is_you": False, **q} for q, x in scored]
     board.insert(pos - 1, {**dash.summary(target), "url": get(target, "source", "url"), "is_you": True, **tq})
     return {"position": pos, "total": len(group) + 1, "score": tq["score"], "components": tq,
             "formula": FORMULA if with_sd else FORMULA_DRAFT, "kind": "listing_quality", "weights": weights(with_sd),
@@ -352,7 +353,7 @@ def audit(payload: dict = Body(...)):
         "context": {"language": get(target, "source", "language"), "currency": get(target, "commerce", "currency"),
                     "merchant": get(target, "source", "merchant_domain"), "dataset_size": len(recs),
                     "quality_status": norm.get("quality_status")},
-        "peers": [{**dash.summary(p), "url": get(p, "source", "url"), "match_score": s,
+        "peers": [{**dash.summary(p), "url": get(p, "source", "url"), **link.flag(p), "match_score": s,
                    "facts_found": sum(attributes_present(p).values())} for s, p in matched],
         "comparison": {"basis": "top_ranked", "of": len(top),
                        "facts": {"target": facts_found, "top_median": statistics.median(counts) if counts else None,

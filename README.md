@@ -69,6 +69,7 @@ python -m unittest discover -s benchmark/tests -t .
 python -m unittest discover -s signals/tests -t .
 python -m unittest discover -s dataset/tests
 python -m unittest discover -s api/tests
+python -m unittest discover -s tools/linkcheck/tests -t .
 ```
 
 `run.sh` runs all five before starting the server. Tests use local fixtures and the `mock` model; they make no network or paid calls.
@@ -98,6 +99,10 @@ python -m benchmark.harness run ... --models anthropic:<model> --max-usd 5
 - `benchmark/metrics.py` also provides `competitor_win_rate(records, products, a, b)` (CWR: share of responses mentioning A or B where A ranks first), `language_visibility_gap(...)` (LVG = V_EN − V_ES per model/product) and `claim_accuracy_passthrough(claims_report)`.
 - Demo set (`benchmark/demo/demo_catalog.jsonl`): 25 adult short-sleeve T-shirt targets from small/own-brand shops (19 EN, 6 ES: only 23 Spanish shops survive the filters and about half are dead), 4 comparable competitors each from `analysis/peers.py` (same detected language/type; currency approximated from country TLD), and 5 untouched controls (3 EN, 2 ES). Amazon, big/licensed brands, marketplaces and resellers (a shop titling another brand) are excluded; language is detected from the record text, not the dataset label; long-sleeve, tank, compression and kids items are excluded. Ids, URLs, brand and product names only. Rebuild with `python -m benchmark.demo.build_demo --data <dataset/output/final> --cache <file outside repo>`; each target/control URL got one robots-respecting fetch via `api/safe_fetch.py` and dead ones (404, DNS, robots, 429/503 at check time) were dropped. Baseline run on dev+val prompts only (192 = 96 EN + 96 ES), about 1152 calls, dry-run estimate $2.00:
   `python -m benchmark.harness run --prompts benchmark/prompts/tshirts.jsonl --splits dev,val --models openai:gpt-4o-mini,anthropic:claude-haiku-4-5-20251001 --repeats 3 --catalog benchmark/demo/demo_catalog.jsonl --out benchmark/demo/runs_baseline.jsonl --max-usd 3`, then `python -m benchmark.harness report --results benchmark/demo/runs_baseline.jsonl --catalog benchmark/demo/demo_catalog.jsonl --out-dir benchmark/demo/report_baseline/`.
+
+## Link checking
+
+`python -m tools.linkcheck.check benchmark/demo/demo_catalog.jsonl` classifies product URLs as live, gone (404/410), redirected_away (to a home/search/collection page), blocked (401/403/429, challenge, robots) or error (DNS/TLS/5xx) into `dataset/output/link_status.jsonl` (gitignored, resumable; `PRODUCTLENS_LINK_STATUS` overrides). Polite: ProductLens User-Agent, robots.txt, 1 request/s per host, HEAD then GET, 8 s timeout, SSRF guard. `python -m tools.linkcheck.top_peers --data DATA --out urls.txt` lists the most frequent top-10 peers to check first. Gone/redirected_away products are dropped from peers, competitors, the listing-quality rank (N counts live listings only) and the AI-visibility catalog; blocked/error stay with `link_unverified`. No status file = no change. `python -m benchmark.citations --results runs.jsonl [--check]` (also in `harness report`) gives the broken citation rate per model.
 
 ## Merchant chat
 

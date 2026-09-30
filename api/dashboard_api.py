@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT))
 
 from analysis.gaps import analyze, completeness  # noqa: E402
 from analysis.peers import find_peers, get, load_records, price  # noqa: E402
+from tools.linkcheck import status as link  # noqa: E402
 
 router = APIRouter(prefix="/v1")
 _cache = {}
@@ -210,7 +211,7 @@ def competitors(pid: str, k: int = Query(10, ge=1, le=50)):
     for sc, p in find_peers(rec, records(), k):
         pp, pcur = price_cur(p)
         same = bool(tp and pp and cur and pcur == cur)
-        rows.append({**summary(p), "price": pp, "currency": pcur, "match_score": sc,
+        rows.append({**summary(p), **link.flag(p), "price": pp, "currency": pcur, "match_score": sc,
                      "completeness_pct": completeness(p),
                      "price_diff_pct": round(100 * (pp - tp) / tp, 1) if same else None,
                      "peer_percentile": ((sig.get(p["product_id"]) or {}).get("peer") or {}).get("percentile")})

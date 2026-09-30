@@ -31,7 +31,7 @@ export interface Quality {
   score: number; points: { facts: number; description: number; structured_data: number };
   facts_stated: number; facts_checked: number; description_chars: number; description_ref: number; structured_data_flags: number;
 }
-export type BoardRow = Summary & Quality & { is_you: boolean };
+export type BoardRow = Summary & Quality & { is_you: boolean; link_unverified?: boolean };
 
 export interface Audit {
   product: Summary & { image: string | null; draft: boolean };
