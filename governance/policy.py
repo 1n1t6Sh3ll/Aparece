@@ -74,6 +74,10 @@ def require(action, actor, target=None, details=None, approval_id=None):
     raise ApprovalRequired(action, audit.request(action, target, actor, dhash), rule["owner"])
 
 
+def _norm(actor):
+    return (actor or "").strip().casefold()
+
+
 def approve(approval_id, approver, role, approve=True):
     """Named human of the action's owner role decides a pending request; requester cannot self-approve."""
     row = audit.get(approval_id)
@@ -82,7 +86,7 @@ def approve(approval_id, approver, role, approve=True):
     owner = POLICY[row["action"]]["owner"]
     if role != owner:
         raise GovernanceError(f"{row['action']} must be decided by {owner}")
-    if approver == row["requested_by"]:
+    if _norm(approver) == _norm(row["requested_by"]):
         raise GovernanceError("requester cannot approve their own request")
     decided = audit.decide(approval_id, approver, approve)
     if not decided:

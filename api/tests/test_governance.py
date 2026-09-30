@@ -69,6 +69,7 @@ class GovernanceTest(unittest.TestCase):
         aid = cm.exception.approval_id
         self.assertEqual(client.get("/v1/approvals").json()["pending"][0]["id"], aid)
         self.assertEqual(self.approve(aid, approver="alice").status_code, 409)  # no self-approval
+        self.assertEqual(self.approve(aid, approver=" Alice ").status_code, 409)  # case/space-insensitive
         self.assertEqual(self.approve(aid, role=policy.MERCHANT).status_code, 409)  # wrong role
         self.assertEqual(self.approve(aid, headers={"X-Governance-Token": "bad"}).status_code, 401)
         self.assertEqual(self.approve(aid).json()["status"], "approved")

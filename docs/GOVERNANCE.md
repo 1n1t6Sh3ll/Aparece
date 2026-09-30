@@ -63,4 +63,4 @@ The log is stored in its own SQLite file, `GOVERNANCE_DB` (default `governance/d
 ## Pending
 - `benchmark/harness.py` and `monitor/crawl.py` do not call `gate_benchmark_run` yet. Adding that edit needs explicit permission.
 - Dockerfile/.dockerignore do not yet ship `governance/` (TEAM-36). Until they do, `api/main.py` skips the governance routes when the package is missing.
-- There are no real user identities: `approver`/`role` are self-declared by the holder of `GOVERNANCE_TOKEN`.
+- There are no real user identities: `approver`/`role` are self-declared by the holder of `GOVERNANCE_TOKEN`. The self-approval check compares ids after trimming spaces and ignoring case, but that does not stop someone using a different name.
