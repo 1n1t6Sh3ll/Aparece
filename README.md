@@ -37,6 +37,8 @@ Routes: `POST /v1/enroll {url, email?, plan?, crawl_now?}`, `GET /v1/monitored`,
 
 ## AI-visibility benchmark
 `benchmark/` sends the same prompts + system instructions to `mock`, `anthropic`, `openai` (official SDKs; keys only from `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`) and `qwen` (a local OpenAI-compatible server such as Ollama/vLLM at `QWEN_BASE_URL`, default `http://localhost:11434/v1`; free unless priced in `prices.json`, then `--max-usd` applies). Several models per provider can run together (`--models openai:A,openai:B,anthropic:C`); the report compares them side by side, stores raw responses in resumable JSONL, then matches mentions to catalog products (URL, alias, brand+name; country-TLD sites distinct) and reports mention rate, top-k, MRR, citation rate, stability per model/language/site. Hidden split is excluded unless `--splits` names it. Always `--dry-run` first; paid runs need `--max-usd` and a price in `benchmark/prices.json` (reviewer-verified; re-check sources).
+
+T-shirt prompt set: `benchmark/prompts/tshirts.jsonl` (dev/val) holds 120 canonical intents (`INTENT_001`…), each written in natural EN (US/GB) and ES (ES/MX), with no brand names. The seeded 60/20/20 split by intent is in `benchmark/prompts/split.py`. Hidden prompts are kept only in `benchmark/prompts/hidden.jsonl`; optimizers must never read that file.
 ```
 python -m benchmark.harness run --prompts benchmark/examples/prompts.example.jsonl --models mock:mock-1 --catalog benchmark/examples/catalog.example.jsonl --out runs.jsonl [--repeats 3 --shuffle --dry-run --max-usd 5]
 python -m benchmark.harness report --results runs.jsonl --catalog benchmark/examples/catalog.example.jsonl --out-dir reports/
