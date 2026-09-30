@@ -64,6 +64,18 @@ class EnforceTest(unittest.TestCase):
         self.assertEqual(self.run_("Your price increased to 25 [snapshot:1].")[0], "")
         self.assertIn("[trend:price]", self.run_("Your price increased by 5 [trend:price].")[0])
 
+    def test_numbers_inside_dates_and_ids_are_not_facts(self):
+        ctx = [engine.record("snapshot", 7, {"taken_at": "2026-09-30", "id": 30, "price": 25, "currency": "EUR"},
+                             "2026-09-30")]
+        for bad in ("Price is 30 dollars [snapshot:7].", "Price is 30 [snapshot:7].", "Price is 9 [snapshot:7].",
+                    "Price is 25 dollars [snapshot:7].", "Price was 25 EUR on 2026-10-01 [snapshot:7]."):
+            self.assertEqual(engine.enforce(bad, ctx)[0], "", bad)
+        for good in ("Price is 25.00 EUR [snapshot:7].", "Price is €25 [snapshot:7].", "Price is 25 [snapshot:7].",
+                     "Price was 25 EUR on 2026-09-30 [snapshot:7]."):
+            self.assertNotEqual(engine.enforce(good, ctx)[0], "", good)
+        text_ctx = [engine.record("snapshot", 8, "price 25.0 EUR on 2026-09-30 for EXP-000030", "2026-09-30")]
+        self.assertEqual(engine.enforce("Price is 30 dollars [snapshot:8].", text_ctx)[0], "")
+
     def test_causal_ranking_claim_dropped(self):
         self.assertEqual(self.run_("Your visibility rose because of the price of 25 [trend:price].")[0], "")
 
