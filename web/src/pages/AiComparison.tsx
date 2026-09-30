@@ -6,7 +6,7 @@ import { api, errorText, useI18n } from "../lib";
 const STR: Record<string, Record<string, string>> = { en: {
   "cta": "Compare with AI models",
   "title": "AI comparison: title, tags, description",
-  "sub": "ProductLens and AI models each write a title, tags and description from the same verified facts. Every part is checked for unsupported claims, audited, and tested in a simulated AI shopping context.",
+  "sub": "Aparece and AI models each write a title, tags and description from the same verified facts. Every part is checked for unsupported claims, audited, and tested in a simulated AI shopping context.",
   "controlled": "Controlled evaluation: a simulated shopping context with 4 real competitor pages, judged by AI models. It is not proof of how any real assistant or search engine will rank a product.",
   "sample": "Sample data: visibility numbers come from mock judges and mean nothing yet. The audits (claims, coverage, tags) are real. A paid run replaces this.",
   "notInSet": "This product is not in the comparison set yet, so there are no AI comparison results for it. Other products' numbers are never shown in its place.",
@@ -44,13 +44,13 @@ const STR: Record<string, Record<string, string>> = { en: {
   "noTags": "no tags",
   "caveats": "Caveats",
   "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats.",
-  "liveRunning": "Comparing this product now: ProductLens and AI models are writing a title, tags and description from its verified facts…",
+  "liveRunning": "Comparing this product now: Aparece and AI models are writing a title, tags and description from its verified facts…",
   "liveNote": "Live comparison of this product, just now. Every part was checked for unsupported claims and audited; AI-visibility is measured only in the benchmark set. API cost: US${c}.",
   "real": "Real run on {d}: live AI judges and generators, {n} judge calls, US${c} API cost as recorded by the run."
 }, es: {
   "cta": "Comparar con modelos de IA",
   "title": "Comparación IA: título, etiquetas, descripción",
-  "sub": "ProductLens y varios modelos de IA escriben un título, etiquetas y una descripción a partir de los mismos datos verificados. Cada parte se revisa para detectar afirmaciones sin respaldo, se audita y se prueba en un contexto de compra simulado.",
+  "sub": "Aparece y varios modelos de IA escriben un título, etiquetas y una descripción a partir de los mismos datos verificados. Cada parte se revisa para detectar afirmaciones sin respaldo, se audita y se prueba en un contexto de compra simulado.",
   "controlled": "Evaluación controlada: un contexto de compra simulado con 4 fichas reales de la competencia, juzgado por modelos de IA. No demuestra cómo clasificará un producto ningún asistente o buscador real.",
   "sample": "Datos de ejemplo: la visibilidad viene de jueces simulados y todavía no significa nada. Las auditorías (afirmaciones, cobertura, etiquetas) son reales. Una ejecución de pago lo sustituirá.",
   "notInSet": "Este producto aún no está en el conjunto de comparación, así que no hay resultados de comparación con IA. Nunca mostramos cifras de otros productos en su lugar.",
@@ -88,7 +88,7 @@ const STR: Record<string, Record<string, string>> = { en: {
   "noTags": "sin etiquetas",
   "caveats": "Advertencias",
   "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val x {r} repeticiones.",
-  "liveRunning": "Comparando este producto ahora: ProductLens y los modelos de IA escriben un título, etiquetas y una descripción con sus datos verificados…",
+  "liveRunning": "Comparando este producto ahora: Aparece y los modelos de IA escriben un título, etiquetas y una descripción con sus datos verificados…",
   "liveNote": "Comparación en directo de este producto, hecha ahora. Cada parte se revisó en busca de afirmaciones sin respaldo y se auditó; la visibilidad en IA solo se mide en el conjunto del benchmark. Coste de API: US${c}.",
   "real": "Ejecución real del {d}: jueces y generadores de IA reales, {n} llamadas de juez, US${c} de coste de API según lo registrado por la ejecución."
 } };
@@ -156,6 +156,8 @@ type Report = {
   generators?: Record<string, Gen>; products?: Product[];
 };
 
+/** Display name for a generator id ("productlens", "productlens@openai:gpt-4o-mini"); ids stay unchanged. */
+const genName = (g: string | null | undefined) => (g ? g.replace(/^productlens(?=@|$)/, "Aparece") : g);
 const PARTS: Part[] = ["title", "tags", "description"];
 const pct = (v: number | null | undefined) => (v == null ? "–" : `${Math.round(v * 100)}%`);
 const ci = (v: CI | undefined) => (v ? `${v.value.toFixed(2)} [${v.lo.toFixed(2)}–${v.hi.toFixed(2)}]` : "–");
@@ -223,15 +225,15 @@ export default function AiComparison({ productId }: { productId?: string }) {
         {PARTS.map((part) => (
           <div key={part} className="card p-5">
             <p className="text-sm muted">{t(`best.${part}`)}</p>
-            <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{o.parts[part].winner || t("none")}</p>
-            <p className="mt-1 text-xs muted">{t("wins", { w: Object.entries(o.parts[part].wins).map(([g, n]) => `${g} ${n}`).join(", ") || "–" })}</p>
+            <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{genName(o.parts[part].winner) || t("none")}</p>
+            <p className="mt-1 text-xs muted">{t("wins", { w: Object.entries(o.parts[part].wins).map(([g, n]) => `${genName(g)} ${n}`).join(", ") || "–" })}</p>
           </div>
         ))}
         <div className="card p-5">
           <p className="text-sm muted">{t("best.visibility")}</p>
-          <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{o.winner || t("none")}</p>
+          <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{genName(o.winner) || t("none")}</p>
           <p className="mt-1 text-xs muted">
-            {o.diff_vs_runner_up ? t(o.decisive ? "separated" : "tie", { r: o.runner_up!, d: ci(o.diff_vs_runner_up) }) : ""}
+            {o.diff_vs_runner_up ? t(o.decisive ? "separated" : "tie", { r: genName(o.runner_up)!, d: ci(o.diff_vs_runner_up) }) : ""}
             {o.holdout_judge ? ` ${t(o.holdout_judge.agrees ? "holdoutAgrees" : "holdoutDisagrees", { j: o.holdout_judge.judge })}` : ""}
           </p>
         </div>
@@ -248,7 +250,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
             <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
               {Object.entries(gens).map(([g, v]) => (
                 <tr key={g} className={v.qualified ? "" : "text-stone-400"}>
-                  <th scope="row" className="px-5 py-2 text-left font-medium sm:px-6">{g}</th>
+                  <th scope="row" className="px-5 py-2 text-left font-medium sm:px-6">{genName(g)}</th>
                   <td className="px-3 py-2"><span className="flex items-center gap-1"><Pass ok={v.qualified} />{v.qualified_products}/{v.candidates}</span></td>
                   <td className="px-3 py-2 tabular-nums">{v.flagged}</td>
                   <td className="px-3 py-2 tabular-nums">{pct(v.title.score)}</td>
@@ -277,11 +279,11 @@ export default function AiComparison({ productId }: { productId?: string }) {
           </label>
         </div>
         <dl className="mt-4 space-y-3 text-sm">
-          <div><dt className="font-medium">{t("part.title")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.title?.from || "–"}</span></dt>
+          <div><dt className="font-medium">{t("part.title")} <span className="chip bg-stone-100 dark:bg-stone-800">{genName(cur.recommended.title?.from) || "–"}</span></dt>
             <dd className="mt-1">{cur.recommended.title?.text || t("none")}</dd></div>
-          <div><dt className="font-medium">{t("part.tags")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.tags?.from.join(", ") || "–"}</span></dt>
+          <div><dt className="font-medium">{t("part.tags")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.tags?.from.map(genName).join(", ") || "–"}</span></dt>
             <dd className="mt-1 flex flex-wrap gap-1.5">{cur.recommended.tags?.list.map((x) => <span key={x} className="chip bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200">{x}</span>) || t("none")}</dd></div>
-          <div><dt className="font-medium">{t("part.description")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.description?.from || "–"}</span></dt>
+          <div><dt className="font-medium">{t("part.description")} <span className="chip bg-stone-100 dark:bg-stone-800">{genName(cur.recommended.description?.from) || "–"}</span></dt>
             <dd className="mt-1">{cur.recommended.description?.text || t("none")}</dd></div>
         </dl>
         <p className="mt-3 text-xs muted">{t("recommendedNote")}</p>
@@ -290,7 +292,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
         <ul className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
           {Object.entries(cur.candidates).map(([g, c]) => (
             <li key={g} className="py-3 text-sm">
-              <p className="flex flex-wrap items-center gap-2 font-medium">{g}
+              <p className="flex flex-wrap items-center gap-2 font-medium">{genName(g)}
                 {Object.entries(cur.part_winners).filter(([, w]) => w === g).map(([part]) =>
                   <span key={part} className="chip bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">{t(`best.${part}`)}</span>)}
                 <span className="muted">MRR {ci(c.visibility?.mrr)}</span>

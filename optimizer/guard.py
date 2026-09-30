@@ -66,6 +66,8 @@ def vocabulary(truth):
                      for v in (s.get("normalized_size"), s.get("raw_size")) if v)
     if re.search(r"\b(?:XXX?L|\dXL)\b", sizes, re.I):
         words.add("xl")  # "2XL" tokenizes as 2 + xl; the number itself is checked by _size_ok
+    if truth.get("care"):  # care text says "30º max": allow the unit and the full word when restating it
+        words |= {"c", "max", "maximum", "maximo", "maxima"}
     ptype = truth["facts"].get("identity.product_type")
     if ptype:
         key = "_shirt" if str(ptype).endswith("_shirt") and ptype not in dict(N.PRODUCT_TYPE) else ptype
@@ -77,6 +79,8 @@ def vocabulary(truth):
 
 def _word_ok(tok, words):
     if tok in words:
+        return True
+    if tok.endswith("'s") and tok[:-2] in words:  # possessive of a verified word: "men's" from "For men"
         return True
     return any(w.startswith("__type__:") and re.fullmatch(w[9:], tok, re.I) for w in words)
 
@@ -101,6 +105,12 @@ def _size_ok(tok, facts):
     return bool({tok.upper(), _size(tok) or tok.upper()} & (verified - {""}))
 
 
+def _care_numbers(facts):
+    care = facts.get("care") or (facts.get("facts") or {}).get("care") or []
+    text = " ".join(c if isinstance(c, str) else str(c.get("text") or c.get("raw") or "") for c in care)
+    return {_num(m) for m in re.findall(r"\d+(?:[.,]\d+)?", text)}
+
+
 def _number_problems(s, truth):
     """Every number must be the value of the field its context names: material %, gsm, price, sale price, 3/4."""
     f, out = truth["facts"], []
@@ -119,6 +129,8 @@ def _number_problems(s, truth):
         elif re.match(r"\s*" + CURRENCY_RE, _fold(after)) or re.search(CURRENCY_RE + r"\s*$", before):
             key = "commerce.sale_price" if SALE_RE.search(before) else "commerce.price"
             ok = bool(f.get("commerce.currency")) and _near(f.get(key), n)
+        elif re.match(r"\s*(?:º|°|ºc|°c|c\b|degrees|grados)", after, re.I) or re.search(r"(?:wash|iron|dry|lav|planch|secad|temperat)\w*\W+(?:\w+\W+){0,4}$", before):
+            ok = n in _care_numbers(truth)  # care temperatures: only numbers the verified care text states
         else:
             ok = False  # counts, years, ratings...: no verified field
         if not ok:

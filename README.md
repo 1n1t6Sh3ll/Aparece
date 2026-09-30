@@ -1,10 +1,10 @@
-# ProductLens
+# Aparece
 
 **See your product page the way AI shopping assistants do, and fix what they can't read.**
 
-Paste a shirt's product URL. ProductLens reads the page, shows which facts machines can verify, ranks the listing against 20,000 similar shirts, and gives you the 3 fixes to make first, plus grounded text you can approve. English and Spanish.
+Paste a shirt's product URL. Aparece reads the page, shows which facts machines can verify, ranks the listing against 20,000 similar shirts, and gives you the 3 fixes to make first, plus grounded text you can approve. English and Spanish.
 
-> We asked gpt-4o-mini and Claude Haiku 384 real shopping questions. None of the 103 small shops we tested was named once; Everlane, Uniqlo and Patagonia were. ProductLens helps small shops close that gap without making up claims.
+> We asked gpt-4o-mini and Claude Haiku 384 real shopping questions. None of the 103 small shops we tested was named once; Everlane, Uniqlo and Patagonia were. Aparece helps small shops close that gap without making up claims.
 
 ## Run it
 
@@ -52,7 +52,7 @@ PRODUCTLENS_DATA=dataset/output/final/train.jsonl ./run.sh
 | **Audit** | Verified facts, each with the page text that proves it; listing-quality rank vs similar shirts; the top 3 fixes |
 | **Generate Fix** | Title and description written only from your facts; a guardrail rejects any unsupported sentence |
 | **AI visibility** | Whether real AI assistants name your store for shopping questions, and who they name instead |
-| **AI comparison** | Your text vs ProductLens vs AI models on title, tags and description |
+| **AI comparison** | Your text vs Aparece vs AI models on title, tags and description |
 | **Monitor** | Scheduled re-checks, snapshots, change diffs, trends, and a chat that cites only stored data |
 | **Bulk and share** | Up to 20 URLs with CSV export; private report links |
 | **Blocked stores** | Draft audit from pasted text, or the extension (Amazon is never fetched) |
@@ -62,7 +62,7 @@ PRODUCTLENS_DATA=dataset/output/final/train.jsonl ./run.sh
 | | |
 |---|---|
 | Fact extraction (200 test products, 63 stores) | Fine-tuned Qwen2.5-0.5B **85.8%** vs GPT-4.1 27.2% vs untuned 4.7% |
-| AI comparison (5 products, EN/ES) | ProductLens best on title, tags and description with no unsupported claims (the AI models' own text had flagged parts); visibility a statistical tie |
+| AI comparison (5 products, EN/ES) | Aparece best on title, tags and description with no unsupported claims (the AI models' own text had flagged parts); visibility a statistical tie |
 | AI visibility (384 answers, 2 models) | 0% mention rate for the 103 small shops tested; big brands named instead |
 
 The scoring and caveats are in [docs/REFERENCE.md](docs/REFERENCE.md).

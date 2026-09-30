@@ -86,6 +86,8 @@ def extract_claims(text):
         c = N.normalize_color(word)
         if c and c not in colors:
             colors.append(c)
+    if "navy" in colors and "blue" in colors and re.search(r"\bnavy\s+blue\b|\bazul\s+marino\b", text, re.I):
+        colors.remove("blue")  # "navy blue" / "azul marino" is one colour (navy), not navy + blue
     out += [("variants.colors", c) for c in colors]
     sizes = []
     for phrase in SIZE_PHRASE.findall(text):

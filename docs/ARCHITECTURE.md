@@ -1,4 +1,4 @@
-# ProductLens architecture
+# Aparece architecture
 
 One audit loop, deterministic by default. Every fact carries evidence (an exact substring of the source); model output is kept separate from rule facts.
 

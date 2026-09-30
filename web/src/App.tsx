@@ -1,6 +1,7 @@
 import AuditPage from "./components/AuditPage";
 import BulkPage from "./components/BulkPage";
 import AiComparison from "./pages/AiComparison";
+import DocsPage from "./pages/DocsPage";
 import Chat from "./components/Chat";
 import { Landing, Overview, ProductsHub, SignIn } from "./components/Home";
 import ModelsPage from "./components/ModelsPage";
@@ -35,6 +36,7 @@ export default function App() {
     : page === "products" ? <ProductsHub />
     : page === "reports" ? <Report />
     : page === "models" ? <ModelsPage />
+    : page === "docs" ? <DocsPage />
     : page === "chat" ? <Chat />
     : page === "settings" ? <Settings />
     : page === "onboarding" ? <Onboarding />

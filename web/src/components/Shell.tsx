@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Aperture, Building2, Check, ChevronsUpDown, Cpu, FileText, Globe, Keyboard, LayoutDashboard, LogIn, Menu, MessageSquare,
-  Moon, Package, Plus, Scale, ScanSearch, Settings, Sun, UserPlus, X,
+  Moon, Package, Plus, Scale, ScanSearch, Settings, Sun, UserPlus, X, BookOpen,
 } from "lucide-react";
 import { useI18n } from "../lib";
 import { accounts, token } from "../profile";
@@ -16,6 +16,7 @@ export const NAV = [
   { to: "compare", key: "i", label: "nav.compare", Icon: Scale },
   { to: "models", key: "m", label: "nav.models", Icon: Cpu },
   { to: "chat", key: "c", label: "nav.chat", Icon: MessageSquare },
+  { to: "docs", key: "d", label: "nav.docs", Icon: BookOpen },
   { to: "settings", key: "s", label: "nav.settings", Icon: Settings },
 ] as const;
 
@@ -123,7 +124,7 @@ export default function Shell({ page, children }: { page: string; children: Reac
   const brand = (
     <a href="#/" className="flex items-center gap-2 px-6 py-5 font-bold tracking-tight text-white">
       <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] shadow-sm"><Aperture className="size-5" aria-hidden /></span>
-      ProductLens
+      Aparece
     </a>
   );
   const foot = (
