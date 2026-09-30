@@ -20,12 +20,14 @@ export function runAudit(body: AuditBody) {
   return api<Audit>("/v1/audit", { method: "POST", body: JSON.stringify(body) });
 }
 export type Stored = { id: string | null; audit: Audit; record: Record<string, unknown> | null };
-/** Audit and keep the result under a stable unlisted id (#/report/<id>); falls back to /v1/audit on older servers. */
+/** Audit and keep the result under a stable unlisted id (#/report/<id>). Falls back to a plain /v1/audit (no stable
+ * link) on older servers (404/405) or when saving fails on our side (500/503), so a storage fault never blocks an audit. */
 export async function runStoredAudit(body: AuditBody): Promise<Stored> {
   try {
     return await api<Stored>("/v1/audits", { method: "POST", body: JSON.stringify(body) });
   } catch (e) {
-    if (e instanceof ApiError && (e.status === 404 || e.status === 405)) return { id: null, audit: await runAudit(body), record: null };
+    const missingRoute = e instanceof ApiError && ((e.status === 404 && e.detail === "Not Found") || e.status === 405);
+    if (missingRoute || (e instanceof ApiError && (e.status === 500 || e.status === 503))) return { id: null, audit: await runAudit(body), record: null };
     throw e;
   }
 }

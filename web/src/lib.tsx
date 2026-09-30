@@ -118,11 +118,12 @@ export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean
     amazon_not_supported: ["err.amazon", true], blocked_by_store: ["err.blocked", true], host_not_found: ["err.dns", false],
     not_a_web_page: ["err.notPage", false], page_not_found: ["err.pageNotFound", false], product_gone: ["err.gone", true],
     not_a_product_page: ["err.notProduct", false], not_a_shirt: ["err.notShirt", false], draft_needs_title: ["hero.emptyTitle", false],
-    invalid_price: ["err.invalidPrice", false], invalid_currency: ["err.invalidCurrency", false], invalid_field: ["err.invalidField", false],
+    too_many_requests: ["err.tooMany", false], invalid_price: ["err.invalidPrice", false], invalid_currency: ["err.invalidCurrency", false], invalid_field: ["err.invalidField", false],
   };
   if (e.status === 0) return { msg: t("err.network"), suggestText: false };
   if (code && coded[code]) return { msg: t(coded[code][0]), suggestText: coded[code][1], openDraft: coded[code][1] };
-  if (e.status === 429 || /upstream HTTP (429|503)/.test(d)) return { msg: t("err.rateLimited"), suggestText: true, openDraft: true };
+  if (e.status === 429) return { msg: t("err.tooMany"), suggestText: false };  // our own per-network limit, not the store's
+  if (/upstream HTTP (429|503)/.test(d)) return { msg: t("err.rateLimited"), suggestText: true, openDraft: true };
   if (/robots\.txt disallows/.test(d)) return { msg: t("err.robots"), suggestText: true, openDraft: true };
   if (d.includes("does not resolve")) return { msg: t("err.dns"), suggestText: false };
   if (d.includes("http(s)")) return { msg: t("err.scheme"), suggestText: false };
@@ -133,6 +134,7 @@ export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean
   if (d.startsWith("upstream") || d.startsWith("fetch failed") || e.status === 502) return { msg: t("err.upstreamPlain"), suggestText: true };
   if (e.status === 401 || e.status === 403) return { msg: t("err.denied"), suggestText: false };
   if (e.status === 404) return { msg: t("err.notFound"), suggestText: false };
+  if (d.includes("provide url, html or text")) return { msg: t("err.empty"), suggestText: false };
   if (e.status === 422) return { msg: t("err.invalid"), suggestText: false };
   return { msg: t("err.unknown"), suggestText: false };
 }
