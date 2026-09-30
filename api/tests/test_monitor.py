@@ -122,6 +122,17 @@ class MonitorTest(unittest.TestCase):
         ev = store.history(pid)["events"]
         self.assertEqual([e["type"] for e in ev], ["VISIBILITY_CHANGED"])
 
+    def test_visibility_with_harness_mock_adapter(self):
+        pid = self.enroll()["product"]["id"]
+        env = {"ANTHROPIC_API_KEY": "unused", "BENCHMARK_MAX_USD": "0.5", "BENCHMARK_MODELS": "mock:mock-1",
+               "BENCHMARK_MIN_INTERVAL": "0"}
+        with mock.patch.dict(os.environ, env):
+            self.assertEqual(crawl.visibility_all()["status"], "ok")  # mock provider: no network, no spend
+        ev = store.history(pid)["events"]
+        self.assertEqual([e["type"] for e in ev], ["VISIBILITY_CHANGED"])
+        rate = ev[0]["after"]["mock-1"]["mention_rate"]  # mock is deterministic; matches depend on its URL coin-flip
+        self.assertTrue(0 < rate <= 1, rate)
+
     def test_scheduler_env_gate(self):
         with mock.patch.dict(os.environ, {"MONITOR_ENABLED": ""}):
             self.assertIsNone(scheduler.start())

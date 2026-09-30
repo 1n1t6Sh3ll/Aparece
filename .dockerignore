@@ -2,5 +2,12 @@
 !api/
 !dataset/requirements.txt
 !dataset/collect/
+!analysis/
+!dashboard/
+!signals/
+!benchmark/
+!monitor/
+monitor/data/*
+!monitor/data/.gitignore
 api/tests/
 **/__pycache__

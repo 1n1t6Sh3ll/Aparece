@@ -82,28 +82,65 @@ def crawl_all():
     return results
 
 
-def load_runner():
-    """Benchmark runner hook: benchmark.runner.run(urls, max_usd) -> {url: visibility}. None until it exists."""
-    try:
-        from benchmark.runner import run
-        return run
-    except ImportError:
-        return None
+def benchmark_runner(urls, max_usd):
+    """Run benchmark/harness over enrolled products; returns {url: {model: product metrics}}.
+    BENCHMARK_MODELS (e.g. anthropic:claude-haiku-4-5), BENCHMARK_PROMPTS (default examples), BENCHMARK_REPEATS (1)."""
+    import json
+    import tempfile
+    from argparse import Namespace
+
+    from benchmark import harness
+    from benchmark.match import load_catalog
+    from benchmark.metrics import build_report
+
+    catalog = []
+    for p in store.monitored(active_only=True):
+        snap = store.last_snapshot(p["id"])
+        if p["url"] in urls and snap:
+            c = snap["data"]["content"]
+            catalog.append({"product_id": snap["data"]["product_id"],
+                            "source": {"url": p["url"], "merchant_domain": urlsplit(p["url"]).hostname},
+                            "identity": {"brand": c["attributes"].get("identity.brand"), "product_name": c["title"]}})
+    models = [m.strip() for m in os.environ.get("BENCHMARK_MODELS", "").split(",") if m.strip()]
+    if not catalog or not models:
+        return {}
+    with tempfile.TemporaryDirectory() as tmp:
+        cat, out = Path(tmp) / "catalog.jsonl", Path(tmp) / "runs.jsonl"
+        cat.write_text("\n".join(json.dumps(r) for r in catalog), encoding="utf-8")
+        harness.run(Namespace(
+            prompts=os.environ.get("BENCHMARK_PROMPTS") or str(harness.HERE / "examples" / "prompts.example.jsonl"),
+            models=models, out=str(out), catalog=str(cat), prices=str(harness.HERE / "prices.json"),
+            splits={"dev", "val"}, repeats=int(os.environ.get("BENCHMARK_REPEATS", "1")), shuffle=False,
+            system=harness.DEFAULT_SYSTEM, temperature=0.7, max_tokens=600, max_usd=max_usd, dry_run=False,
+            min_interval=float(os.environ.get("BENCHMARK_MIN_INTERVAL", "1")), retries=3), log=log.info)
+        records = [json.loads(ln) for ln in out.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        products = load_catalog(cat)
+    report = build_report(records, products) if records else {"models": {}}
+    by_pid = {r["product_id"]: r["source"]["url"] for r in catalog}
+    vis = {}
+    for model, m in report["models"].items():
+        for pid, metrics in m["products"].items():
+            vis.setdefault(by_pid[pid], {})[model] = metrics
+    return vis
 
 
 def visibility_all(runner=None):
     """Weekly job. Runs only with an API key and BENCHMARK_MAX_USD set; otherwise logs 'skipped'. No other spend."""
     keys = any(os.environ.get(k) for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"))
     cap = os.environ.get("BENCHMARK_MAX_USD")
-    runner = runner or load_runner()
-    reason = ("no API key" if not keys else "BENCHMARK_MAX_USD not set" if not cap
-              else "no benchmark runner" if not runner else None)
+    runner = runner or benchmark_runner
+    reason = "no API key" if not keys else None if cap else "BENCHMARK_MAX_USD not set"
     if reason:
         store.log_run("visibility", "skipped", reason)
         log.info("weekly visibility skipped: %s", reason)
         return {"status": "skipped", "detail": reason}
     prods = store.monitored(active_only=True)
-    results = runner([p["url"] for p in prods], max_usd=float(cap))
+    try:
+        results = runner([p["url"] for p in prods], max_usd=float(cap))
+    except (SystemExit, Exception) as e:  # harness exits on missing key/price; never crash the scheduler
+        store.log_run("visibility", "error", str(e)[:200])
+        log.warning("weekly visibility failed: %s", e)
+        return {"status": "error", "detail": str(e)[:200]}
     for p in prods:
         prev = store.last_snapshot(p["id"])
         vis = results.get(p["url"])
