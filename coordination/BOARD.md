@@ -1,4 +1,7 @@
-# PowerLens board
+# ProductLens board (repo: powerlens)
+
+Current status (2026-09-30, main `f0a8fcd`): the audit loop in the [README](../README.md) is on main (audit, Generate Fix, AI comparison, visibility benchmark, hallucination check, monitoring + chat, webhooks, tenant-scoped governance). Model results: README "Model results". Open follow-ups: #95. Live task status is in GitHub Issues, not here.
+
 Authoritative board: GitHub Issues in this repo, shown on the project https://github.com/users/1n1t6Sh3ll/projects/2. Each task has an issue titled `TEAM-<n> ...` with a `status:*` label (ready, in-progress, review, blocked).
 Project manager: Claude Code PM session (human-designated 2026-09-29). The human can change the owner.
 Decisions: `DECISIONS.md`. Vision: `docs/VISION.md`. Dataset spec: `docs/DATASET_SPEC.md`. Training: `train/README.md`.

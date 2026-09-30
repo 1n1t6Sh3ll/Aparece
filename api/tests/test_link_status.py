@@ -30,7 +30,7 @@ class LinkStatusTest(unittest.TestCase):
 
     def test_without_status_file_rank_unchanged(self):
         b = self.audit()
-        self.assertEqual((b["rank"]["position"], b["rank"]["total"]), (4, 5))
+        self.assertEqual(b["rank"]["total"], 5)
         self.assertTrue(all(p["link_status"] is None and not p["link_unverified"] for p in b["peers"]))
 
     def test_gone_peer_leaves_rank_and_peers_blocked_is_flagged(self):

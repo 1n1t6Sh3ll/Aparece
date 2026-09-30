@@ -78,6 +78,15 @@ export class ApiError extends Error {
   constructor(public status: number, public detail: string) { super(detail); }
 }
 
+/** Per-enrollment manage tokens (shown once by POST /v1/enroll), kept only in this browser. */
+function manageTokens(): Record<string, string> {
+  try { return JSON.parse(store.get("pl.manage") || "{}"); } catch { return {}; }
+}
+export const saveManageToken = (id: string, token: string) => store.set("pl.manage", JSON.stringify({ ...manageTokens(), [id]: token }));
+export const manageToken = (id: string) => manageTokens()[id] || "";
+/** All tokens this browser holds, for GET /v1/monitored (which lists only the caller's products). */
+export const allManageTokens = () => Object.values(manageTokens()).join(",");
+
 export async function api<R>(path: string, init?: RequestInit): Promise<R> {
   let r: Response;
   try {
@@ -100,6 +109,7 @@ export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean
   if (e.status === 0) return { msg: t("err.network"), suggestText: false };
   if (d.includes("robots")) return { msg: t("err.robots"), suggestText: true };
   if (d.startsWith("not_a_product_page")) return { msg: t("err.notProduct"), suggestText: false };
+  if (d.startsWith("not_a_shirt")) return { msg: t("err.notShirt"), suggestText: false };
   if (d.includes("does not resolve")) return { msg: t("err.dns"), suggestText: false };
   if (d.includes("http(s)")) return { msg: t("err.scheme"), suggestText: false };
   if (d.includes("non-public")) return { msg: t("err.private"), suggestText: false };

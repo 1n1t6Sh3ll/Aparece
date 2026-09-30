@@ -6,7 +6,11 @@ Hard filters (a candidate is excluded if any fails):
   - same commerce.currency, when the target's currency is known (even if its price is not)
   - price within +/-30% of the target price, when both prices are known and in the
     same known currency (otherwise the price criterion is skipped)
-  - same identity.audience, when both audiences are known
+  - same identity.audience, when both audiences are known; kids vs adult always (unknown counts as adult)
+  - same fit_and_style.sleeve_length, when both are known; shirts with no stated sleeve are used only when
+    fewer than SLEEVE_FILL known matches exist
+  - same pack size (single vs '3-pack' etc., from the title)
+  - no recorded dead/redirected link status (when a link_status exists)
 
 Score (higher = more comparable), one point each when both sides are known and match:
   audience, price (in band), subcategory, fit, pattern, primary_material.
@@ -27,6 +31,7 @@ from collections import Counter
 from tools.linkcheck.status import keep as link_alive
 
 PRICE_BAND = 0.30
+SLEEVE_FILL = 10  # known sleeve-length matches needed before unknown-sleeve shirts are left out
 SOFT_FIELDS = [("identity", "subcategory"), ("fit_and_style", "fit"),
                ("fit_and_style", "pattern"), ("materials", "primary_material")]
 
@@ -51,8 +56,54 @@ def price_comparable(t, c):
     return bool(price(t) and price(c) and cur and cur == get(c, "commerce", "currency"))
 
 
+PACK_RE = re.compile(r"\b(\d{1,2})\s?-?\s?(?:pack|pk|pcs|pieces|piezas|unidades|er[- ]?pack)\b|"
+                     r"\b(?:pack|set|paquete|lote) (?:of|de) (\d{1,2})\b", re.I)
+DEAD_LINKS = {"dead", "broken", "gone", "not_found", "redirected", "redirect", "error"}
+
+
+def pack_size(rec):
+    """Items per listing from the title/name ('3-pack', 'pack of 2', '3 piezas'); 1 when none is stated."""
+    for text in ((rec.get("content") or {}).get("title"), get(rec, "identity", "product_name")):
+        m = PACK_RE.search(text or "")
+        if m and int(m.group(1) or m.group(2)) > 1:
+            return int(m.group(1) or m.group(2))
+    return 1
+
+
+def link_dead(rec):
+    """True when a recorded link status says the URL is dead or redirected; no status recorded -> False.
+    (Link checking itself is TEAM-50; this only reads a status if one is present.)"""
+    s = rec.get("link_status") or get(rec, "source", "link_status")
+    s = s.get("status") if isinstance(s, dict) else s
+    if isinstance(s, int) or (isinstance(s, str) and s.isdigit()):
+        return not 200 <= int(s) < 300
+    return isinstance(s, str) and s.lower() in DEAD_LINKS
+
+
+KIDS_RE = re.compile(r"\b(?:kids?|child(?:ren)?|toddlers?|bab(?:y|ies)|infants?|youth|boys?|girls?|niñ[oa]s?|"
+                     r"bebés?|infantil)\b", re.I)
+
+
+def adult(rec):
+    """False for kids' items: audience 'kids', or no audience and a kids word in the title/name."""
+    aud = get(rec, "identity", "audience")
+    if aud:
+        return aud != "kids"
+    text = " ".join(x for x in ((rec.get("content") or {}).get("title"), get(rec, "identity", "product_name")) if x)
+    return bool(re.search(r"\badults?\b|\badult[oa]s?\b", text, re.I)) or not KIDS_RE.search(text)
+
+
 def _eligible(t, c):
     if c.get("product_id") == t.get("product_id"):
+        return False
+    if link_dead(c):
+        return False
+    ts, cs = get(t, "fit_and_style", "sleeve_length"), get(c, "fit_and_style", "sleeve_length")
+    if ts and cs and ts != cs:
+        return False
+    if adult(t) != adult(c):
+        return False  # unknown audience counts as adult: kids' items are never peers of adult/unknown targets
+    if pack_size(t) != pack_size(c):
         return False
     if get(c, "identity", "product_type") != get(t, "identity", "product_type"):
         return False
@@ -90,7 +141,18 @@ def find_peers(target, records, k=10):
         return (-score(target, c), diff, c.get("product_id") or "")
 
     cands = sorted((c for c in link_alive(records) if _eligible(target, c)), key=order)
+    ts = get(target, "fit_and_style", "sleeve_length")
+    if ts:  # known sleeve matches first; unknown-sleeve shirts only fill in when fewer than SLEEVE_FILL match
+        known = [c for c in cands if get(c, "fit_and_style", "sleeve_length") == ts]
+        cands = known if len(known) >= SLEEVE_FILL else known + [c for c in cands if c not in known]
     return [(score(target, c), c) for c in cands[:k]]
+
+
+def unknown_sleeve(target, peers):
+    """How many peers were included with no stated sleeve length although the target states one."""
+    if not get(target, "fit_and_style", "sleeve_length"):
+        return 0
+    return sum(not get(p[1] if isinstance(p, tuple) else p, "fit_and_style", "sleeve_length") for p in peers)
 
 
 # --- Weighted similarity (TEAM-43, vision section 6) ------------------------------

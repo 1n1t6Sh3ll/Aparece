@@ -26,13 +26,18 @@ def normalize_page(url, final_url, html):
     return main.backend()(raw)
 
 
+def peers_for(norm):
+    """Up to 10 comparable records from the local dataset (same as /v1/products/{pid}/gaps)."""
+    import dashboard_api
+    from analysis.peers import find_peers
+    return [r for _, r in find_peers(norm, dashboard_api.records(), 10)]
+
+
 def gaps_for(norm):
-    """Gaps vs peers from the local dataset (same as /v1/products/{pid}/gaps); None if unavailable."""
+    """Gaps vs peers from the local dataset; None if unavailable."""
     try:
-        import dashboard_api
         from analysis.gaps import analyze
-        from analysis.peers import find_peers
-        out = analyze(norm, find_peers(norm, dashboard_api.records(), 10))
+        out = analyze(norm, peers_for(norm))
         return {"metrics": out.get("metrics"), "issues": out.get("issues")}
     except Exception as e:  # gaps are advisory; never fail a crawl on them
         log.warning("gaps skipped: %s", e)
@@ -48,9 +53,20 @@ def snapshot(pid, url, html, final_url=None, visibility=None):
         visibility = old.get("visibility")  # carry the last weekly result forward
     new = changes.content(norm, html, visibility)
     events = changes.diff(old, new)
-    sid = store.add_snapshot(pid, {"content": new, "product_id": norm["product_id"],
-                                   "quality_status": norm["quality_status"], "gaps": gaps_for(norm)}, events)
+    gaps = gaps_for(norm)
+    sid = store.add_snapshot(pid, {"content": new, "product_id": norm["product_id"], "record": norm,
+                                   "quality_status": norm["quality_status"], "gaps": gaps}, events)
+    notify(pid, sid, events, norm, gaps)
     return sid, events
+
+
+def notify(pid, sid, events, record=None, gaps=None):
+    """Outgoing merchant webhooks (TEAM-51); never raises, skipped if webhooks/ is not shipped."""
+    try:
+        from webhooks.core import emit_snapshot
+        emit_snapshot(store.product(pid=pid)["public_id"], sid, events, record, gaps)
+    except Exception as e:
+        log.warning("webhooks skipped: %s", e)
 
 
 def crawl(pid):
@@ -147,6 +163,6 @@ def visibility_all(runner=None):
         if prev and vis is not None:  # re-snapshot the last content with the new visibility result
             new = {**prev["data"]["content"], "visibility": vis}
             events = changes.diff(prev["data"]["content"], new)
-            store.add_snapshot(p["id"], {**prev["data"], "content": new}, events)
+            notify(p["id"], store.add_snapshot(p["id"], {**prev["data"], "content": new}, events), events)
     store.log_run("visibility", "ok", f"{len(prods)} products, cap {cap} USD")
     return {"status": "ok"}

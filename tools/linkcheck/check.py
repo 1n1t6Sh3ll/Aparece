@@ -49,6 +49,7 @@ PRODUCT_PATH = re.compile(r"/(products?|dp|gp/product|p|item|items|artikel|produ
                           r"|-p-?\d+|/\d{5,}|\.html?$", re.I)
 AWAY_PATH = re.compile(r"^/?(?:[a-z]{2}(?:[-_][a-z]{2})?/?)?$"
                        r"|/(?:collections?|categor(?:y|ies)|search|catalog(?:ue)?|shop|store|all|c)(?:/|$)", re.I)
+PARKED = re.compile(r"^ww\d+\.", re.I)
 AWAY_QUERY = re.compile(r"(?:^|&)(?:q|s|query|search)=", re.I)
 CHALLENGE = re.compile(r"<title[^>]*>\s*(?:just a moment|attention required|access denied|robot check|"
                        r"are you a (?:human|robot)|security check|pardon our interruption)"
@@ -67,14 +68,29 @@ def host_of(url):
     return h[4:] if h.startswith("www.") else h
 
 
+def brand(host):
+    """Site name without subdomain and public suffix, approximately: shop.example.co.uk -> example."""
+    labels = [x for x in host.split(".") if x]
+    while len(labels) > 1 and (len(labels[-1]) <= 3 or labels[-1] in ("shop", "store")):
+        labels.pop()
+    return labels[-1] if labels else host
+
+
+def same_site(original, final):
+    """Same host, or the same brand on another country domain (example.com -> example.co.uk). Parking
+    subdomains such as ww38.example.com are not the store."""
+    a, b = host_of(original), host_of(final)
+    return a == b or (brand(a) == brand(b) and not PARKED.match(b))
+
+
 def redirected_away(original, final):
     """True when a redirect ended on a non-product page (home, search, collection, category) or another site."""
     if url_key(final) == url_key(original):
         return False
     p = urlsplit(final)
-    if PRODUCT_PATH.search(p.path) and host_of(final) == host_of(original):
+    if PRODUCT_PATH.search(p.path) and same_site(original, final):
         return False
-    return bool(AWAY_PATH.search(p.path) or AWAY_QUERY.search(p.query) or host_of(final) != host_of(original))
+    return bool(AWAY_PATH.search(p.path) or AWAY_QUERY.search(p.query) or not same_site(original, final))
 
 
 def classify(original, final, code, headers, body=""):
@@ -95,6 +111,8 @@ def classify(original, final, code, headers, body=""):
         return "redirected_away", "redirect_to_non_product"
     if body and NOT_FOUND.search(body):
         return "gone", "soft_404"
+    if host_of(final) != host_of(original):
+        return "live", "redirected_same_product"
     return "live", f"http_{code}"
 
 

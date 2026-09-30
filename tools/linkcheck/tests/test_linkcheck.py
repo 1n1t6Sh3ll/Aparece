@@ -96,6 +96,15 @@ class CheckerTest(unittest.TestCase):
         row = c.check(U)
         self.assertEqual((row["status"], row["final_url"]), ("live", new))
 
+    def test_cross_host_redirect_to_same_product_is_live(self):
+        uk = "https://www.example.co.uk/products/tee"
+        c, _ = checker({("HEAD", "https://example.com/products/tee"): Resp(301, {"location": uk}), ("HEAD", uk): Resp(200)})
+        row = c.check("https://example.com/products/tee")
+        self.assertEqual((row["status"], row["detail"], row["final_url"]), ("live", "redirected_same_product", uk))
+        # a parking subdomain or another site keeping the path is not the store
+        self.assertEqual(classify(U, "http://ww38.shop.example.com/products/tee", 200, {})[0], "redirected_away")
+        self.assertEqual(classify(U, "https://another-store.net/products/tee", 200, {})[0], "redirected_away")
+
     def test_blocked(self):
         for code in (401, 403, 429):
             c, _ = checker({("HEAD", U): Resp(code), ("GET", U): Resp(code)})
