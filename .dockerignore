@@ -10,6 +10,7 @@
 !governance/
 !optimizer/
 !experiments/
+!chat/
 !train/common.py
 !web/
 web/node_modules/

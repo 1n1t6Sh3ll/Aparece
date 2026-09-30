@@ -44,6 +44,11 @@ try:  # experiments/ may be missing from older images; the API still starts with
     app.include_router(experiments_api.router)
 except ModuleNotFoundError:
     pass
+try:  # chat/ may be missing from older images
+    import chat_api  # noqa: E402
+    app.include_router(chat_api.router)
+except ModuleNotFoundError:
+    pass
 app.mount("/dashboard", StaticFiles(directory=Path(__file__).resolve().parents[1] / "dashboard", html=True), name="dashboard")
 
 
