@@ -87,19 +87,46 @@ class CompetitorTests(unittest.TestCase):
                                 "observations": [], "resolution": None}]
         target["variants"]["product_group_id"] = "t_grp"
         target["variants"]["items"] = []
-        peers = [rec(f"p{i}", source__language="es") for i in range(3)]
-        out = C.gap_issues(target, peers, [target] + peers)
+        peers, pages = [], []
+        for i in range(3):  # English peers, each with its own Spanish language page
+            p, es = rec(f"p{i}"), rec(f"es{i}", source__language="es")
+            for r in (p, es):
+                r["variants"]["product_group_id"] = f"g{i}"
+                r["variants"]["items"] = []
+            peers.append(p)
+            pages.append(es)
+        records = [target] + peers + pages
+        out = C.gap_issues(target, peers, records)
         kinds = {(i["kind"], i["type"]) for i in out["issues"]}
         for k in ("missing_attributes", "entity_inconsistency", "incomplete_structured_data",
                   "weak_language_coverage", "factual_contradictions"):
             self.assertIn((k, "OBSERVED_FACT"), kinds)
-        self.assertIn(("weak_language_coverage", "SUPPORTED_HYPOTHESIS"), kinds)
+        # no LVG given: the Spanish hypothesis is UNKNOWN, not SUPPORTED
+        self.assertNotIn(("weak_language_coverage", "SUPPORTED_HYPOTHESIS"), kinds)
+        self.assertIn(("weak_language_coverage", "UNKNOWN"), kinds)
         self.assertIn(("independent_evidence", "UNKNOWN"), kinds)
+        for lvg, supported in ((0.25, True), (0.0, False), (-0.1, False)):
+            k2 = {(i["kind"], i["type"]) for i in C.gap_issues(target, peers, records, lvg)["issues"]}
+            self.assertEqual(("weak_language_coverage", "SUPPORTED_HYPOTHESIS") in k2, supported)
         self.assertEqual(out["table"]["target"]["contradictions"], 1)
         text = json.dumps(out).lower()
         self.assertIn("associated with the observed visibility gap", text)
         for bad in ("causes the", "because of", "will improve", "leads to"):
             self.assertNotIn(bad, text)
+
+    def test_spanish_language_peers_do_not_flag_english_target(self):
+        # Real-shaped EN record (dataset example); peers are other products whose own
+        # pages are Spanish. They are not language pages of the target or of EN peers.
+        peers = []
+        for i in range(3):
+            p = rec(f"s{i}", source__language="es")
+            p["variants"]["product_group_id"] = f"other{i}"
+            p["variants"]["items"] = []
+            peers.append(p)
+        out = C.gap_issues(EXAMPLE, peers, [EXAMPLE] + peers, lvg=0.4)
+        self.assertEqual(out["table"]["target"]["spanish_content"], "none")
+        self.assertIsNone(out["table"]["peer_median"]["spanish_content"])
+        self.assertFalse([i for i in out["issues"] if i["kind"] == "weak_language_coverage"])
 
     def test_cli(self):
         with tempfile.TemporaryDirectory() as d:

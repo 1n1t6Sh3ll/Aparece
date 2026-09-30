@@ -14,6 +14,7 @@ Column definitions (all computed from normalized records, no network):
                         partial = Spanish sibling with title only, or Spanish words in
                                  this page's text
                         none   = neither
+                        (peer median uses only peers in the target's page language)
   independent_evidence  distinct evidence source domains other than the merchant's;
                         "not measured" when none are recorded (the collector only
                         reads the merchant page)
@@ -169,15 +170,22 @@ def competitor_table(target, peers, records=(), top=3):
     for col in NUMERIC:
         xs = [p[col] for p in pp if isinstance(p[col], (int, float))]
         med[col] = _median(xs) if xs else "not measured"
-    levels = [SPANISH_LEVELS[p["spanish_content"]] for p in pp]
+    # Spanish coverage is compared only with peers in the target's own page language:
+    # a Spanish-language peer is trivially "full" and says nothing about whether an
+    # English page has a Spanish counterpart.
+    lang = get(target, "source", "language")
+    same = [p for p, r in zip(pp, peers) if get(r, "source", "language") == lang]
+    levels = [SPANISH_LEVELS[p["spanish_content"]] for p in same]
     med["spanish_content"] = (["none", "partial", "full"][round(_median(levels))] if levels else None)
     return {"framing": FRAMING, "target": tp, "peer_median": med, "top_peers": pp[:top],
-            "peer_count": len(pp)}
+            "peer_count": len(pp), "spanish_peer_ids": [p["product_id"] for p in same]}
 
 
-def gap_issues(target, peers, records=()):
+def gap_issues(target, peers, records=(), lvg=None):
     """Typed issues grouped by kind: missing_attributes, entity_inconsistency,
-    incomplete_structured_data, weak_language_coverage, factual_contradictions."""
+    incomplete_structured_data, weak_language_coverage, factual_contradictions.
+    lvg: the target's measured V_EN - V_ES (benchmark.metrics.language_visibility_gap),
+    or None. The Spanish SUPPORTED_HYPOTHESIS is emitted only when lvg > 0."""
     peers = [p[1] if isinstance(p, tuple) else p.get("record", p) for p in peers]
     table = competitor_table(target, peers, records)
     t, med, n = table["target"], table["peer_median"], len(peers)
@@ -212,13 +220,19 @@ def gap_issues(target, peers, records=()):
     ts, ps = t["spanish_content"], med["spanish_content"]
     if ps is not None and SPANISH_LEVELS[ts] < SPANISH_LEVELS[ps]:
         add("weak_language_coverage", "OBSERVED_FACT", "spanish_content",
-            f"Spanish content is {ts}; peer median is {ps}",
-            {"peer_spanish": {p["product_id"]: p["spanish_content"] for p in table["top_peers"]}},
+            f"Spanish content is {ts}; median of same-language peers is {ps}",
+            {"peers_compared": table["spanish_peer_ids"]},
             "Publish a reviewed Spanish page; re-measure Spanish visibility (LVG).")
-        add("weak_language_coverage", "SUPPORTED_HYPOTHESIS", "spanish_content",
-            "Spanish page coverage is a measurable difference associated with the observed "
-            "Spanish visibility gap; testing it is reasonable",
-            {}, "Change one thing at a time and compare V_ES before and after.")
+        if isinstance(lvg, (int, float)) and lvg > 0:
+            add("weak_language_coverage", "SUPPORTED_HYPOTHESIS", "spanish_content",
+                f"Spanish page coverage is a measurable difference associated with the observed "
+                f"Spanish visibility gap (LVG = {lvg}); testing it is reasonable",
+                {"lvg": lvg}, "Change one thing at a time and compare V_ES before and after.")
+        else:
+            add("weak_language_coverage", "UNKNOWN", "lvg",
+                "No Spanish visibility gap is established: LVG " +
+                ("was not provided" if lvg is None else f"= {lvg} shows no gap"),
+                {"lvg": lvg}, "Run the benchmark in EN and ES to measure LVG = V_EN - V_ES.")
 
     conf = [c for c in target.get("conflicts") or [] if c.get("status") == "conflicting"]
     if conf:
@@ -241,6 +255,7 @@ def main(argv=None):
     ap.add_argument("--data", required=True, help="normalized records JSONL")
     ap.add_argument("--product-id", required=True)
     ap.add_argument("--k", type=int, default=5)
+    ap.add_argument("--lvg", type=float, help="measured V_EN - V_ES for this product")
     a = ap.parse_args(argv)
     records = load_records(a.data)
     target = next((r for r in records if r.get("product_id") == a.product_id), None)
@@ -248,7 +263,7 @@ def main(argv=None):
         print(f"product_id not found: {a.product_id}", file=sys.stderr)
         return 2
     sim = similar_peers(target, records, a.k)
-    out = gap_issues(target, sim["peers"], records)
+    out = gap_issues(target, sim["peers"], records, a.lvg)
     out["similarity"] = {"text_method": sim["text_method"], "weights": sim["weights"],
                          "peers": [{k: v for k, v in r.items() if k != "record"} for r in sim["peers"]]}
     json.dump(out, sys.stdout, indent=2, ensure_ascii=False)
