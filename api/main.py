@@ -27,6 +27,11 @@ app.add_middleware(CORSMiddleware, allow_origin_regex=r"^chrome-extension://[a-p
                    allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 app.include_router(dashboard_api.router)
 app.include_router(monitor_api.router)
+try:  # governance/ may be missing from older images; the API still starts without it
+    import governance_api  # noqa: E402
+    app.include_router(governance_api.router)
+except ModuleNotFoundError:
+    pass
 app.mount("/dashboard", StaticFiles(directory=Path(__file__).resolve().parents[1] / "dashboard", html=True), name="dashboard")
 
 

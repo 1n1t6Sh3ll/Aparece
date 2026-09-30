@@ -58,6 +58,9 @@ python -m unittest discover -s signals/tests -t .
 - Flags: `missing_currency`, `nonpositive_price`, `price_outlier` (log price beyond 3 IQR of peers, n>=10), `rating_out_of_range`, `rating_conflict`, `sale_above_list`, `conflicting_prices`, `suspicious_discount`.
 - TODO: price over time from Common Crawl snapshots.
 
+## Governance (`governance/`)
+Every action is `auto`, `approve` or `forbidden`, and each has a named owner (Account owner, Merchant or ProductLens operator). All decisions go to an append-only audit log in `GOVERNANCE_DB`. Endpoints: `GET /v1/governance/policy`, `GET /v1/audit-log?limit=`, `GET|POST /v1/approvals` (POST needs `GOVERNANCE_TOKEN`), `POST /v1/predictions/confirm`. See [docs/GOVERNANCE.md](docs/GOVERNANCE.md).
+
 ## Checks
 CI (`ci / check`) runs `python -m unittest discover -s dataset/tests`, compiles `train/`, and runs `api/tests`.
 
