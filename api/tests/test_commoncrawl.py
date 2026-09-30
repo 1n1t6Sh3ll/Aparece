@@ -91,7 +91,8 @@ class CommonCrawlTest(unittest.TestCase):
 
     def test_transient_index_error_retried_once(self):
         get, _ = network({})
-        with mock.patch.object(cc.requests, "get", side_effect=get),                 mock.patch.object(cc, "lookup", side_effect=[requests.HTTPError("index 504"), ROW]) as look:
+        with mock.patch.object(cc.requests, "get", side_effect=get), \
+                mock.patch.object(cc, "lookup", side_effect=[requests.HTTPError("index 504"), ROW]) as look:
             res = cc.fetch_archived(URL)
         self.assertEqual((res["crawl_id"], look.call_count), (NEWEST, 2))
 
