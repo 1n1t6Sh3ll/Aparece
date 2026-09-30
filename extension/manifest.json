@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "PowerLens Product Audit",
-  "version": "0.1.0",
-  "description": "Audit the product on the current page with the PowerLens extraction API.",
-  "permissions": ["activeTab", "storage"],
+  "name": "PowerLens Listing Audit",
+  "version": "0.2.0",
+  "description": "Audit the shirt listing on the current page against similar shirts with the PowerLens API.",
+  "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": ["http://localhost:8000/*"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "action": { "default_popup": "popup.html", "default_title": "PowerLens audit" },

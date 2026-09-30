@@ -6,6 +6,7 @@ import {
 import { api, cap, fieldLabel, fmtField, fmtValue, money, store, useI18n, type Lang, type T } from "../lib";
 import type { Action, Audit, Label } from "../types";
 import { CompareTable, Leaderboard, RankCard } from "./RankParts";
+import { CompareLink } from "../pages/AiComparison";
 
 const LABEL_STYLE: Record<Label, string> = {
   OBSERVED_FACT: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-400/20",
@@ -270,6 +271,7 @@ export default function Results({ audit, onReset }: { audit: Audit; onReset: () 
         {live && (
           <a href={p.url!} target="_blank" rel="noopener noreferrer" className="btn-ghost self-start sm:self-center"><ExternalLink className="size-4" aria-hidden /> <span className="sr-only sm:not-sr-only">{p.merchant}</span></a>
         )}
+        <CompareLink productId={pid} />
       </section>
 
       {/* 2. Where you rank */}
