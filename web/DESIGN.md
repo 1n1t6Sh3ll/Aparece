@@ -2,7 +2,7 @@
 
 A working tool for people who run apparel stores: paper-and-ink neutrals, one forest-green accent, dense tables, square-ish components. No gradients, glass effects, sparkle/"AI" icons or emoji.
 
-Source of truth: tokens in `src/index.css` (`:root` and `:root[data-theme="dark"]`). Theme = saved choice (`pl.theme`), else the OS preference; toggle in the top bar or with `t`.
+Source of truth: tokens in `src/index.css` (`:root` and `:root[data-theme="dark"]`). Theme = saved choice (`pl.theme`), else dark; toggle in the top bar or with `t`.
 
 ## Type
 

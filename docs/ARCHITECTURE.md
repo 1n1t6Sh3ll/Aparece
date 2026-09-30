@@ -59,6 +59,6 @@ flowchart LR
 | Experiments | `experiments/`, `api/experiments_api.py` | Before/after lift against auto-picked control products, a dev vs hidden overfitting flag, and an accuracy guardrail. Built; no real before/after experiment run yet. |
 | Governance | `governance/`, `api/governance_api.py` | Every action is `auto`, `approve` or `forbidden`, with an owner; an append-only audit log. Confirming a model prediction needs merchant approval. |
 | Training | `train/build_examples.py`, `train/train.py`, `train/eval.py`, `train/api_eval.py`, `train/reward.py` | QLoRA on Qwen2.5-0.5B / 1.5B, and exact-match evaluation against GPT-4.1, Claude and untuned Qwen. Weights: GitHub release `weights-v1`. |
-| Web and extension | `web/src/` (React, served at `/`), `extension/` (Chrome MV3) | Audit, comparison, models, monitoring, reports, and a How it works page (`#/docs`), in EN/ES. Light theme by default. |
+| Web and extension | `web/src/` (React, served at `/`), `extension/` (Chrome MV3) | Audit, comparison, models, monitoring, reports, and a How it works page (`#/docs`), in EN/ES. Dark theme by default (a saved choice wins). |
 
 Serving: FastAPI (`api/main.py`) exposes all `/v1` routes on port 8000 and serves the `web/` build at `/`. The Docker image (`ghcr.io/1n1t6sh3ll/aparece`, built by `.github/workflows/docker.yml`) is rules-only, with no torch.
