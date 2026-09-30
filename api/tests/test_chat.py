@@ -21,7 +21,8 @@ client = TestClient(main.app)
 
 def content(price, chars, vis=None):
     return {"title": "Everyday Tee", "language": "en", "price": price, "currency": "EUR", "description_chars": chars,
-            "attributes": {"identity.brand": "Northwind"}, "schema": {}, "languages": [], "visibility": vis}
+            "attributes": {"identity.brand": "Northwind"}, "schema": {"json_ld": True}, "languages": ["en"],
+            "description_sha256": f"sha-{chars}", "visibility": vis}
 
 
 class TrendTest(unittest.TestCase):
@@ -90,8 +91,8 @@ class ChatApiTest(unittest.TestCase):
                "CHAT_LLM": "stub", "CHAT_TOKEN": "", "CHAT_COMPANY_PROFILE": ""}
         self.env = mock.patch.dict(os.environ, env)
         self.env.start()
-        p, _ = store.enroll("https://shop.example.com/p/p_target")
-        self.pid = str(p["id"])
+        p, self.token = store.enroll("https://shop.example.com/p/p_target")
+        self.pid, self.internal = p["public_id"], p["id"]
         for day, price, vis in (("2026-09-01", 20.0, 0.25), ("2026-09-08", 24.0, 0.5)):
             with mock.patch.object(store, "utcnow", return_value=f"{day}T00:00:00Z"):
                 store.add_snapshot(p["id"], {"content": content(price, 300, {"mock:mock-1": {"mention_rate": vis}}),
@@ -101,24 +102,27 @@ class ChatApiTest(unittest.TestCase):
         self.env.stop()
         self.tmp.cleanup()
 
-    def post(self, **body):
-        return client.post("/v1/chat", json=body)
+    def post(self, mt=None, **body):
+        return client.post("/v1/chat", json=body, headers={"X-Manage-Token": mt} if mt else {})
+
+    def mpost(self, **body):
+        return self.post(mt=self.token, product_id=self.pid, **body)
 
     def test_outside_context_refused_without_llm_call(self):
         called = []
         with mock.patch.dict(llm.BACKENDS, {"stub": lambda m: called.append(m) or "x"}):
-            r = self.post(product_id=self.pid, message="What will the weather be in Paris tomorrow?")
+            r = self.mpost(message="What will the weather be in Paris tomorrow?")
         self.assertEqual(r.status_code, 200)
         self.assertEqual((r.json()["answer"], r.json()["refused"], r.json()["citations"]), (engine.REFUSAL, True, []))
         self.assertEqual(called, [])
         self.assertEqual(audit.entries(1)[0]["outcome"], "refused")
 
     def test_trend_answer_cites_computed_delta(self):
-        r = self.post(product_id=self.pid, message="How has my price trend changed over time?").json()
+        r = self.mpost(message="How has my price trend changed over time?").json()
         self.assertFalse(r["refused"])
         refs = {f"{c['type']}:{c['id']}" for c in r["citations"]}
         self.assertTrue(refs & {"trend:price", "trend:visibility.mock:mock-1.mention_rate"}, r)
-        trend = next(t for t in main.chat_api.collect(self.pid) if t["id"] == "price")
+        trend = next(t for t in main.chat_api.collect(self.pid, self.internal) if t["id"] == "price")
         self.assertEqual((trend["delta"], trend["first"], trend["last"]), (4.0, 20.0, 24.0))
         self.assertTrue(r["audit_logged"])
         self.assertEqual(audit.entries(1)[0]["action"], "chat_answer")
@@ -126,11 +130,11 @@ class ChatApiTest(unittest.TestCase):
     def test_hallucinating_llm_is_filtered(self):
         lie = "Your price is 99 EUR [snapshot:1]. Visibility rose because you cut the price [trend:price]."
         with mock.patch.dict(llm.BACKENDS, {"stub": lambda m: lie}):
-            r = self.post(product_id=self.pid, message="price trend").json()
+            r = self.mpost(message="price trend").json()
         self.assertEqual((r["answer"], r["refused"], r["dropped_sentences"]), (engine.REFUSAL, True, 2))
 
     def test_sources_dataset_signals_visibility(self):
-        types = {r["type"] for r in main.chat_api.collect(self.pid)}
+        types = {r["type"] for r in main.chat_api.collect(self.pid, self.internal)}
         self.assertTrue({"snapshot", "trend", "product", "gaps", "competitors", "signals", "visibility"} <= types,
                         types)
         r = self.post(product_id="p_target", message="What is my peer percentile in signals?").json()
@@ -154,6 +158,30 @@ class ChatApiTest(unittest.TestCase):
         analysis = next(x for x in exp_recs if x["type"] == "experiment_analysis")
         self.assertIn('"status":"pending"', analysis["text"])
         self.assertIn(f"experiment_analysis:{e['id']}", r["context"])
+
+    def test_monitored_product_needs_public_id_and_manage_token(self):
+        self.assertEqual(self.post(product_id=self.pid, message="price trend").status_code, 401)
+        self.assertEqual(self.post(mt="wrong", product_id=self.pid, message="price trend").status_code, 403)
+        _, other = store.enroll("https://shop.example.com/p/other")
+        self.assertEqual(self.post(mt=other, product_id=self.pid, message="price trend").status_code, 403)
+        r = self.post(product_id=str(self.internal), message="price trend snapshot").json()  # internal id: no access
+        self.assertFalse(any(c.startswith(("snapshot", "trend", "change_event")) for c in r["context"]), r)
+        r = self.mpost(message="price trend snapshot diff")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(any(c.startswith("trend:") for c in r.json()["context"]), r.json())
+
+    def test_monitor_context_has_snapshots_diff_trends(self):
+        by_type = {}
+        for x in main.chat_api.collect(self.pid, self.internal):
+            by_type.setdefault(x["type"], []).append(x)
+        self.assertEqual(len(by_type["snapshot"]), 2)
+        self.assertIn('"metrics"', by_type["snapshot"][0]["text"])
+        [d] = by_type["snapshot_diff"]
+        self.assertIn('"price":{"changed":true', d["text"])
+        self.assertEqual(by_type["monitored_product"][0]["id"], self.pid)
+        self.assertTrue({"price", "attribute_completeness_pct", "description_chars"}
+                        <= {t["id"] for t in by_type["trend"]}, by_type["trend"])
+        self.assertIn("product", by_type)  # dataset record linked through the snapshot's product_id
 
     def test_token_and_validation(self):
         with mock.patch.dict(os.environ, {"CHAT_TOKEN": "s3cret"}):
