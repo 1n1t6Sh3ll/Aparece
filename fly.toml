@@ -8,6 +8,7 @@ app = "aparece"
 [env]
   MODEL_BACKEND = "rules"
   PROFILE_TRUST_PROXY = "1"  # behind Fly's proxy: rate limits are per visitor (last X-Forwarded-For entry)
+  MONITOR_TRUST_PROXY = "1"  # same for the monitor routes' own rate limit
   PRODUCTLENS_DATA = "/data/peers.jsonl"
   PROFILE_DB = "/data/profile.db"
   MONITOR_DB = "/data/monitor.db"
