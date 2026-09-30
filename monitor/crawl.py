@@ -126,7 +126,7 @@ def benchmark_runner(urls, max_usd):
 
 def visibility_all(runner=None):
     """Weekly job. Runs only with an API key and BENCHMARK_MAX_USD set; otherwise logs 'skipped'. No other spend."""
-    keys = any(os.environ.get(k) for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"))
+    keys = any(os.environ.get(k) for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY"))
     cap = os.environ.get("BENCHMARK_MAX_USD")
     runner = runner or benchmark_runner
     reason = "no API key" if not keys else None if cap else "BENCHMARK_MAX_USD not set"

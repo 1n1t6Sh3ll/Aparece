@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from benchmark import harness
@@ -128,24 +129,44 @@ class HarnessTests(unittest.TestCase):
         finally:
             harness.make_adapter = orig
 
-    def test_gemini_priced_and_qwen_free(self):
-        with tempfile.TemporaryDirectory() as d:
-            res = harness.main(["run", "--prompts", PROMPTS, "--out", str(Path(d) / "r.jsonl"), "--dry-run",
-                                "--models", "gemini:gemini-2.5-flash,qwen:qwen2.5:7b", "--repeats", "1"])
-            self.assertEqual(res["calls"], 16)
-            self.assertGreater(res["est_usd"], 0)
-            with self.assertRaises(SystemExit):  # gemini is paid: needs --max-usd
-                harness.main(["run", "--prompts", PROMPTS, "--out", str(Path(d) / "r.jsonl"),
-                              "--models", "gemini:gemini-2.5-flash"])
-        orig = harness.make_adapter  # qwen (local server) runs without a cap; mocked, no network
+    def _mocked(self, fn):
+        orig = harness.make_adapter  # every provider served by the mock: no network, no spend
         harness.make_adapter = lambda prov, model, products=(): harness.MockAdapter(model, products)
         try:
             with tempfile.TemporaryDirectory() as d:
-                res = harness.main(["run", "--prompts", PROMPTS, "--out", str(Path(d) / "r.jsonl"),
-                                    "--models", "qwen:qwen2.5:7b", "--repeats", "1", "--min-interval", "0"])
-                self.assertEqual(res["calls"], 8)
+                return fn(Path(d))
         finally:
             harness.make_adapter = orig
+
+    def test_multiple_models_per_provider_side_by_side(self):
+        models = ["openai:model-a", "openai:model-b", "anthropic:model-c", "anthropic:model-d"]
+
+        def body(d):
+            prices = d / "prices.json"
+            prices.write_text(json.dumps({"models": {m.split(":")[1]: {"input": 0, "output": 0} for m in models}}),
+                              encoding="utf-8")
+            env = {"OPENAI_API_KEY": "test", "ANTHROPIC_API_KEY": "test"}
+            with mock.patch.dict(harness.os.environ, env):
+                res = harness.main(run_args(str(d / "r.jsonl"), "--models", ",".join(models), "--repeats", "1",
+                                            "--prices", str(prices), "--max-usd", "1"))
+            self.assertEqual(res["calls"], 32)
+            rep = harness.main(["report", "--results", str(d / "r.jsonl"), "--catalog", CATALOG, "--out-dir", str(d)])
+            ids = sorted(m.split(":")[1] for m in models)  # bare model ids: backward-compatible keys
+            self.assertEqual(list(rep["models"]), ids)
+            self.assertTrue(all(m["responses"] == 8 for m in rep["models"].values()))
+            md = (d / "report.md").read_text(encoding="utf-8")
+            self.assertIn("| site | " + " | ".join(ids) + " |", md)
+        self._mocked(body)
+
+    def test_qwen_free_by_default_capped_when_priced(self):
+        def body(d):
+            base = ["run", "--prompts", PROMPTS, "--models", "qwen:qwen2.5:7b", "--repeats", "1", "--min-interval", "0"]
+            self.assertEqual(harness.main(base + ["--out", str(d / "a.jsonl")])["calls"], 8)
+            prices = d / "prices.json"
+            prices.write_text(json.dumps({"models": {"qwen2.5:7b": {"input": 1e6, "output": 0}}}), encoding="utf-8")
+            res = harness.main(base + ["--out", str(d / "b.jsonl"), "--prices", str(prices), "--max-usd", "100"])
+            self.assertLess(res["calls"], 8)
+        self._mocked(body)
 
     def test_paid_requires_cap_and_price(self):
         with tempfile.TemporaryDirectory() as d:
@@ -181,6 +202,11 @@ class HarnessTests(unittest.TestCase):
 
 
 class MetricTests(unittest.TestCase):
+    def test_same_model_id_under_two_providers_stays_distinct(self):
+        recs = [{"provider": p, "model": "x", "language": "en", "prompt_id": "q", "variant": "original",
+                 "response_text": "NW Classic Tee"} for p in ("openai", "qwen")]
+        self.assertEqual(sorted(build_report(recs, load_catalog(CATALOG))["models"]), ["openai:x", "qwen:x"])
+
     def test_rates_and_markdown(self):
         products = load_catalog(CATALOG)
         recs = [{"model": "m", "language": "en", "prompt_id": "q", "variant": "original",

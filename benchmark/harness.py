@@ -3,9 +3,9 @@
   python -m benchmark.harness run --prompts P --models mock:mock-1 --out runs.jsonl --catalog C
   python -m benchmark.harness report --results runs.jsonl --catalog C --out-dir reports/
 
-Paid providers (anthropic, openai, gemini) read keys from ANTHROPIC_API_KEY / OPENAI_API_KEY /
-GEMINI_API_KEY only, require --max-usd, and should first be checked with --dry-run.
-qwen calls a local OpenAI-compatible server at QWEN_BASE_URL (free; nothing is loaded here).
+Paid providers (anthropic, openai) read keys from ANTHROPIC_API_KEY / OPENAI_API_KEY only, require --max-usd, and should first be checked with --dry-run.
+qwen calls a local OpenAI-compatible server at QWEN_BASE_URL (nothing is loaded here); it is
+free by default, and --max-usd applies to it when prices.json has a price for its model.
 """
 import argparse
 import csv
@@ -27,7 +27,7 @@ SPLITS = {"dev", "val", "hidden"}
 REQUIRED = ("id", "text", "language", "market", "canonical_intent", "split")
 DEFAULT_SYSTEM = ("You are a helpful shopping assistant. When recommending products, "
                   "name the brand and product, most recommended first.")
-KEY_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY", "gemini": "GEMINI_API_KEY"}
+KEY_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
 FREE = {"mock", "qwen"}  # qwen = local server, no spend
 
 
@@ -118,24 +118,6 @@ class QwenAdapter(OpenAIAdapter):
                          api_key=os.environ.get("QWEN_API_KEY", "local"))
 
 
-class GeminiAdapter:
-    def __init__(self, model):
-        from google import genai  # official google-genai SDK
-        self.model, self.client = model, genai.Client(api_key=os.environ["GEMINI_API_KEY"])
-
-    def complete(self, system, prompt, temperature, max_tokens, seed=0):
-        from google.genai import types
-        r = self.client.models.generate_content(
-            model=self.model, contents=prompt,
-            config=types.GenerateContentConfig(system_instruction=system, temperature=temperature,
-                                               max_output_tokens=max_tokens))
-        u = r.usage_metadata
-        return {"text": r.text or "", "model_version": r.model_version or self.model,
-                "input_tokens": u.prompt_token_count or 0,
-                "output_tokens": (u.candidates_token_count or 0) + (u.thoughts_token_count or 0),
-                "raw": r.model_dump(mode="json")}
-
-
 def make_adapter(provider, model, products=()):
     if provider == "mock":
         return MockAdapter(model, products)
@@ -143,8 +125,6 @@ def make_adapter(provider, model, products=()):
         return AnthropicAdapter(model)
     if provider == "openai":
         return OpenAIAdapter(model)
-    if provider == "gemini":
-        return GeminiAdapter(model)
     if provider == "qwen":
         return QwenAdapter(model)
     raise ValueError(f"unknown provider {provider!r}")
@@ -273,7 +253,7 @@ def main(argv=None):
     r = sub.add_parser("run")
     r.add_argument("--prompts", required=True)
     r.add_argument("--models", required=True, type=lambda s: [m.strip() for m in s.split(",") if m.strip()],
-                   help="comma list of provider:model, e.g. mock:mock-1,anthropic:claude-haiku-4-5,gemini:gemini-2.5-flash,qwen:qwen2.5:7b")
+                   help="comma list of provider:model, e.g. mock:mock-1,openai:gpt-4o-mini,anthropic:claude-haiku-4-5,qwen:qwen2.5:7b")
     r.add_argument("--out", required=True, help="JSONL results (appended; resumable)")
     r.add_argument("--catalog", help="catalog JSONL (mock adapter uses it to fake answers)")
     r.add_argument("--prices", default=str(HERE / "prices.json"))

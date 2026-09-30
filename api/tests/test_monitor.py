@@ -26,7 +26,7 @@ class MonitorTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         data = Path(__file__).parent / "fixtures" / "dashboard_records.jsonl"
         env = {"MONITOR_DB": os.path.join(self.tmp.name, "m.db"), "PRODUCTLENS_DATA": str(data), "MONITOR_DELAY": "0"}
-        for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "BENCHMARK_MAX_USD"):
+        for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "BENCHMARK_MAX_USD"):
             env[k] = ""
         self.page = PAGES["v1"]
         clock = iter(f"2026-09-{d:02d}T03:00:00Z" for d in range(1, 29))
