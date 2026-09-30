@@ -56,6 +56,18 @@ class MatchTests(unittest.TestCase):
         m = match_response("https://northwindtees.es/productos/camiseta-organica-clasica", self.products)
         self.assertEqual(m["cited_sites"], ["northwindtees.es"])
 
+    def test_host_boundary_not_substring(self):
+        dup = dict(self.products[0], product_id="p_dup", site="northwindtees.de", aliases=[])
+        products = load_catalog(CATALOG) + [dup]
+        line = "Northwind Tees Classic Organic Tee (northwindtees.com.au)"
+        m = match_response(line, products)
+        self.assertEqual(m["mentions"], [])  # .com.au is neither .com nor .de
+        self.assertEqual(m["cited_sites"], [])
+        m = match_response(line.replace(".com.au", ".com"), products)
+        self.assertEqual(m["mentions"], ["p_nw_classic_com"])
+        m = match_response("https://northwindtees.com.au/products/classic-organic-tee", products)
+        self.assertEqual((m["mentions"], m["cited_sites"]), ([], []))
+
     def test_brand_required_for_name_match(self):
         self.assertEqual(match_response("a generic Heavy Tee", self.products)["mentions"], [])
 
@@ -97,6 +109,24 @@ class HarnessTests(unittest.TestCase):
             prices.write_text(json.dumps({"models": {"mock-1": {"input": 1e6, "output": 0}}}), encoding="utf-8")
             res = harness.main(run_args(str(Path(d) / "r.jsonl"), "--prices", str(prices), "--max-usd", "100"))
             self.assertLess(res["calls"], 8)
+
+    def test_spend_cap_uses_actual_usage(self):
+        class Costly(harness.MockAdapter):
+            def complete(self, *a, **k):
+                return dict(super().complete(*a, **k), output_tokens=1_000_000)  # far above estimate
+
+        orig = harness.make_adapter
+        harness.make_adapter = lambda prov, model, products=(): Costly(model, products)
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                prices = Path(d) / "prices.json"
+                prices.write_text(json.dumps({"models": {"mock-1": {"input": 0, "output": 1.0}}}), encoding="utf-8")
+                res = harness.main(run_args(str(Path(d) / "r.jsonl"), "--prices", str(prices),
+                                            "--max-usd", "0.5", "--max-tokens", "10"))
+                self.assertEqual(res["calls"], 1)
+                self.assertGreaterEqual(res["spent"], 0.5)
+        finally:
+            harness.make_adapter = orig
 
     def test_paid_requires_cap_and_price(self):
         with tempfile.TemporaryDirectory() as d:

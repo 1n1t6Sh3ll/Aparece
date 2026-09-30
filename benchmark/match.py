@@ -10,6 +10,7 @@ import unicodedata
 from urllib.parse import urlparse
 
 URL_RE = re.compile(r"https?://[^\s)\]>\"'<]+")
+HOST_RE = re.compile(r"(?<![\w.-])((?:[a-z0-9-]+\.)+[a-z]{2,})(?![\w-])", re.I)
 LIST_ITEM_RE = re.compile(r"^\s*(?:\d+[.)]|[-*•])\s+(.+)")
 
 
@@ -74,7 +75,8 @@ def match_response(text, products):
 
     offset = 0
     for line in (text or "").splitlines(keepends=True):
-        nl, low = norm(line), line.lower()
+        nl = norm(line)
+        line_hosts = {host(h) for h in HOST_RE.findall(line)}
         found = [p for p in products
                  if any(norm(a) in nl for a in p["aliases"] if a.strip())
                  or (p["name"] and norm(p["name"]) in nl and norm(p["brand"]) in nl)]
@@ -84,7 +86,7 @@ def match_response(text, products):
             groups.setdefault((norm(p["brand"]), norm(p["name"])), []).append(p)
         for group in groups.values():
             if len(group) > 1:
-                group = [p for p in group if p["site"] in low] or group
+                group = [p for p in group if p["site"] in line_hosts] or group
             if len(group) == 1:
                 hit(group[0]["product_id"], offset)
             else:

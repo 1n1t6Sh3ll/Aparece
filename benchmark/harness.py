@@ -131,8 +131,8 @@ def plan_calls(prompts, models, repeats, shuffle):
 
 
 def estimate_usd(price, system, text, max_tokens):
-    """Upper-bound estimate: ~3 chars/token input, full max_tokens output."""
-    return (math.ceil(len(system + text) / 3) * price["input"] + max_tokens * price["output"]) / 1e6
+    """Upper-bound estimate: ~2 chars/token input (conservative), full max_tokens output."""
+    return (math.ceil(len(system + text) / 2) * price["input"] + max_tokens * price["output"]) / 1e6
 
 
 def actual_usd(price, out):
@@ -195,6 +195,7 @@ def run(args, sleep=time.sleep, log=print):
                     sleep(2 ** attempt)
             cost = actual_usd(price, out)
             spent += cost
+            stop_after = args.max_usd is not None and spent >= args.max_usd
             p = c["prompt"]
             f.write(json.dumps({
                 "run_id": run_id, "call_key": c["key"], "prompt_id": p["id"], "prompt_text": c["text"],
@@ -209,6 +210,9 @@ def run(args, sleep=time.sleep, log=print):
             }, ensure_ascii=False) + "\n")
             f.flush()
             made += 1
+            if stop_after:
+                log(f"spend cap ${args.max_usd} reached by actual usage (spent ${spent:.4f}); stopping.")
+                break
             if args.min_interval and made < len(calls):
                 sleep(args.min_interval)
     log(f"run {run_id}: {made} calls, ${spent:.4f} spent -> {args.out}")
