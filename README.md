@@ -18,7 +18,7 @@ python -m unittest discover -s analysis/tests -t .
 FastAPI service in `api/` (reuses `dataset/collect` extract + normalize). OpenAPI docs at `/docs`.
 - `GET /v1/health`
 - `POST /v1/extract` with one of `url`, `html`, `text` (+ optional `language`) -> `{product_id, language, raw, normalized, evidence, conflicts, quality_status}`.
-URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s total deadline, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default); `qwen` returns 501 until implemented.
+URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s total deadline, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default) or `qwen` (`api/model_backend.py`, `pip install -r api/requirements-qwen.txt`): base Qwen2.5-1.5B-Instruct + LoRA adapter from `QWEN_ADAPTER_PATH` (501 if unset; optional `QWEN_BASE_MODEL`, `QWEN_TIMEOUT_S`=30, `QWEN_MAX_NEW`=512), 4-bit on CUDA else CPU fp32, loaded lazily once, prompt from `train/common.py`. Rule facts with evidence stay primary; the model only fills fields the rules left null, schema-validated, returned as `predicted: {field: {value, confidence, model}}` (never in `normalized`) plus `model_status` (`ok` or `fallback: <reason>`, rules-only on any model error/timeout). `confidence` = geometric mean of the generated token probabilities over the field's value; uncalibrated, null if no scores. The Docker image is rules-only (no `train/`, schema or torch).
 Run: `docker compose up --build` (port 8000 on localhost) or `pip install -r api/requirements.txt && uvicorn main:app --app-dir api`. Tests: `python -m unittest discover -s api/tests`.
 
 ## Shirt audit site (`web/`, TEAM-30)
@@ -41,11 +41,15 @@ Routes: `POST /v1/enroll {url, email?, plan?, crawl_now?}`, `GET /v1/monitored`,
 
 ## AI-visibility benchmark
 `benchmark/` sends the same prompts + system instructions to `mock`, `anthropic`, `openai` (official SDKs; keys only from `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`) and `qwen` (a local OpenAI-compatible server such as Ollama/vLLM at `QWEN_BASE_URL`, default `http://localhost:11434/v1`; free unless priced in `prices.json`, then `--max-usd` applies). Several models per provider can run together (`--models openai:A,openai:B,anthropic:C`); the report compares them side by side, stores raw responses in resumable JSONL, then matches mentions to catalog products (URL, alias, brand+name; country-TLD sites distinct) and reports mention rate, top-k, MRR, citation rate, stability per model/language/site. Hidden split is excluded unless `--splits` names it. Always `--dry-run` first; paid runs need `--max-usd` and a price in `benchmark/prices.json` (reviewer-verified; re-check sources).
+
+T-shirt prompt set: `benchmark/prompts/tshirts.jsonl` (dev/val) holds 120 canonical intents (`INTENT_001`…), each written in natural EN (US/GB) and ES (ES/MX), with no brand names. The seeded 60/20/20 split by intent is in `benchmark/prompts/split.py`. Hidden prompts are kept only in `benchmark/prompts/hidden.jsonl`; optimizers must never read that file.
 ```
 python -m benchmark.harness run --prompts benchmark/examples/prompts.example.jsonl --models mock:mock-1 --catalog benchmark/examples/catalog.example.jsonl --out runs.jsonl [--repeats 3 --shuffle --dry-run --max-usd 5]
 python -m benchmark.harness report --results runs.jsonl --catalog benchmark/examples/catalog.example.jsonl --out-dir reports/
 python -m unittest discover -s benchmark/tests -t .
 ```
+
+Claim check (hallucination detection, `benchmark/claims.py`): `report` also parses the sentences around each matched product with the `dataset/collect/normalize.py` rules (composition %, fit, sleeve, neckline, gsm, price+currency, colors, sizes, audience, origin, certifications) and compares them with that product's non-null ground truth in the catalog (normalized records with evidence). Each claim is SUPPORTED, CONTRADICTED, or UNVERIFIABLE (gold unknown; never counted wrong). Per model/language: claim accuracy = supported/(supported+contradicted), hallucination rate = contradicted/(supported+contradicted), unverifiable share; examples quote the answer, gold value and evidence. Origin/certifications are checked against page text; a certification absent from the page stays unverifiable. Prices in a currency other than the gold currency are unverifiable. Sentences naming several products are skipped.
 
 ## Review and price signals (`signals/`)
 Deterministic per-product signals keyed by `product_id`, written to `dataset/output/signals/` (git-ignored).
@@ -59,6 +63,9 @@ python -m unittest discover -s signals/tests -t .
 - USD 2026: ECB reference rates (2024-10-01) then US CPI-U (BLS CUUR0000SA0) to 2026-08; null when currency, date, or rate is unknown. Amazon (amazon.com) prices are assumed USD, period 2023. Tables and sources: `signals/reference.py`.
 - Flags: `missing_currency`, `nonpositive_price`, `price_outlier` (log price beyond 3 IQR of peers, n>=10), `rating_out_of_range`, `rating_conflict`, `sale_above_list`, `conflicting_prices`, `suspicious_discount`.
 - TODO: price over time from Common Crawl snapshots.
+
+## Governance (`governance/`)
+Every action is `auto`, `approve` or `forbidden`, and each has a named owner (Account owner, Merchant or ProductLens operator). All decisions go to an append-only audit log in `GOVERNANCE_DB`. Endpoints: `GET /v1/governance/policy`, `GET /v1/audit-log?limit=`, `GET|POST /v1/approvals` (POST needs `GOVERNANCE_TOKEN`), `POST /v1/predictions/confirm`. See [docs/GOVERNANCE.md](docs/GOVERNANCE.md).
 
 ## Checks
 CI (`ci / check`) runs `python -m unittest discover -s dataset/tests`, compiles `train/`, and runs `api/tests`.
