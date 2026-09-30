@@ -162,7 +162,7 @@ function rememberRecord(productId: string, record?: Record<string, unknown> | nu
 }
 
 function recentRecords(): { id: string; record: Record<string, unknown> }[] {
-  try { const v = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
+  try { const v = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); return Array.isArray(v) ? v.filter((r) => r && typeof r.id === "string" && r.record) : []; } catch { return []; }
 }
 
 function liveRecord(productId?: string): Record<string, unknown> | null {
