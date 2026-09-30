@@ -95,6 +95,16 @@ class CommonCrawlTest(unittest.TestCase):
             res = cc.fetch_archived(URL)
         self.assertEqual((res["crawl_id"], look.call_count), (NEWEST, 2))
 
+    def test_wildcard_url_never_queried(self):
+        res, calls = self.run_with({}, url="https://www.allbirds.com/products/*")
+        self.assertIsNone(res)
+        self.assertEqual(calls, [])
+
+    def test_capture_of_another_url_is_ignored(self):
+        other = CDX.replace("mens-strider-medium-grey", "another-product")
+        res, _ = self.run_with({(NEWEST, "https://www.allbirds.com/products/mens-strider-medium-grey"): other})
+        self.assertIsNone(res)
+
     def test_older_crawl_and_overloaded_index(self):
         bare = "https://www.allbirds.com/products/mens-strider-medium-grey"
         res, _ = self.run_with({(NEWEST, URL): 504, (SECOND, bare): CDX})

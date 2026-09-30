@@ -183,35 +183,33 @@ def _payload(p):
 
 
 def _prepare(payload):
-    """(audit payload, ExtractRequest) for a /v1/audit-style payload: a URL is fetched once (safe_fetch) and the page is
+    """(audit payload, ExtractRequest, archive info or None) for a /v1/audit-style payload: a URL is fetched once (safe_fetch) and the page is
     reused for the audit and for the normalized record; a draft is wrapped exactly as /v1/audit does."""
     import main  # lazy: main imports this module
     try:  # bad input is a 422 with the first validation message, as in /v1/audit (never a 500)
         if audit_api.is_draft(payload):
-            return payload, audit_api.draft_request(main, audit_api.draft_fields(payload))
+            return payload, audit_api.draft_request(main, audit_api.draft_fields(payload)), None
         req = main.ExtractRequest(**{k: payload.get(k) for k in ("url", "html", "text", "language") if payload.get(k)})
     except ValidationError as e:
         raise HTTPException(422, e.errors()[0]["msg"])
     except TypeError as e:
         raise HTTPException(422, str(e).splitlines()[0])
     if req.html or not req.url:
-        return payload, req
+        return payload, req, None
     try:
         _, page = safe_fetch.fetch_page(req.url)
     except safe_fetch.FetchError as e:
         raise HTTPException(e.status, e.detail)
-    return {**payload, "html": page}, main.ExtractRequest(url=req.url, html=page, language=req.language)
+    return ({**payload, "html": page}, main.ExtractRequest(url=req.url, html=page, language=req.language),
+            getattr(page, "archive", None))
 
 
 def _run(payload):
     """Run /v1/audit once and return (audit, normalized record for /v1/optimize)."""
     import main
-    from_url = bool(payload.get("url")) and not (payload.get("html") or payload.get("text") or audit_api.is_draft(payload))
-    payload, req = _prepare(payload)
+    payload, req, archive = _prepare(payload)
     try:
-        result = audit_api.audit(payload)
-        if from_url:
-            audit_api.mark_archive(result, req.url)
+        result = audit_api.run_audit(payload, archive)
     except ValidationError as e:
         raise HTTPException(422, e.errors()[0]["msg"])
     except TypeError as e:

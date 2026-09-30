@@ -248,21 +248,35 @@ def shopify_html(prod, lang=None):
             f'<body><h1>{t}</h1>{prod.get("body_html") or ""}</body></html>')
 
 
-def archive_of(url):
-    """{"source", "capture_date", "crawl_id", "warc_url"} if fetch_page(url) last served an archived copy, else None."""
-    return cached(("archive", url))
+class ArchivedHtml(str):
+    """HTML read from a Common Crawl copy. It carries its own label (.archive), so the label lives and dies with the
+    page in the cache and cannot be separated from it. Live pages are plain str (getattr(page, "archive", None))."""
+    archive = None
+
+
+_archive_slots = threading.BoundedSemaphore(4)  # a lookup can hold a thread for ~30 s: at most 4 at once
 
 
 def archived_page(url):
-    """(html, info) from Common Crawl for a blocked page, or None. Never Amazon; a captured bot-check page is refused."""
-    a = commoncrawl.fetch_archived(url, ARCHIVE_TIMEOUT)
-    if not a or is_challenge(a["html"]):
+    """ArchivedHtml from Common Crawl for a blocked page, or None. Never Amazon; a captured bot-check page is refused.
+    Busy, slow or failing (any exception) means None: the caller then raises its normal actionable error."""
+    if not _archive_slots.acquire(blocking=False):
         return None
-    return a["html"], {"source": "common_crawl", **{k: a[k] for k in ("capture_date", "crawl_id", "warc_url")}}
+    try:
+        a = commoncrawl.fetch_archived(url, ARCHIVE_TIMEOUT)
+        if not a or is_challenge(a["html"]):
+            return None
+        page = ArchivedHtml(a["html"])
+        page.archive = {"source": "common_crawl", **{k: a[k] for k in ("capture_date", "crawl_id", "warc_url")}}
+        return page
+    except Exception:
+        return None
+    finally:
+        _archive_slots.release()
 
 
 def fetch_page(url):
-    """robots.txt check, then the page (cached 10 min). Returns (final_url, html). Amazon is never fetched. A
+    """robots.txt check, then the page (cached 10 min). Returns (final_url, html); html is an ArchivedHtml (with .archive) if it came from Common Crawl. Amazon is never fetched. A
     rate-limited, blocked or product-less Shopify product page falls back to the store's public product JSON.
     Errors carry a coded reason: blocked_by_store, page_not_found, product_gone, not_a_web_page, host_not_found."""
     hit = cached(("page", url))
@@ -278,13 +292,11 @@ def fetch_page(url):
     if status in LIMITED or blocked or no_product:
         page = shopify_page(p, robots_txt, deadline)
         if page:
-            remember(("archive", url), None, 0)
             return remember(("page", url), (url, page), PAGE_TTL)
     if blocked or status in LIMITED:  # still blocked after the retry and the Shopify JSON: last resort, an archive
         arch = archived_page(url)
-        if arch:
-            remember(("archive", url), arch[1], PAGE_TTL)
-            return remember(("page", url), (url, arch[0]), PAGE_TTL)
+        if arch is not None:
+            return remember(("page", url), (url, arch), PAGE_TTL)
     if blocked:
         raise FetchError(403, BLOCKED)
     if status in (404, 410):

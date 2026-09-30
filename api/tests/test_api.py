@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+os.environ.setdefault("AUDIT_RATE_LIMIT", "100000")  # per-client limit: test_api.RateLimitTest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -135,14 +136,64 @@ class ArchiveFallbackTest(FetchCase):
         self.assertEqual(self.archive.call_args.args[0], self.URL)
         _, calls, _ = self.run_fetch({}, "/v1/audit")  # cached copy stays labelled
         self.assertEqual(calls, [])
-        self.assertEqual(safe_fetch.archive_of(self.URL)["capture_date"], "2026-08-14")
+
+    def test_cached_archive_page_keeps_label_until_it_expires(self):
+        """The label is part of the cached page: served together, near the TTL, still labelled (never shown as live)."""
+        self.archive.return_value = self.CAPTURE
+        now = safe_fetch.time.monotonic()
+        with mock.patch.object(safe_fetch.time, "monotonic", return_value=now):
+            self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        with mock.patch.object(safe_fetch.time, "monotonic", return_value=now + safe_fetch.PAGE_TTL - 1):
+            r, calls, _ = self.run_fetch({}, "/v1/audit")
+        self.assertEqual((r.status_code, calls), (200, []))
+        self.assertEqual(r.json()["archive"]["capture_date"], "2026-08-14")
+        self.assertIn("archive copy", r.json()["notes"][0])
+
+    def test_extract_carries_archive_label(self):
+        self.archive.return_value = self.CAPTURE
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        self.assertEqual(r.json()["archive"]["crawl_id"], "CC-MAIN-2026-33")
+
+    def test_live_success_after_archive_drops_label(self):
+        self.archive.return_value = self.CAPTURE
+        self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        safe_fetch.clear_cache()  # the archived copy expired; the store answers again
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(200, FIXTURE)]}, "/v1/audit")
+        self.assertNotIn("archive", r.json())
+        self.assertFalse(any("archive" in n for n in r.json()["notes"]))
+
+    def test_401_uses_archive(self):
+        self.archive.return_value = self.CAPTURE
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(401)],
+                                  "https://shop.example.com/products/heavy-tee.json": [resp(401)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertIn("archive", r.json())
+
+    def test_archive_failure_never_becomes_a_500(self):
+        self.archive.side_effect = RuntimeError("boom")
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("Paste the page HTML or text as a draft instead.", r.json()["detail"])
+
+    def test_busy_archive_skipped_with_actionable_error(self):
+        self.archive.return_value = self.CAPTURE
+        slots = [safe_fetch._archive_slots.acquire(blocking=False) for _ in range(4)]
+        try:
+            r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
+        finally:
+            for ok in slots:
+                ok and safe_fetch._archive_slots.release()
+        self.assertEqual(r.status_code, 502)
+        self.archive.assert_not_called()
+        self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})  # slots were released
+        self.archive.assert_called_once()
 
     def test_blocked_403_uses_archive(self):
         self.archive.return_value = self.CAPTURE
         r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(403), resp(403)],
                                   "https://shop.example.com/products/heavy-tee.json": [resp(403)]})
         self.assertEqual(r.status_code, 200, r.text)
-        self.assertEqual(safe_fetch.archive_of(self.URL)["crawl_id"], "CC-MAIN-2026-33")
+        self.assertEqual(r.json()["archive"]["crawl_id"], "CC-MAIN-2026-33")
 
     def test_429_without_archive_is_actionable(self):
         r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(429), resp(429)], **self.LIMITED})
@@ -152,10 +203,11 @@ class ArchiveFallbackTest(FetchCase):
         self.archive.assert_called_once()
 
     def test_blocked_without_archive_is_actionable(self):
-        status, detail = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(403), resp(403)],
-                                         "https://shop.example.com/products/heavy-tee.json": [resp(403)]})[0].status_code, safe_fetch.BLOCKED
-        self.assertEqual(status, 403)
-        self.assertTrue(detail.startswith("blocked_by_store: This store blocks automated reading from our server."))
+        r, _, _ = self.run_fetch({self.ROBOTS: [resp(404)], self.URL: [resp(403), resp(403)],
+                                  "https://shop.example.com/products/heavy-tee.json": [resp(403)]})
+        self.assertEqual(r.status_code, 403)
+        self.assertEqual(r.json()["detail"], safe_fetch.BLOCKED)
+        self.assertTrue(safe_fetch.BLOCKED.startswith("blocked_by_store: This store blocks automated reading from our server."))
 
     def test_archived_bot_check_page_refused(self):
         self.archive.return_value = {**self.CAPTURE, "html": "<html><head><title>Just a moment...</title></head></html>"}
@@ -196,6 +248,18 @@ class ArchiveFallbackTest(FetchCase):
         r = client.post("/v1/audit", json={"url": self.URL, "html": FIXTURE})
         self.assertEqual(r.status_code, 200, r.text)
         self.assertNotIn("archive", r.json())
+
+
+class RateLimitTest(unittest.TestCase):
+    def test_audit_is_rate_limited_per_client(self):
+        import profile_api
+        profile_api._hits.clear()
+        self.addCleanup(profile_api._hits.clear)
+        with mock.patch.dict(os.environ, {"AUDIT_RATE_LIMIT": "2"}):
+            codes = [client.post("/v1/audit", json={"title": "Blue cotton tee", "text": "Soft cotton t-shirt."}).status_code
+                     for _ in range(3)]
+        self.assertEqual(codes[2], 429)
+        self.assertNotIn(429, codes[:2])
 
 
 class FetchErrorTest(FetchCase):

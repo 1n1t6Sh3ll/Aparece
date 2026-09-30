@@ -8,6 +8,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+os.environ.setdefault("AUDIT_RATE_LIMIT", "100000")  # the per-client limit is tested in test_api.RateLimitTest
 from fastapi.testclient import TestClient  # noqa: E402
 
 import main  # noqa: E402

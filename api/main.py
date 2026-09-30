@@ -155,6 +155,7 @@ def extract(req: ExtractRequest):
         raw["page_language"] = req.language
     norm = normalize(raw)
     model = norm.pop("_model", {})  # qwen only: {predicted, model_status}, kept out of the schema-bound record
+    archive = getattr(page, "archive", None)  # set only for a page read from a Common Crawl copy, not the live page
     return {"product_id": raw["product_id"], "language": raw["page_language"], "raw": raw, "normalized": norm,
             "evidence": norm["evidence"], "conflicts": norm["conflicts"], "quality_status": norm["quality_status"],
-            **model}
+            **({"archive": archive} if archive else {}), **model}

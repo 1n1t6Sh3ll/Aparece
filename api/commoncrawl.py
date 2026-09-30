@@ -112,6 +112,16 @@ def variants(url):
     return uniq
 
 
+def page_key(u):
+    """(host without www., path without trailing slash, query) or None: scheme and host case are ignored."""
+    q = urlsplit(str(u or ""))
+    return ((q.hostname or "").lower().removeprefix("www."), q.path.rstrip("/"), q.query) if q.hostname else None
+
+
+def same_page(a, b):
+    return page_key(a) is not None and page_key(a) == page_key(b)
+
+
 def lookup(crawl_id, url, deadline):
     """Newest HTML 200 capture of url in one crawl's CDX index, or None."""
     status, body = _get(f"https://index.commoncrawl.org/{crawl_id}-index", deadline, MAX_INDEX,
@@ -125,6 +135,8 @@ def lookup(crawl_id, url, deadline):
         try:
             row = json.loads(line)
         except ValueError:
+            continue
+        if not isinstance(row, dict) or same_page(row.get("url"), url) is False:  # never another page's capture
             continue
         if "html" in row.get("mime", "") + row.get("mime-detected", "") and row.get("filename"):
             rows.append(row)
@@ -199,6 +211,8 @@ def fetch_record(row, deadline):
 def fetch_archived(url, timeout_total=10):
     """Newest archived HTML copy of url from the latest MAX_CRAWLS Common Crawl crawls, or None."""
     if urlsplit(url or "").scheme not in ("http", "https") or not urlsplit(url).hostname:
+        return None
+    if re.search(r"[*\s]", url):  # CDX treats * as a prefix/wildcard match: could return another product's capture
         return None
     deadline = time.monotonic() + timeout_total
     try:
