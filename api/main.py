@@ -65,8 +65,8 @@ def rules_backend(raw):
 
 
 def qwen_backend(raw):
-    """Placeholder: fine-tuned Qwen (train/) will take a raw record and return a normalized record."""
-    raise HTTPException(501, "MODEL_BACKEND=qwen is not implemented yet")
+    import model_backend  # lazy: needs train/ + dataset/schema, which the rules-only Docker image does not ship
+    return model_backend.qwen_backend(raw)
 
 
 BACKENDS = {"rules": rules_backend, "qwen": qwen_backend}
@@ -106,5 +106,7 @@ def extract(req: ExtractRequest):
     if req.language:
         raw["page_language"] = req.language
     norm = normalize(raw)
+    model = norm.pop("_model", {})  # qwen only: {predicted, model_status}, kept out of the schema-bound record
     return {"product_id": raw["product_id"], "language": raw["page_language"], "raw": raw, "normalized": norm,
-            "evidence": norm["evidence"], "conflicts": norm["conflicts"], "quality_status": norm["quality_status"]}
+            "evidence": norm["evidence"], "conflicts": norm["conflicts"], "quality_status": norm["quality_status"],
+            **model}
