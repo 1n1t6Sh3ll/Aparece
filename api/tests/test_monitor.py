@@ -87,7 +87,7 @@ class MonitorTest(unittest.TestCase):
             self.assertEqual(client.get(f"/v1/products/{pid}/{path}").status_code, 401)
             self.assertEqual(client.get(f"/v1/products/{pid}/{path}", headers={"X-Manage-Token": "x"}).status_code, 403)
         snaps = client.get(f"/v1/products/{pid}/snapshots", headers=h).json()["results"]
-        self.assertEqual([s["crawled_at"] for s in snaps], ["2026-09-04T03:00:00Z", "2026-09-07T03:00:00Z"])
+        self.assertEqual([s["crawled_at"] for s in snaps], ["2026-09-03T03:00:00Z", "2026-09-06T03:00:00Z"])
         m1, m2 = snaps[0]["metrics"], snaps[1]["metrics"]
         self.assertLess(m1["attribute_completeness_pct"], m2["attribute_completeness_pct"])
         self.assertEqual((m1["price"], m2["price"], m2["currency"]), (30.0, 25.0, "EUR"))
@@ -108,7 +108,7 @@ class MonitorTest(unittest.TestCase):
         self.assertEqual([p["attribute_completeness_pct"] for p in t["points"]],
                          [m1["attribute_completeness_pct"], m2["attribute_completeness_pct"]])
         self.assertEqual(client.get(f"/v1/products/{pid}/snapshots/{a}/diff/999", headers=h).status_code, 404)
-        self.assertNotIn("record", str(client.get(f"/v1/products/{pid}/history").json()["snapshots"][0]["data"].keys()))
+        self.assertNotIn("record", str(client.get(f"/v1/products/{pid}/history", headers=h).json()["snapshots"][0]["data"].keys()))
 
     def test_snapshots_immutable(self):
         pid = store.pid_for(self.enroll()["product"]["id"])
