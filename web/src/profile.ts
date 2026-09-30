@@ -1,4 +1,5 @@
 import { api, store } from "./lib";
+import { productPrefix } from "./prefill";
 import type { Audit } from "./types";
 
 /** Merchant profile (TEAM-45). Everything here is merchant-stated; ProductLens verifies none of it. */
@@ -65,9 +66,7 @@ export const CURRENCIES = [...new Set(Object.values(CURRENCY))];
 
 /** Audit defaults from the company profile: product-link prefix (store origin), draft language and currency. */
 export function auditDefaults(c: Pick<Company, "website" | "languages" | "markets">, fallbackLang: string) {
-  let origin = "";
-  try { if (c.website) origin = new URL(c.website).origin; } catch { /* not a full URL */ }
   const l = (c.languages[0] || "").toLowerCase().slice(0, 2);
   const currency = CURRENCY[(c.markets[0] || "").trim().toUpperCase()] || "USD";
-  return { currency, language: l === "en" || l === "es" ? l : fallbackLang, prefix: origin ? `${origin}/products/` : "" };
+  return { currency, language: l === "en" || l === "es" ? l : fallbackLang, prefix: productPrefix(c.website) };
 }

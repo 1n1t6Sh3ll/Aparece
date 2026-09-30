@@ -6,6 +6,7 @@ import {
 import { allManageTokens, api, ApiError, errorText, fieldLabel, money, useI18n } from "../lib";
 import { history, type Monitored } from "../history";
 import { auditDefaults, papi, productName, token, type Product } from "../profile";
+import { isBarePrefix } from "../prefill";
 import { useSession } from "../session";
 import { Empty, ErrorBox, PageHeader, Stat, Tabs, useTheme, useToast } from "../ui";
 import { ProductsPage as Monitoring } from "./Monitor";
@@ -335,7 +336,7 @@ export function ProductsHub() {
 
   async function add(e: FormEvent) {
     e.preventDefault();
-    if (url.trim() === prefix || !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url.trim())) return setMsg(t("hero.invalidUrl"));
+    if (isBarePrefix(url) || !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url.trim())) return setMsg(t("hero.invalidUrl"));
     try {
       const p = await papi<Product>("/v1/profile/products", { method: "POST", body: JSON.stringify({ url: url.trim() }) });
       setUrl(prefix); setMsg(""); await reload();

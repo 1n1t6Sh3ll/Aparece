@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { api, errorText, useI18n } from "../lib";
 import { auditDefaults, CURRENCIES, emptyCompany, papi, token, type Company, type Person, type ProductIn, type Profile } from "../profile";
+import { productLinks, refreshPrefill } from "../prefill";
 import { useSession } from "../session";
 import { useToast } from "../ui";
 
@@ -54,7 +55,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
       if (bad.length) return setErr(t("ob.badUrl", { url: bad[0] }));
       if (edit) return save();
     }
-    if (step === 1 && !urls.trim() && def.prefix) setUrls(def.prefix);  // store URL prefills the product links
+    if (step === 1) setUrls(refreshPrefill(urls, def.prefix));  // store URL prefills the links; an unedited old prefill is replaced
     setStep(step + 1);
   }
 
@@ -66,7 +67,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
         await reload(); toast("ok", t("set.saved")); setBusy(false);
         return;
       }
-      const list = lines(urls).filter((u) => u !== def.prefix);  // an untouched prefill is not a product
+      const list = productLinks(urls);  // bare <store>/products/ prefills are not products
       const bad = list.find((u) => !URL_RE.test(u));
       if (bad) { setBusy(false); return setErr(t("ob.badUrl", { url: bad })); }
       const products = [...list.map((url) => ({ url })), ...manual.filter((m) => m.title?.trim())];
