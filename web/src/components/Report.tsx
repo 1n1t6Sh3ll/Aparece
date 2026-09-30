@@ -28,7 +28,7 @@ function ProductCard({ p, owner, onChange }: { p: Product; owner: boolean; onCha
         </div>
         <div className="flex shrink-0 flex-wrap gap-1.5">
         {p.merchant_stated && <span className="chip bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("label.merchantStated")}</span>}
-        {a && <span className="chip bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">{a.rank.total > 1 ? t("rep.rank", { pos: a.rank.position, total: a.rank.total }) : t("rep.noPeers")} · {a.rank.score}/100</span>}
+        {a && <span className="chip bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">{a.rank.total > 1 ? t("rep.rank", { pos: a.rank.position ?? 0, total: a.rank.total }) : t("rep.noPeers")} · {a.rank.score}/100</span>}
         </div>
       </header>
       {!a ? <p className="mt-3 text-sm muted">{t("rep.notAudited")}</p> : (

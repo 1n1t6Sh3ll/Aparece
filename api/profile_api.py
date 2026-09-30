@@ -13,6 +13,7 @@ GET    /v1/share/{token}                          read-only report: company name
 Everything the merchant enters is merchant-stated and never verified here.
 """
 import importlib.util
+import math
 import os
 import time
 from collections import OrderedDict, deque
@@ -47,7 +48,9 @@ def rate_limit(request: Request, bucket: str, env: str, default: int):
     while q and now - q[0] > 60:
         q.popleft()
     if len(q) >= limit:
-        raise HTTPException(429, "too many requests; try again in a minute")
+        wait = max(1, math.ceil(60 - (now - q[0])))
+        raise HTTPException(429, f"too_many_requests: too many requests from this network; try again in {wait} s",
+                            headers={"Retry-After": str(wait)})
     q.append(now)
 NOINDEX = {"X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer"}
 Str = lambda n: Field("", max_length=n)  # noqa: E731
@@ -183,15 +186,21 @@ def _prepare(payload):
     """(audit payload, ExtractRequest) for a /v1/audit-style payload: a URL is fetched once (safe_fetch) and the page is
     reused for the audit and for the normalized record; a draft is wrapped exactly as /v1/audit does."""
     import main  # lazy: main imports this module
-    if audit_api.is_draft(payload):
-        return payload, audit_api.draft_request(main, audit_api.draft_fields(payload))
-    if payload.get("html") or not payload.get("url"):
-        return payload, main.ExtractRequest(**{k: payload.get(k) for k in ("url", "html", "text", "language") if payload.get(k)})
+    try:  # bad input is a 422 with the first validation message, as in /v1/audit (never a 500)
+        if audit_api.is_draft(payload):
+            return payload, audit_api.draft_request(main, audit_api.draft_fields(payload))
+        req = main.ExtractRequest(**{k: payload.get(k) for k in ("url", "html", "text", "language") if payload.get(k)})
+    except ValidationError as e:
+        raise HTTPException(422, e.errors()[0]["msg"])
+    except TypeError as e:
+        raise HTTPException(422, str(e).splitlines()[0])
+    if req.html or not req.url:
+        return payload, req
     try:
-        _, page = safe_fetch.fetch_page(str(payload["url"]))
+        _, page = safe_fetch.fetch_page(req.url)
     except safe_fetch.FetchError as e:
         raise HTTPException(e.status, e.detail)
-    return {**payload, "html": page}, main.ExtractRequest(url=payload["url"], html=page, language=payload.get("language"))
+    return {**payload, "html": page}, main.ExtractRequest(url=req.url, html=page, language=req.language)
 
 
 def _run(payload):
@@ -211,8 +220,8 @@ def _run(payload):
 def stored_audit(request: Request, payload: dict = Body(...)):
     """/v1/audit plus a stable, unlisted link: the result is kept under a random id (GET /v1/audits/{id}).
     Only the public product page's audit is stored; no personal data. Results expire after AUDIT_RESULT_TTL_DAYS
-    (default 90); the route is rate-limited per client (AUDIT_STORE_RATE_LIMIT per minute, default 20)."""
-    rate_limit(request, "audits", "AUDIT_STORE_RATE_LIMIT", 20)
+    (default 90); the route is rate-limited per client (AUDIT_STORE_RATE_LIMIT per minute, default 60)."""
+    rate_limit(request, "audits", "AUDIT_STORE_RATE_LIMIT", 60)
     result, record = _run(payload)
     return {"id": store.save_result(result, record), "audit": result, "record": record}
 

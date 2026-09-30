@@ -11,6 +11,7 @@ import json
 import re
 import statistics
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import FileResponse
@@ -151,11 +152,47 @@ def peer_key(target, recs):
                  "and audience without a price band; prices were not compared.")
 
 
-def rank(target, recs, match=None):
+MIN_PEERS = 10  # fewer comparable shirts than this: widen the match step by step
+
+
+def peer_group(match, recs, k, types=None):
+    """find_peers, or (types given) the union over those shirt types, most comparable first."""
+    if not types:
+        return find_peers(match, recs, k)
+    out = []
+    for t in types:
+        out += find_peers({**match, "identity": {**(match.get("identity") or {}), "product_type": t}}, recs, k)
+    out.sort(key=lambda sp: (-sp[0], str(sp[1].get("product_id") or "")))
+    return out[:k]
+
+
+def widen(match, recs):
+    """(match, types, step, note). Steps until MIN_PEERS comparable shirts match: exact -> without the price band
+    -> without the sleeve length -> any shirt type. Only matching changes; every row is scored with one formula."""
+    no_price = {**match, "commerce": {**(match.get("commerce") or {}), "price": None, "currency": None}}  # prices not compared
+    no_sleeve = {**no_price, "fit_and_style": {**(no_price.get("fit_and_style") or {}), "sleeve_length": None}}
+    steps = [("exact", match, None, None)]
+    if price(match) or get(match, "commerce", "currency"):
+        steps.append(("no_price_band", no_price, None, "without the price band"))
+    if get(match, "fit_and_style", "sleeve_length"):
+        steps.append(("no_sleeve", no_sleeve, None, "without the price band or sleeve length"
+                      if price(match) else "without the sleeve length"))
+    steps.append(("any_shirt_type", no_sleeve, sorted(SHIRT_TYPES), "across all shirt types, without the price band "
+                  "or sleeve length"))
+    for i, (step, m, types, how) in enumerate(steps):
+        n = len(peer_group(m, recs, RANK_K, types))
+        if n >= MIN_PEERS or i == len(steps) - 1:
+            if n == 0 or step == "exact":
+                return match, None, "exact", None
+            return m, types, step, (f"Fewer than {MIN_PEERS} shirts matched exactly, so comparable shirts were matched "
+                                    f"{how} ({n} found). The same scoring formula applies to every shirt in the ranking.")
+
+
+def rank(target, recs, match=None, types=None):
     """Rank the target among comparable shirts (analysis.peers hard filters). `match` (default: target) is the
     record used for peer matching. Ties share a position ("position".."position_to"); inside a tie the order is
     neutral (by product_id), never in the target's favour. Returns (rank dict, shirts ordered by quality)."""
-    group = [p for _, p in find_peers(match or target, recs, RANK_K)]
+    group = [p for _, p in peer_group(match or target, recs, RANK_K, types)]
     w = weights(group + [target])
     tq = quality(target, w)
     rows = [(quality(x, w), x, False) for x in group] + [(tq, target, True)]
@@ -392,9 +429,91 @@ def infer_type(target, d):
     return None
 
 
-def looks_like_shirt(target, texts):
-    """A shirt type from the rules, or a generic shirt word (type unknown only because the sleeve is not stated)."""
-    return get(target, "identity", "product_type") in SHIRT_TYPES or any(match_lookup(t, PRODUCT_TYPE) for t in texts)
+# Shirt words normalize.PRODUCT_TYPE (EN/ES) does not cover: FR/DE/IT/PT and compounds. Same values as PRODUCT_TYPE.
+EXTRA_SHIRT = [
+    ("polo", r"\bpolo-?(?:shirts?|hemd(?:en)?)\b"),
+    ("henley", r"\bhenley-?shirts?\b"),
+    ("t_shirt", r"\btee-?shirts?\b|\bt-?shirts?\b|\bmagliett[ae]\b|\bt-?shirt-?\w+|\bcamisetas?\b|\btees?\b"),
+    ("_shirt", r"\bchemises?\b|\b(?:ober)?hemd(?:en)?\b|\bcamici[ae]\b|\bcamisas?\b"),
+]
+SHIRT_TABLE = PRODUCT_TYPE + EXTRA_SHIRT
+# Other apparel and common products (EN/ES/FR/DE/IT/PT): audited in full but not ranked (we rank shirts only).
+NON_SHIRT = [
+    ("hoodie", r"\bhood(?:ie|y)s?\b|\bhooded\b|\bsudaderas? con capucha\b|\bkapuzen\w*|\bfelpe? con cappuccio\b"),
+    ("sweatshirt", r"\bsweat-?shirts?\b|\bcrewnecks? sweat|\bsudaderas?\b|\bsweats?\b|\bfelpas?\b|\bmoletons?\b"),
+    ("sweater", r"\bsweaters?\b|\bjumpers?\b|\bjers[eé]is?\b|\bsu[eé]teres?\b|\bpull-?overs?\b|\bpulls?\b"
+                r"|\bpullis?\b|\bmagliones?\b|\bcardigans?\b|\bstrickjacke\b"),
+    ("jacket", r"\bjackets?\b|\bchaquetas?\b|\bcazadoras?\b|\bvestes?\b|\bjacken?\b|\bgiacc(?:a|he)\b"
+               r"|\bjaquetas?\b|\bblazers?\b|\bbombers?\b"),
+    ("coat", r"\bcoats?\b|\babrigos?\b|\bmanteaux?\b|\bm[aä]ntel\b|\bcappott[oi]\b|\bcasacos?\b|\bparkas?\b"),
+    ("jeans", r"\bjeans\b|\bvaqueros?\b"),
+    ("pants", r"\bpants\b|\btrousers\b|\bpantal[oó]n(?:es)?\b|\bpantalons?\b|\bhosen?\b|\bpantaloni\b"
+              r"|\bcal[çc]as?\b|\bchinos?\b|\bjoggers?\b|\bleggings?\b"),
+    ("shorts", r"\bshorts\b|\bbermudas?\b"),
+    ("dress", r"\bdress(?:es)?\b|\bvestidos?\b|\brobes?\b|\bkleid(?:er)?\b|\babiti?\b"),
+    ("skirt", r"\bskirts?\b|\bfaldas?\b|\bjupes?\b|\bgonnas?\b|\bsaias?\b"),
+    ("socks", r"\bsocks?\b|\bcalcetines\b|\bchaussettes\b|\bsocken\b|\bcalzini\b|\bmeias\b"),
+    ("underwear", r"\bunderwear\b|\bboxers?\b|\bbriefs\b|\bcalzoncillos?\b|\bbragas?\b|\bbras?\b|\bsujetador(?:es)?\b"),
+    ("swimwear", r"\bswim\w*|\bba[ñn]adores?\b|\bbikinis?\b|\bmaillots? de bain\b"),
+    ("shoes", r"\bshoes?\b|\bsneakers?\b|\btrainers?\b|\bzapat(?:os|illas)\b|\bchaussures\b|\bschuhe\b"
+              r"|\bscarpe\b|\bsapatos?\b|\bboots?\b|\bbotas?\b|\brunners?\b|\bsandal(?:s|ias)?\b"),
+    ("hat", r"\bhats?\b|\bcaps?\b|\bbeanies?\b|\bgorras?\b|\bgorros?\b|\bsombreros?\b|\bm[üu]tzen?\b|\bcappell[oi]\b"),
+    ("bag", r"\bbags?\b|\bbolsos?\b|\bmochilas?\b|\bbackpacks?\b|\btote\b|\btasche\b|\bborsa\b"),
+    ("accessory", r"\bscar(?:f|ves)\b|\bbufandas?\b|\bbelts?\b|\bcinturones?\b|\bgloves?\b|\bguantes\b"
+                  r"|\bwallets?\b|\bcarteras?\b|\bsunglasses\b|\bwatch(?:es)?\b|\bjewel\w*"),
+    ("bottle", r"\bbottles?\b|\bbotellas?\b|\bmugs?\b|\btazas?\b"),
+]
+DESC_CHARS = 300  # only the start of a page description is read for the product type
+
+
+def flat(v):
+    """Text of a breadcrumb/category value (string, list, or schema.org dict)."""
+    if isinstance(v, str):
+        return v
+    if isinstance(v, dict):
+        return flat(v.get("name") or v.get("item") or "")
+    if isinstance(v, (list, tuple)):
+        return " > ".join(t for t in (flat(x) for x in v) if t)
+    return ""
+
+
+def type_sources(target, raw, d):
+    """(label, text) pairs read for the product type, strongest first."""
+    if d is not None:
+        return [("title", d["title"]), ("description", d["description"])]
+    schema = raw.get("raw_product_schema") if isinstance(raw.get("raw_product_schema"), dict) else {}
+    url = get(target, "source", "url") or raw.get("source_url") or ""
+    slug = unquote(urlsplit(url).path).strip("/").split("/")[-1] if url else ""
+    desc = raw.get("raw_full_description") or get(target, "content", "full_description") or ""
+    return [("title", get(target, "content", "title")), ("product name", get(target, "identity", "product_name")),
+            ("meta title", raw.get("raw_meta_title")), ("category", flat(schema.get("category"))),
+            ("category", raw.get("raw_category_text")), ("breadcrumbs", flat(raw.get("raw_breadcrumbs"))),
+            ("URL", slug), ("description", desc[:DESC_CHARS])]
+
+
+def first_match(text, table):
+    return next((v for v, p in table if re.search(p, text or "", re.I)), None)
+
+
+def classify(target, raw, d):
+    """("shirt", PRODUCT_TYPE value, label, text) | ("other", NON_SHIRT type, label, text) | ("other", None, ...).
+    The normalized type wins when it is a shirt; otherwise the first source (strongest first) naming a shirt or
+    another product type decides, so a shirt word deep in a hoodie's description does not make it a shirt."""
+    pt = get(target, "identity", "product_type")
+    src = type_sources(target, raw, d)
+    if pt in SHIRT_TYPES:
+        return "shirt", pt, src[0][0], src[0][1]
+    for lbl, text in src:
+        if not text:
+            continue
+        shirt = first_match(text, SHIRT_TABLE)
+        if shirt:
+            return "shirt", shirt, lbl, text
+        other = first_match(text, NON_SHIRT)
+        if other:
+            return "other", other, lbl, text
+    return "other", None, src[0][0], src[0][1]
+
 
 
 def url_key(u):
@@ -440,30 +559,49 @@ def audit(payload: dict = Body(...)):
             or get(target, "identity", "product_type")):
         raise HTTPException(422, "not_a_product_page: we couldn't find a product name, price or product type"
                                  " (the page may load them with JavaScript). Paste the title and description instead.")
-    texts = (d["title"], d["description"]) if draft else \
-        (get(target, "content", "title"), get(target, "identity", "product_name"))
-    if not looks_like_shirt(target, texts):
-        pt = get(target, "identity", "product_type")
-        raise HTTPException(422, "not_a_shirt: this doesn't look like a shirt"
-                            + (f" (product type: {pt})" if pt else " (no shirt type such as t-shirt, polo or shirt in the "
-                               "title" + (" or description" if draft else "") + ")")
-                            + ". We only rank shirts against comparable shirts, so it was not ranked.")
-    if not get(target, "identity", "product_type"):  # a generic shirt whose sleeve length is not stated
-        target["identity"]["product_type"] = "unknown"
-        notes.append("It looks like a shirt, but we couldn't tell which type (e.g. t-shirt, polo, short or long "
-                     "sleeve), so there are no comparable shirts to rank against. Name the type in the title.")
+    kind, ptype, read_from, read_text = classify(target, raw, d)
+    ident = target.setdefault("identity", {})
+    unranked = None
+    if kind == "other":  # not a shirt: the full audit, without a rank (we rank shirts only for now)
+        ident["product_type"] = ptype or "other"
+        unranked = {"reason": "not_a_shirt", "type": ptype, "read_from": read_from, "read_text": (read_text or "")[:200]}
+        notes.append(f"We rank against shirts only for now; this looks like {'a ' + ptype if ptype else 'a product that is not a shirt'}"
+                     f" (we read the {read_from} as \"{(read_text or '')[:120]}\"), so here is its listing quality and "
+                     "fixes without a rank. The fixes compare it with the best-listed shirts in our dataset.")
+    elif get(target, "identity", "product_type") not in SHIRT_TYPES:
+        ident["product_type"] = shirt_type(ptype, get(target, "fit_and_style", "sleeve_length")) or "unknown"
+        if read_from != "title":
+            notes.append(f"We read the shirt type from the {read_from} (\"{(read_text or '')[:120]}\").")
     recs = not_self(target)  # the product is never its own peer
-    key, note = peer_key(target, recs)
-    notes += [note] if note else []
-    matched = find_peers(key, recs, K)
-    rk, ranked = rank(target, recs, match=key)
-    if not ranked and get(target, "identity", "product_type") != "unknown":
-        notes.append("No comparable shirts found: we need the same product type and language in our dataset.")
-    n_unknown = unknown_sleeve(target, ranked)
+    if unranked:
+        ref = {**target, "commerce": {**(target.get("commerce") or {}), "price": None, "currency": None},
+               "fit_and_style": {**(target.get("fit_and_style") or {}), "sleeve_length": None}}
+        rk, _ = rank(target, [])
+        rk.update(position=None, position_from=None, position_to=None, tied=0, ranked=False)
+        matched, ranked = [], []
+        pool = [p for _, p in peer_group(ref, recs, RANK_K * 4, sorted(SHIRT_TYPES))]
+        w = weights(pool + [target])  # the best-listed comparable shirts (same language), as the ranking would order them
+        reference = sorted(pool, key=lambda x: (-quality(x, w)["score"], str(x.get("product_id") or "")))[:TOP]
+    else:
+        key, note = peer_key(target, recs)
+        notes += [note] if note else []
+        key, types, step, wnote = widen(key, recs)
+        notes += [wnote] if wnote else []
+        matched = peer_group(key, recs, K, types)
+        rk, ranked = rank(target, recs, match=key, types=types)
+        rk.update(ranked=bool(ranked), match_step=step)
+        reference = None
+        if get(target, "identity", "product_type") == "unknown":
+            notes.append("It looks like a shirt, but we couldn't tell which type (e.g. t-shirt, polo, short or long "
+                         "sleeve)" + (", so it was compared with all shirt types." if ranked else
+                                      ", so there are no comparable shirts to rank against.") + " Name the type in the title.")
+        elif not ranked:
+            notes.append("No comparable shirts found: we need the same product type and language in our dataset.")
+    n_unknown = unknown_sleeve(target, ranked) if rk.get("match_step") in ("exact", "no_price_band") else 0
     if n_unknown:
         notes.append(f"Fewer than {SLEEVE_FILL} comparable shirts state the same sleeve length as yours, so {n_unknown} "
                      "shirts that don't state a sleeve length were included.")
-    top = ranked[:TOP]
+    top = ranked[:TOP] if reference is None else reference
     res = analyze(target, top)  # the plan: what the top-ranked comparable shirts state that this one doesn't
     m = res["metrics"]
     pp = price_position(target, ranked)
@@ -508,6 +646,7 @@ def audit(payload: dict = Body(...)):
         "visibility": {"available": isinstance(vis, dict) and bool(vis.get("models"))},
         "conflicts": norm.get("conflicts") or [],
         "notes": notes,
+        "unranked": unranked,
     }
 
 

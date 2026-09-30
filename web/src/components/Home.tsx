@@ -207,7 +207,7 @@ function useAuditRunner() {
 }
 
 const rankText = (p: Product, t: (k: string, x?: Record<string, string | number>) => string) =>
-  !p.audit ? t("home.notAudited") : p.audit.rank.total > 1 ? t("rep.rank", { pos: p.audit.rank.position, total: p.audit.rank.total }) : t("rep.noPeers");
+  !p.audit ? t("home.notAudited") : p.audit.rank.total > 1 ? t("rep.rank", { pos: p.audit.rank.position ?? 0, total: p.audit.rank.total }) : t("rep.noPeers");
 
 /** Logged-in home: KPIs, products needing attention, next steps. */
 export function Overview() {
