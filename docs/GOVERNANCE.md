@@ -48,6 +48,17 @@ When a request is allowed, the hooks do not change the action's behavior.
 ## Audit log
 The log is stored in its own SQLite file, `GOVERNANCE_DB` (default `governance/data/governance.db`, git-ignored). Each row records who, action, target, mode, outcome (allowed/denied/pending/approved/rejected), approved_by, approval_id, a UTC timestamp and `details_hash` (SHA-256; raw details are not stored). SQLite triggers abort any UPDATE or DELETE. Read it with `GET /v1/audit-log?limit=` (1–1000, newest first).
 
+### Tenant scoping
+Rows and approval requests carry `owner_pid`, which is the monitored product they belong to. It is set only after the caller has checked that product's manage token, and it is never taken from a request body.
+- `GET /v1/audit-log` and `GET /v1/approvals` need one of two headers:
+  - `X-Manage-Token`, from `POST /v1/enroll`; a comma list is accepted. Only entries for products those tokens own are returned. A missing token gets 401 and an invalid token gets 403.
+  - `X-Governance-Admin-Token`, which must equal `GOVERNANCE_ADMIN_TOKEN`. This is the full view and is off when the variable is unset.
+- An approval can be used only under the same owner it was requested for, so tenant A's approval cannot run an action for tenant B or for an unscoped caller.
+- `POST /v1/chat` attributes its audit entry to `product_id` only when `X-Manage-Token` owns that product. Otherwise the entry is logged as `anonymous` with no product reference.
+- `POST /v1/predictions/confirm` scopes the request to the tenant when `X-Manage-Token` owns `record_id`.
+- Entries without an owner, such as optimizer, benchmark and scheduler entries or entries created before this change, appear only in the admin view.
+- Profile tokens (`X-Profile-Token`) have no server-side store yet, so they are not accepted here.
+
 ## Data, licensing and privacy
 - Only collect product pages that a user submitted or enrolled. Fetches go through `api/safe_fetch.py` (SSRF guard, size limit). Merchant or shopper data is never sold or shared.
 - Research-only datasets, such as Amazon Reviews 2023, are used for research signals only. They are not shipped in product outputs as licensed content. Record the source and license with every dataset, and record any copied code in THIRD_PARTY_NOTICES.md.
