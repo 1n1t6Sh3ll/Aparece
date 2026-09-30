@@ -256,7 +256,7 @@ export function Overview() {
               {worst.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{productName(p)}</p>
+                    <a href={`#/products/p/${p.id}`} className="block truncate text-sm font-medium hover:underline">{productName(p)}</a>
                     <p className="truncate text-xs muted">{p.audit!.actions[0] ? t("ov.next", { f: p.audit!.actions[0].field ? fieldLabel(lang, p.audit!.actions[0].field) : p.audit!.actions[0].kind }) : t("rep.noFixes")}</p>
                   </div>
                   <span className="text-xs muted">{rankText(p, t)}</span>
@@ -289,6 +289,16 @@ export function Overview() {
 }
 
 type SortK = "name" | "score" | "fixes";
+
+/** Product photo from the audited page (hot-linked, no referrer), or a neutral placeholder. */
+function Thumb({ src }: { src?: string | null }) {
+  const [ok, setOk] = useState(true);
+  return (
+    <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-sm bg-[var(--surface-2)]">
+      {src && ok ? <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setOk(false)} className="size-full object-cover" /> : <Package className="size-4 muted" aria-hidden />}
+    </span>
+  );
+}
 
 /** My products: the company's catalogue (audits, add, remove) and monitored pages. */
 export function ProductsHub() {
@@ -365,7 +375,9 @@ export function ProductsHub() {
                     return (
                       <tr key={p.id} className="hover:bg-[var(--surface-2)]/60">
                         <td className="max-w-[20rem] px-4 py-3">
-                          <p className="truncate font-medium">{productName(p)}</p>
+                          <a href={`#/products/p/${p.id}`} className="flex items-center gap-3 font-medium hover:underline">
+                            <Thumb src={a?.product.image} /><span className="truncate">{productName(p)}</span>
+                          </a>
                           <p className="flex items-center gap-2 truncate text-xs muted">
                             {p.merchant_stated ? <span className="chip bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("label.merchantStated")}</span> : <span className="truncate">{p.url}</span>}
                           </p>
