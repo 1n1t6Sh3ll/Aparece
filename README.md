@@ -22,7 +22,7 @@ flowchart LR
   B --> C[Compare / rank vs peers]
   B --> D[AI visibility benchmark]
   D --> E[Hallucination check<br/>AI answers vs ground truth]
-  C --> F[Actions<br/>audit site, dashboard, extension]
+  C --> F[Actions<br/>web app, extension]
   E --> F
   F --> G[Monitoring<br/>snapshots + change events]
   G --> A
@@ -33,7 +33,7 @@ Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | Path | What |
 |---|---|
 | `web/` | Shirt audit site served at `/` (React + TypeScript + Vite): paste a URL or draft listing, get a listing-quality rank among comparable shirts (formula shown; not an AI or search rank), top 3 fixes, side-by-side peers, facts with evidence, price position, monitoring; EN/ES; bulk audit of up to 20 URLs with CSV export; Models page (`#/models`, `GET /v1/model-comparison` reads `PRODUCTLENS_COMPARISON`, default `train/runs/comparison.json`; empty state until the run lands) |
-| `api/` | FastAPI service: `POST /v1/audit`, extraction, dashboard, monitoring and governance routes, OpenAPI at `/docs` |
+| `api/` | FastAPI service: `POST /v1/audit`, extraction, dataset, monitoring and governance routes, OpenAPI at `/docs` |
 | `governance/` | Action policy (`auto` / `approve` / `forbidden`, each with an owner), append-only audit log, approvals ([docs/GOVERNANCE.md](docs/GOVERNANCE.md)) |
 | `dataset/` | Collectors (live fetch, WDC, Amazon Reviews 2023), normalization rules, ground-truth build ([spec](docs/DATASET_SPEC.md), [README](dataset/README.md)) |
 | `analysis/` | Peer comparison and gap issues (no LLM) |
@@ -41,12 +41,12 @@ Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | `benchmark/` | AI-visibility benchmark harness |
 | `monitor/` | Scheduled crawls, snapshots, change events |
 | `webhooks/` | Outgoing merchant webhooks: signed, retried, SSRF-checked deliveries (`/v1/webhooks`, [docs/WEBHOOKS.md](docs/WEBHOOKS.md)) |
-| `dashboard/`, `extension/` | Analyst dashboard (served at `/dashboard/`) and MV3 Chrome popup |
+| `extension/` | MV3 Chrome popup |
 | `train/` | Optional Qwen2.5-0.5B / 1.5B QLoRA extractors (GPU; not needed to run the demo; [train/README.md](train/README.md)) |
 
 ## Quickstart
 
-Docker (one command; audit site at http://127.0.0.1:8000/, dashboard at `/dashboard/`, API docs at `/docs`):
+Docker (one command; audit site at http://127.0.0.1:8000/, API docs at `/docs`):
 
 ```sh
 docker compose up --build
@@ -63,12 +63,12 @@ Without Docker (Python 3.12+; creates `.venv`, installs `api/requirements.txt`, 
 Demo with bundled fixtures (no downloads, no keys):
 
 ```sh
-tools/demo_data.sh   # then open http://127.0.0.1:8000/dashboard/
+tools/demo_data.sh   # then open http://127.0.0.1:8000/
 ```
 
 Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. Never commit `.env`.
 
-The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps1` build it when `npm` is available (else `cd web && npm ci && npm run build`; dev server: `npm run dev`, proxies `/v1` to :8000). Without it the API and `/dashboard/` still work.
+The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps1` build it when `npm` is available (else `cd web && npm ci && npm run build`; dev server: `npm run dev`, proxies `/v1` to :8000). Without it the API still works. The old static `/dashboard/` was removed; `/dashboard*` redirects to `/`.
 
 Environment variables (all optional; see `.env.example`):
 
@@ -96,7 +96,7 @@ All under `/v1` (OpenAPI at `/docs` and `/openapi.json`). `X-Manage-Token` is re
 | Group | Routes | Auth |
 |---|---|---|
 | Core | `GET /health`, `POST /extract`, `POST /audit` (`{url}`, `{html}`/`{text}` or draft `{title, text, price?, currency?, language?}`), `GET /model-comparison` | none |
-| Dataset/dashboard | `GET /products?q=`, `/products/{id}`, `/products/{id}/gaps`, `/products/{id}/signals`, `/products/{id}/competitors`, `/stats`, `/eval`, `/visibility`, `/languages` | none |
+| Dataset | `GET /products?q=`, `/products/{id}`, `/products/{id}/gaps`, `/products/{id}/signals`, `/products/{id}/competitors`, `/stats`, `/eval`, `/visibility`, `/languages` | none |
 | Monitoring | `GET /plans`, `POST /enroll` | none (enroll returns the manage token) |
 | | `GET /monitored`, `DELETE /enroll/{public_id}`, `POST /monitored/{public_id}/crawl`, `GET /products/{public_id}/history`, `/snapshots`, `/snapshots/{a}/diff/{b}`, `/trends` | `X-Manage-Token` |
 | Chat | `POST /chat` | `token` in body when `CHAT_TOKEN` is set; `X-Manage-Token` for a monitored product |
@@ -111,7 +111,7 @@ All under `/v1` (OpenAPI at `/docs` and `/openapi.json`). `X-Manage-Token` is re
 | | `POST /approvals` | `X-Governance-Token` = `GOVERNANCE_TOKEN` (503 if unset) |
 | | `POST /predictions/confirm` | optional `X-Manage-Token` (tenant-scoped when it owns the product) |
 
-Governance, optimizer, experiments, chat, shootout and webhooks routers are mounted only when their packages import. The audit site is served at `/` and the dashboard at `/dashboard/`.
+Governance, optimizer, experiments, chat, shootout and webhooks routers are mounted only when their packages import. The audit site is served at `/`; `/dashboard*` redirects there.
 
 ## Chrome extension
 

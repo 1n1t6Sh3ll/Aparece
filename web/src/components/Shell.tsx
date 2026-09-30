@@ -123,7 +123,6 @@ export default function Shell({ page, children }: { page: string; children: Reac
   const foot = (
     <div className="space-y-2 px-6 py-5 text-xs text-[var(--sidebar-ink)]">
       <button className="flex items-center gap-2 hover:text-white" onClick={() => setHelp(true)}><Keyboard className="size-3.5" aria-hidden /> {t("kb.title")} <kbd className="kbd border-white/10 bg-white/5">?</kbd></button>
-      <a className="block hover:text-white" href="/dashboard/">{t("nav.analyst")}</a>
     </div>
   );
 

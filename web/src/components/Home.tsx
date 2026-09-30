@@ -136,7 +136,7 @@ export function Landing() {
           <a href="#/onboarding" className="btn-primary px-6 py-3"><UserPlus className="size-4" aria-hidden /> {t("home.signup")}</a>
           <a href="#/audit" className="btn-outline px-6 py-3"><ScanSearch className="size-4" aria-hidden /> {t("land.tryApp")}</a>
         </div>
-        <p className="mt-8 text-xs muted">{t("footer")} <a className="underline" href="/dashboard/">{t("nav.analyst")}</a></p>
+        <p className="mt-8 text-xs muted">{t("footer")}</p>
       </section>
     </div>
   );

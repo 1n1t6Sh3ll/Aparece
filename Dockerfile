@@ -12,7 +12,7 @@ WORKDIR /app
 COPY dataset/requirements.txt dataset/requirements.txt
 COPY api/requirements.txt api/requirements.txt
 RUN pip install --no-cache-dir -r api/requirements.txt
-# Source set (api, dataset/collect, analysis, signals, dashboard, monitor, benchmark,
+# Source set (api, dataset/collect, analysis, signals, monitor, benchmark,
 # governance, train/common.py) is controlled by the .dockerignore allowlist.
 COPY . .
 COPY --from=web /web/dist web/dist

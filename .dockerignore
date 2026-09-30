@@ -3,7 +3,6 @@
 !dataset/requirements.txt
 !dataset/collect/
 !analysis/
-!dashboard/
 !signals/
 !benchmark/
 !monitor/
