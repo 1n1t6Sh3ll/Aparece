@@ -184,6 +184,36 @@ def reward(output, input_text, gold=None):
             "errors": [f"missing key {f}" for f in FIELDS if f not in pred]}
 
 
+# ---- copy reward: Generate Fix candidates (optimizer/fix.py) -------------------------------------------
+
+GROUNDED, COVERAGE, TITLE_MAX = 1.0, 2.0, 90
+
+
+def copy_reward(candidate, sentence_reports, covered, targets):
+    """Reward for one generated {title, description} candidate. The same verifiable terms as reward():
+      format         FORMAT_OK if title and description are non-empty strings and the title is <= TITLE_MAX chars,
+                     else FORMAT_FAIL and stop.
+      grounding      GROUNDED x share of sentences the guardrail passes (sentence_reports: guard.check_text rows
+                     [{sentence, problems}] for the title and description).
+      hallucination  HALLUCINATION per sentence the guardrail flags.
+      coverage       COVERAGE x share of `targets` (verified attribute fields) that `covered` states in grounded text.
+    """
+    t, d = (candidate or {}).get("title"), (candidate or {}).get("description")
+    if not (isinstance(t, str) and t.strip() and isinstance(d, str) and d.strip() and len(t) <= TITLE_MAX):
+        return {"total": FORMAT_FAIL, "format_ok": False, "format": FORMAT_FAIL, "grounding": 0.0, "hallucination": 0.0,
+                "coverage": 0.0, "covered": [], "missing": sorted(targets), "hallucinated": [],
+                "errors": [f"needs non-empty string title (<= {TITLE_MAX} chars) and description"]}
+    bad = [r["sentence"] for r in sentence_reports if r["problems"]]
+    n = max(len(sentence_reports), 1)
+    grounding = round(GROUNDED * (n - len(bad)) / n, 4)
+    hit = sorted(set(covered) & set(targets))
+    coverage = round(COVERAGE * len(hit) / len(targets), 4) if targets else 0.0
+    hallucination = HALLUCINATION * len(bad)
+    return {"total": round(FORMAT_OK + grounding + hallucination + coverage, 4), "format_ok": True, "format": FORMAT_OK,
+            "grounding": grounding, "hallucination": hallucination, "coverage": coverage, "covered": hit,
+            "missing": sorted(set(targets) - set(hit)), "hallucinated": bad, "errors": []}
+
+
 # ---- files ------------------------------------------------------------------------------------------
 
 def read_jsonl(path):

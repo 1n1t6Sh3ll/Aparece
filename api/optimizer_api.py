@@ -1,6 +1,7 @@
 """Generate Fix routes (TEAM-41). Logic lives in optimizer/; this file is HTTP only.
 
-POST /v1/optimize          draft title/description (guarded), missing attributes, JSON-LD. Never published.
+POST /v1/optimize          draft title/description (best of N reward-scored, guarded candidates, with per-candidate
+                           reward breakdown), missing attributes, JSON-LD. Never published.
 POST /v1/optimize/publish  re-checks the suggestion, then needs Merchant approval (governance publish_suggestions).
 """
 import sys
@@ -30,6 +31,8 @@ class OptimizeRequest(BaseModel):
     language: Literal["en", "es"] = "en"
     gaps: dict[str, Any] | None = Field(None, description="analysis.gaps.analyze() output.")
     peers: list[dict[str, Any]] | None = Field(None, max_length=200, description="Peer records; gaps computed if given.")
+    candidates: int | None = Field(None, ge=1, le=fix.MAX_CANDIDATES,
+                                   description="Candidates per round (default OPTIMIZER_CANDIDATES or 3).")
     actor: str = Field("api", max_length=254)
 
 
@@ -50,7 +53,7 @@ def optimize(req: OptimizeRequest):
     if policy:
         policy.require("generate_suggestions", req.actor, target=target)
     try:
-        return fix.generate(req.product, req.language, gaps)
+        return fix.generate(req.product, req.language, gaps, candidates=req.candidates)
     except (RuntimeError, OSError, urllib.error.URLError) as e:
         raise HTTPException(502, f"text backend failed: {e}")
     except ValueError as e:
