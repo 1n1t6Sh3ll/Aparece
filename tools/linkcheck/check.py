@@ -42,6 +42,7 @@ TIMEOUT = 8
 MIN_INTERVAL = 1.0
 MAX_REDIRECTS = 5
 BODY_BYTES = 65536
+TRUST_GETS, RECHECK_EVERY = 3, 10
 REDIRECTS = (301, 302, 303, 307, 308)
 # Product-looking paths win over "away" markers (Shopify /collections/x/products/y is a product).
 PRODUCT_PATH = re.compile(r"/(products?|dp|gp/product|p|item|items|artikel|producto|productos)/[^/]+"
@@ -51,7 +52,7 @@ AWAY_PATH = re.compile(r"^/?(?:[a-z]{2}(?:[-_][a-z]{2})?/?)?$"
 AWAY_QUERY = re.compile(r"(?:^|&)(?:q|s|query|search)=", re.I)
 CHALLENGE = re.compile(r"<title[^>]*>\s*(?:just a moment|attention required|access denied|robot check|"
                        r"are you a (?:human|robot)|security check|pardon our interruption)"
-                       r"|cf-chl-|/_incapsula_resource|px-captcha|captcha-delivery|/errors/validatecaptcha|opfcaptcha"
+                       r"|cf-chl-|/_incapsula_resource|px-captcha|captcha-delivery|validatecaptcha|opfcaptcha"
                        r"|type the characters you see", re.I)
 NOT_FOUND = re.compile(r"<title[^>]*>[^<]*(?:\b404\b|not found|no longer available|no encontrad|"
                        r"no existe|nicht gefunden|introuvable)[^<]*</title>", re.I)
@@ -119,7 +120,8 @@ class Checker:
         self.session.headers.update({"User-Agent": USER_AGENT, "Accept": "text/html,*/*;q=0.8"})
         self.throttle, self.timeout, self.guard = throttle or Throttle(), timeout, guard
         self.robots, self.lock = {}, threading.Lock()
-        self.head_trusted = {}  # host -> False when a GET there showed a bot challenge (HEAD 200 then proves nothing)
+        # host -> clean GETs seen (-1 once a GET there served a bot challenge: HEAD 200 then proves nothing)
+        self.clean_gets, self.heads = Counter(), Counter()
 
     def _request(self, method, url):
         self.guard(url)  # SSRF: http(s) + public IPs, re-checked on every redirect hop
@@ -168,9 +170,13 @@ class Checker:
             r, final = self._follow("HEAD", url)
             row["method"], body = "HEAD", ""
             h = host_of(url)
-            # Many stores reject or mis-answer HEAD, and some answer HEAD 200 but serve a challenge page on GET:
-            # confirm non-2xx HEADs, the first 2xx HEAD per host, and every HEAD on a host that served a challenge.
-            if not 200 <= r.status_code < 300 or not self.head_trusted.get(h, False):
+            # Many stores reject or mis-answer HEAD, and some answer HEAD 200 but serve a challenge page on GET.
+            # A 2xx HEAD is trusted only after TRUST_GETS clean GETs on that host, never after a challenge there,
+            # and every RECHECK_EVERY-th trusted HEAD is still confirmed with GET (challenges can start mid-run).
+            with self.lock:
+                self.heads[h] += 1
+                trusted = self.clean_gets[h] >= TRUST_GETS and self.heads[h] % RECHECK_EVERY
+            if not 200 <= r.status_code < 300 or not trusted:
                 r.close()
                 r, final = self._follow("GET", url)
                 row["method"] = "GET"
@@ -182,7 +188,8 @@ class Checker:
             result = classify(url, final, r.status_code, r.headers, body)
             if row["method"] == "GET" and 200 <= r.status_code < 300:
                 with self.lock:
-                    self.head_trusted[h] = result[1] != "challenge" and self.head_trusted.get(h, True)
+                    bad = result[1] == "challenge" or self.clean_gets[h] < 0
+                    self.clean_gets[h] = -1 if bad else self.clean_gets[h] + 1
             return self._done(row, *result)
         except safe_fetch.FetchError as e:
             return self._done(row, "error", e.detail)

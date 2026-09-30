@@ -58,11 +58,12 @@ U = "https://shop.example.com/products/tee"
 
 class CheckerTest(unittest.TestCase):
     def test_head_ok_is_live_and_sends_honest_ua(self):
-        u2 = U + "-2"
-        c, s = checker({("HEAD", U): Resp(200), ("GET", U): Resp(200, body="<title>Tee</title>"), ("HEAD", u2): Resp(200)})
-        row = c.check(U, "p1")  # the first 2xx HEAD on a host is confirmed with GET
+        c, s = checker({("HEAD", U): Resp(200), ("GET", U): Resp(200, body="<title>Tee</title>")})
+        row = c.check(U, "p1")  # 2xx HEADs are confirmed with GET until the host served 3 clean GETs
         self.assertEqual((row["status"], row["method"], row["product_id"]), ("live", "GET", "p1"))
-        self.assertEqual((c.check(u2)["method"], c.check(u2)["status"]), ("HEAD", "live"))  # then HEAD is trusted
+        methods = [c.check(U)["method"] for _ in range(12)]
+        self.assertEqual(methods[:2], ["GET", "GET"])
+        self.assertEqual(methods[2:].count("GET"), 1)  # trusted HEADs, with every 10th HEAD re-confirmed
         self.assertIn("ProductLens", s.headers["User-Agent"])
         self.assertIn("checked_at", row)
         self.assertEqual(s.calls[0], ("GET", "https://shop.example.com/robots.txt"))
@@ -103,7 +104,7 @@ class CheckerTest(unittest.TestCase):
         self.assertEqual(c.check(U)["detail"], "challenge")
 
     def test_head_200_but_get_captcha_is_blocked_and_host_keeps_using_get(self):
-        cap = '<html><title>Amazon.com</title><form action="/errors/validateCaptcha">'
+        cap = '<html><title>Amazon.com</title><form action="/errors_page/validateCaptcha">'
         u, u2 = "https://www.amazon.com/dp/B000000001", "https://www.amazon.com/dp/B000000002"
         c, s = checker({("HEAD", u): Resp(200), ("GET", u): Resp(200, body=cap),
                         ("HEAD", u2): Resp(200), ("GET", u2): Resp(200, body=cap)})
