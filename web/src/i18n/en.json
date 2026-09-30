@@ -29,6 +29,7 @@
   "err.title": "We couldn't audit this page",
   "err.robots": "This store's robots.txt asks crawlers not to read this page, so we didn't. You can check it as a draft listing instead.",
   "err.notProduct": "This doesn't look like a product page. We couldn't find a product name, price or product type. Try the link of a single product.",
+  "err.notShirt": "This doesn't look like a shirt, so it wasn't ranked. PowerLens compares shirts (t-shirts, polos, shirts) only. If it is a shirt, name the type in the title.",
   "err.dns": "We couldn't reach that website. Check the link for typos.",
   "err.scheme": "Only http:// and https:// links can be audited.",
   "err.private": "That link points to a private network address, so we can't open it.",

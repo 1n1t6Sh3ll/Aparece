@@ -12,7 +12,7 @@ TRAIN = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TRAIN))
 
 from common import FIELDS, prompt_text, target  # noqa: E402
-from reward import FORMAT_FAIL, reward, score_file  # noqa: E402
+from reward import FORMAT_FAIL, HALLUCINATION, copy_reward, reward, score_file  # noqa: E402
 
 EN = prompt_text({"raw_title": "Men's Slim Fit Crew Neck T-Shirt - White",
                   "raw_full_description": "Short sleeves. Composition: 100% cotton, 180 gsm jersey.\nSlightly stretchy.",
@@ -109,6 +109,21 @@ class ScoreFile(unittest.TestCase):
         self.assertEqual(summary["hallucinated_by_field"], {"fit_and_style.fit": 1})
         self.assertEqual(rows[0]["total"], 1 + 10 - 2)
         self.assertEqual(rows[1]["total"], FORMAT_FAIL)
+
+
+
+class CopyRewardTest(unittest.TestCase):
+    def test_terms(self):
+        ok = {"sentence": "Regular fit.", "problems": []}
+        bad = {"sentence": "Waterproof.", "problems": ["words not grounded"]}
+        t = {"fit_and_style.fit", "materials.fabric_weight_gsm"}
+        r = copy_reward({"title": "Tee", "description": "Regular fit."}, [ok], ["fit_and_style.fit"], t)
+        self.assertEqual((r["total"], r["coverage"], r["missing"]), (3.0, 1.0, ["materials.fabric_weight_gsm"]))
+        h = copy_reward({"title": "Tee", "description": "Regular fit. Waterproof."}, [ok, bad], ["fit_and_style.fit"], t)
+        self.assertEqual((h["hallucination"], h["hallucinated"]), (HALLUCINATION, ["Waterproof."]))
+        self.assertLess(h["total"], r["total"])
+        self.assertEqual(copy_reward({"title": "x" * 91, "description": "a"}, [], [], t)["total"], FORMAT_FAIL)
+        self.assertEqual(copy_reward({"title": "", "description": "a"}, [], [], t)["format_ok"], False)
 
 
 if __name__ == "__main__":
