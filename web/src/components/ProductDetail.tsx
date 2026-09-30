@@ -222,7 +222,7 @@ export default function ProductDetail({ id }: { id: string }) {
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl">{a?.product.title || url || id}</h1>
           {url && <p className="truncate text-xs muted">{url}</p>}
-          {info && <p className="mt-1.5 text-xs muted">{t("pd.meta", { n: info.product.snapshot_count, e: info.product.event_count, d: info.product.last_snapshot_at ? when(info.product.last_snapshot_at, lang) : "–" })}</p>}
+          {info && snaps && <p className="mt-1.5 text-xs muted">{t("pd.meta", { n: snaps.length, e: info.events.length, d: snaps.length ? when(snaps[snaps.length - 1].crawled_at, lang) : "–" })}</p>}
         </div>
         <div className="flex gap-2">
           {url && <a className="btn-ghost px-2.5" href={url} target="_blank" rel="noopener noreferrer" aria-label={t("ws.open")}><ExternalLink className="size-4" aria-hidden /></a>}
