@@ -19,6 +19,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .citations import citation_report, citations_markdown
 from .claims import claims_markdown, claims_report, load_gold
 from .match import load_catalog
 from .metrics import build_report, to_markdown
@@ -242,10 +243,12 @@ def report(args, log=print):
     products = load_catalog(args.catalog)
     rep = build_report(records, products, k=args.k)
     rep["claims"] = claims_report(records, products, load_gold(args.catalog))
+    rep["broken_citations"] = citation_report(records)  # from link_status.jsonl; see benchmark/citations.py
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.json").write_text(json.dumps(rep, indent=2, ensure_ascii=False), encoding="utf-8")
-    (out / "report.md").write_text(to_markdown(rep) + claims_markdown(rep["claims"]), encoding="utf-8")
+    (out / "report.md").write_text(to_markdown(rep) + claims_markdown(rep["claims"])
+                                    + citations_markdown(rep["broken_citations"]), encoding="utf-8")
     log(f"wrote {out / 'report.json'} and {out / 'report.md'}")
     return rep
 
