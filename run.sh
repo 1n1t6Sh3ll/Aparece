@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ProductLens quickstart: venv -> install -> tests -> API on :8000.
+# Aparece quickstart: venv -> install -> tests -> API on :8000.
 # Usage: ./run.sh [--skip-tests]   Optional settings come from .env (see .env.example).
 set -euo pipefail
 cd "$(dirname "$0")"

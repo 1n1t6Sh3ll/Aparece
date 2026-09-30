@@ -28,7 +28,7 @@ Environment variables (all optional; see `.env.example`):
 |---|---|
 | `PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL` | Dashboard/audit data files (dataset JSONL, signals, benchmark report, extraction eval) |
 | `PRODUCTLENS_COMPARISON` | Model comparison JSON for `#/models` (default `train/runs/comparison.json`) |
-| `PRODUCTLENS_SHOOTOUT`, `PRODUCTLENS_SHOOTOUT_REAL`, `PRODUCTLENS_SHOOTOUT_SAMPLE` | AI comparison report: this path, else `benchmark/shootout/out/report.json`, else the committed real run, else the bundled mock sample |
+| `PRODUCTLENS_SHOOTOUT`, `PRODUCTLENS_SHOOTOUT_REAL`, `PRODUCTLENS_SHOOTOUT_SAMPLE` | AI comparison report: this path, else `benchmark/shootout/out/report.json`, else the committed real run, else the bundled mock sample (the API serves it marked `sample`; the web page shows "Not run yet" instead of mock numbers) |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `QWEN_API_KEY` | Paid/local model access; paid runs also need a spend cap (`--max-usd`, `BENCHMARK_MAX_USD`) |
 | `MONITOR_ENABLED`, `MONITOR_DB`, `MONITOR_DELAY` | Scheduler and snapshot store |
 | `GOVERNANCE_DB`, `GOVERNANCE_TOKEN`, `GOVERNANCE_ADMIN_TOKEN` | Audit log; enables `POST /v1/approvals`; admin view of the full log |
@@ -78,9 +78,11 @@ python -m unittest discover -s signals/tests -t .
 python -m unittest discover -s dataset/tests
 python -m unittest discover -s api/tests
 python -m unittest discover -s tools/linkcheck/tests -t .
+python -m unittest discover -s train/tests
+cd web && npm ci && npm test && npm run build   # web unit tests, typecheck, production build
 ```
 
-`run.sh` runs all five before starting the server. Tests use local fixtures and the `mock` model; they make no network or paid calls.
+`run.sh` runs the first five before starting the server. Tests use local fixtures and the `mock` model; they make no network or paid calls.
 
 ## AI-visibility benchmark (spend-capped)
 

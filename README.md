@@ -1,86 +1,124 @@
+<div align="center">
+
 # Aparece
 
 **See your product page the way AI shopping assistants do, and fix what they can't read.**
 
-Shoppers now ask AI what to buy. We asked gpt-4o-mini and Claude Haiku 384 real shopping questions, in English and Spanish. None of the 103 small shirt shops we tested was named; Everlane, Uniqlo and Patagonia were. Paste your product link, and Aparece shows what machines can read on your page, ranks it against similar shirts, and gives you the 3 fixes to make first. It suggests text that only states what your page proves; you approve everything.
+[![CI](https://github.com/1n1t6Sh3ll/powerlens/actions/workflows/ci.yml/badge.svg)](https://github.com/1n1t6Sh3ll/powerlens/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)
+![Node 22](https://img.shields.io/badge/node-22-339933)
+[![Docker image](https://img.shields.io/badge/docker-ghcr.io%2F1n1t6sh3ll%2Faparece-2496ED)](https://github.com/1n1t6Sh3ll/powerlens/pkgs/container/aparece)
 
-## Try it
+</div>
+
+Shoppers now ask AI what to buy. We asked gpt-4o-mini and Claude Haiku 384 real shopping questions, in English and Spanish. None of the 103 small shirt shops we tested was named; Everlane, Uniqlo and Patagonia were. Paste a product link and Aparece shows what machines can read on your page, ranks it against comparable shirts, and gives you the 3 fixes to make first. Suggested text states only what your page proves, and you approve everything.
+
+> The product was called ProductLens until recently. The repository, some environment variables (`PRODUCTLENS_*`) and a few internal names still use the old name.
+
+## Features
+
+- **Audit**: paste a link or a draft. Every fact shown comes with the exact text it was read from. Missing values stay missing.
+- **Rank and fixes**: a fixed, visible formula (no AI) ranks the page among comparable shirts and lists the top 3 fixes, each with evidence.
+- **Generate Fix**: writes a title and description from your verified facts, fact-checks every sentence, scores candidates with a reward, and only a fully passing candidate can win.
+- **AI visibility**: real AI answers to shopping questions, showing which shops and brands get named and whether the claims match the facts.
+- **AI comparison**: your original text vs Aparece vs AI models, all written from the same facts.
+- **Monitoring and chat**: snapshots, change events, and a chat that may only cite stored records.
+- **Governance and webhooks**: approvals, an append-only audit log, signed webhooks. English and Spanish UI, plus a Chrome extension.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U["Link, draft or extension"] --> F["Fetch<br/>api/safe_fetch.py"]
+    F --> V["Verified facts + evidence<br/>dataset/collect/normalize.py"]
+    Q["Fine-tuned Qwen<br/>fills empty fields as 'predicted'<br/>train/"] -.-> V
+    D[("Shirt dataset<br/>dataset/")] --> M
+    V --> M["Match comparable shirts<br/>analysis/peers.py"]
+    M --> S["Score, rank, top 3 fixes<br/>api/audit_api.py"]
+    S --> G["Generate Fix<br/>write, fact-check, reward<br/>optimizer/"]
+    V --> B["AI visibility + comparison<br/>benchmark/"]
+    G --> N["Monitor, chat, governance<br/>monitor/ chat/ governance/"]
+    N --> F
+```
+
+A FastAPI service (`api/main.py`) exposes the `/v1` routes and serves the React build in `web/` at `/`. Every stage, with its code, is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Quickstart
+
+Docker (published image):
 
 ```sh
 docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/aparece:latest
 ```
 
-Open http://127.0.0.1:8000 and paste a product link. To run from source: `git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens && ./run.sh` (Windows: `.\run.ps1`). You need Python 3.12+ and Node 22, and no API keys. To rank against real shirts, set `PRODUCTLENS_DATA` to the dataset (build it with `dataset/collect/wdc.py` → `dataset/build/make_ground_truth.py`). The model weights are in the [weights-v1 release](https://github.com/1n1t6Sh3ll/powerlens/releases/tag/weights-v1).
+Or build locally with `docker compose up --build`. Or from source (Python 3.12+, Node 22; no API keys needed):
 
-## How it works
-
-```mermaid
-flowchart TD
-    U["Product link or pasted text"] --> F{"Fetch the page<br/>respects robots.txt, never Amazon<br/>api/safe_fetch.py"}
-    F -- blocked --> X["Extension or pasted draft<br/>extension/"]
-    X --> V
-    F -- ok --> V["Verified facts, each with its evidence<br/>dataset/collect/normalize.py"]
-    Q["Fine-tuned Qwen fills empty fields<br/>labelled 'predicted'<br/>train/"] -.-> V
-    D[("20,037-shirt dataset<br/>dataset/")] --> M
-    V --> M["Match comparable shirts<br/>same type, language, audience, sleeve, price<br/>analysis/peers.py"]
-    M --> S["Score and rank<br/>60 facts + 20 questions + 20 markup<br/>api/audit_api.py"]
-    S --> A["Top 3 fixes, with evidence"]
-    A --> G["Generate Fix<br/>write from facts → fact-check → reward → best wins<br/>optimizer/, train/reward.py"]
-    G --> H{"Merchant approves?"}
-    H -- yes --> P["Use the new title and description"]
-    H -. "accept / dismiss, winner vs loser pairs" .-> T["Training feedback<br/>optimizer/data/pairs.jsonl"]
-    T -.-> Q
-    V --> C["AI comparison<br/>shop vs Aparece vs AI models<br/>benchmark/shootout/"]
-    V --> B["AI visibility<br/>real AI answers: who gets named?<br/>benchmark/harness.py"]
-    P --> N["Monitor over time<br/>snapshots, changes, chat<br/>monitor/, chat/"]
-    N --> F
+```sh
+git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens
+./run.sh --skip-tests        # Windows: .\run.ps1 -SkipTests
 ```
 
-**The key formulas**
+`run.sh` creates `.venv`, installs `api/requirements.txt`, builds `web/`, and starts the API. Open http://127.0.0.1:8000 (API docs at `/docs`, health at `/v1/health`). Without the dataset, ranking against real shirts is unavailable; set `PRODUCTLENS_DATA` to a built dataset (see [docs/DATASET_SPEC.md](docs/DATASET_SPEC.md)).
 
-```
-listing score = 60 × (key facts stated ÷ 22) + 20 × (shopper questions answered ÷ 9) + 20 × (markup found ÷ 2)
-rank          = 1 + number of comparable shirts with a higher score
-reward        = 1 + share of sentences passing the fact-check − 2 × flagged sentences + 2 × share of facts covered
-```
+## Configuration
 
-**The reward mechanism** (`train/reward.py` → `copy_reward`, used by `optimizer/fix.py`):
-1. The writer produces 3 candidate titles and descriptions from your verified facts only.
-2. Every sentence goes through the fact-check.
-3. Each candidate gets a reward:
-   - **+1** for a valid format (a title of up to 90 characters, plus a description); a broken format scores **−10**;
-   - **up to +1** for the share of its sentences that pass the fact-check;
-   - **−2** for every flagged sentence;
-   - **up to +2** for the share of your verified facts it mentions.
-4. **A candidate with any flagged sentence can't win**, whatever its reward. If none passes, the writer gets the flagged sentences back and tries again, up to 2 more rounds. After that, unsupported sentences are removed. If nothing is left, the plain fact sentences are used.
-5. The winner is the passing candidate with the highest reward. Each winner and a lower-scoring candidate are saved as a pair (`optimizer/data/pairs.jsonl`), as future training data.
+All optional; copy `.env.example` to `.env` (never commit it). The full list is in [docs/REFERENCE.md](docs/REFERENCE.md).
 
-Example: 5 sentences, all passing, mentioning 6 of 8 facts: 1 + 1 + 0 + 1.5 = **3.5**. The same candidate with 1 flagged sentence: 1 + 0.8 − 2 + 1.5 = **1.3**, and it can't win.
-
-The fact-check rejects any word or number that your page's facts don't back (`optimizer/guard.py`). In the AI comparison, only parts that pass can win: the best title score, the best tag score, and the best description (most AI mentions, or the most facts covered).
-
-## Where AI models are used
-
-| Place | Role of the AI model |
+| Variable | Purpose |
 |---|---|
-| Listing rank ("#4 of 25") | **None.** It's a fixed, visible formula |
-| AI visibility | gpt-4o-mini and Claude Haiku act as shopping assistants; we measure which shops they name and in what position |
-| AI comparison | Models write competing text (fact-checked); in the saved run they also judge a simulated shopping test |
-| Generate Fix | Optional writer (template, gpt-4o-mini, Claude or Qwen) inside the fact-check and reward |
-| Fact extraction | The fine-tuned Qwen only fills fields the rules left empty, labelled "predicted" |
+| `PRODUCTLENS_DATA`, `_SIGNALS`, `_VISIBILITY`, `_EVAL` | Dataset and report files behind the audit |
+| `MODEL_BACKEND`, `QWEN_ADAPTER_PATH` | `rules` (default) or the optional Qwen fallback |
+| `OPTIMIZER_BACKEND`, `OPTIMIZER_MODEL` | Generate Fix writer (`stub` default) |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | Paid runs only; they also need a spend cap (`--max-usd`, `BENCHMARK_MAX_USD`) |
+| `MONITOR_ENABLED`, `MONITOR_DB` | Monitoring scheduler and snapshot store |
+| `GOVERNANCE_TOKEN`, `GOVERNANCE_ADMIN_TOKEN` | Enable approvals; admin view of the audit log |
+| `CHAT_TOKEN`, `CHAT_LLM` | Protect `/v1/chat`; chat backend (`stub` default) |
 
-Full system diagram and every stage with its code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+## Tests and build
+
+Offline, with no network or paid calls:
+
+```sh
+python -m unittest discover -s api/tests
+python -m unittest discover -s analysis/tests -t .
+python -m unittest discover -s benchmark/tests -t .
+python -m unittest discover -s signals/tests -t .
+python -m unittest discover -s dataset/tests
+python -m unittest discover -s tools/linkcheck/tests -t .
+python -m unittest discover -s train/tests
+cd web && npm ci && npm test && npm run build
+```
+
+CI (`.github/workflows/ci.yml`) runs these on every pull request.
 
 ## Results
 
 | Test (same input for every model) | Result |
 |---|---|
 | Reading product pages (200 products, 63 stores) | Aparece Qwen2.5-0.5B **85.8%** · GPT-4.1 27.2% · untuned Qwen 4.7% |
-| Writing product copy | Aparece best on title, tags and description with no unsupported claims; visibility a statistical tie |
-| Which shops AI names (384 questions) | 0% for the 103 small shops; big brands named instead |
+| Writing copy, 5 products (`benchmark/shootout/results/2026-09-29`) | Aparece won title, tags and description; the visibility gap to the runner-up is not decisive (its interval includes 0) |
+| Which shops AI names (`benchmark/results/visibility-2026-09-30`) | 384 answers: none of the 103 small shops named; big brands named instead |
 
-Caveats: the extraction test uses our own label format, and the copy-test judges are also AI models. Human feedback is being collected (label reviews, confirmed predictions, accepted fixes, text pairs), but the model hasn't been retrained on it yet.
+Caveats: the extraction test uses our own label format (figures are from [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md); the raw run files are not committed). The copy-test judges are also AI models, and the test context is simulated. Nothing here predicts how a real assistant will rank your page.
 
-## Learn more
+## Project layout
 
-[Architecture](docs/ARCHITECTURE.md) · [How it works](docs/HOW_IT_WORKS.md) covers every formula, where it is in the code, tags, the human loop and the vision. The [Reference](docs/REFERENCE.md) lists all settings and API routes, and there's a [Vision](docs/VISION.md) document. Tests: `python -m unittest discover -s api/tests` and `cd web && npm test` (offline, no paid calls). The code is MIT-licensed; the data and weights are for research use.
+| Path | Contents |
+|---|---|
+| `api/` | FastAPI app, audit, safe fetch, tests |
+| `web/` | React + Vite site (EN/ES) |
+| `extension/` | Chrome MV3 extension |
+| `dataset/`, `analysis/`, `signals/` | Data collection and normalizing, peer matching, signals |
+| `optimizer/`, `train/` | Generate Fix, fact-check, reward, Qwen training and eval |
+| `benchmark/` | AI visibility harness, hallucination check, AI comparison |
+| `monitor/`, `chat/`, `experiments/`, `governance/`, `webhooks/` | Over-time and control features |
+| `docs/` | Documentation |
+
+## Docs
+
+[Architecture](docs/ARCHITECTURE.md) · [How it works](docs/HOW_IT_WORKS.md) · [Reference: setup, env, API routes](docs/REFERENCE.md) · [Vision](docs/VISION.md) · [Dataset spec](docs/DATASET_SPEC.md) · [Governance](docs/GOVERNANCE.md) · [Webhooks](docs/WEBHOOKS.md) · [User stories](docs/USER_STORIES.md). Model weights: [weights-v1 release](https://github.com/1n1t6Sh3ll/powerlens/releases/tag/weights-v1).
+
+## License
+
+Code: MIT ([LICENSE](LICENSE)). Data and weights are for research use.

@@ -1,4 +1,4 @@
-# ProductLens quickstart (Windows): venv -> install -> tests -> API on :8000.
+# Aparece quickstart (Windows): venv -> install -> tests -> API on :8000.
 # Usage: .\run.ps1 [-SkipTests]   Optional settings come from .env (see .env.example).
 param([switch]$SkipTests)
 $ErrorActionPreference = "Stop"
