@@ -8,6 +8,7 @@
 !benchmark/
 !monitor/
 !governance/
+!optimizer/
 !train/common.py
 !web/
 web/node_modules/

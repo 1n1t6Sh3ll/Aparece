@@ -122,6 +122,10 @@ Do not use the collected data commercially without checking each source's terms.
 
 Every action is `auto`, `approve` or `forbidden` with a named owner (account owner, merchant, ProductLens operator); decisions go to an append-only audit log (`GOVERNANCE_DB`). Paid benchmark runs need a key and a spend cap; optimizers never read the hidden prompt split. Full policy: [docs/GOVERNANCE.md](docs/GOVERNANCE.md). Task board and decisions: `coordination/`.
 
+## Generate Fix (optimizer)
+
+`POST /v1/optimize` with `{"product": <audited normalized record>, "language": "en"|"es", "gaps"?: <analysis.gaps output>, "peers"?: [...]}` returns a draft: a factual title and description, `missing_attributes` to ask the merchant for, and schema.org Product/Offer `json_ld`. Only fields with evidence count as Product Truth; they are rendered as localized fact sentences, and the model rewrites only those (marketing text is never translated). Every sentence is checked with `benchmark/claims.py` plus material, number and risky-term checks (`optimizer/guard.py`). Rejected output is regenerated up to 2 times, then unsupported sentences are removed. The response reports `accuracy_before` and `accuracy_after`, and `accuracy_after` must be at least `accuracy_before`. `POST /v1/optimize/publish` re-checks the suggestion and needs Merchant approval (`publish_suggestions`). It never writes to a storefront. Backend: `OPTIMIZER_BACKEND=stub` (default, no model), `openai` (`gpt-4o-mini`), `anthropic` or `qwen`, with `OPTIMIZER_MODEL` to override the model. The guard is rule-based and can miss paraphrased claims, so a merchant still reviews every suggestion.
+
 ## Checks and merging
 
 CI (`ci / check`) runs `dataset/tests`, compiles `train/`, and runs `api/tests`. PR only: `main` requires the `check` status and 1 approval (repo admins can bypass the approval on PR merge). Every merge also needs independent review, updated docs, and explicit human approval of the exact revision.

@@ -34,6 +34,11 @@ try:  # governance/ may be missing from older images; the API still starts witho
     app.include_router(governance_api.router)
 except ModuleNotFoundError:
     pass
+try:  # optimizer/ may be missing from older images
+    import optimizer_api  # noqa: E402
+    app.include_router(optimizer_api.router)
+except ModuleNotFoundError:
+    pass
 app.mount("/dashboard", StaticFiles(directory=Path(__file__).resolve().parents[1] / "dashboard", html=True), name="dashboard")
 
 
