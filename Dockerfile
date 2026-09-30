@@ -19,7 +19,8 @@ RUN pip install --no-cache-dir -r api/requirements.txt -r benchmark/requirements
 COPY . .
 COPY --from=web /web/dist web/dist
 RUN useradd --create-home --uid 10001 app \
- && mkdir -p monitor/data governance/data && chown app monitor/data governance/data
+ && mkdir -p monitor/data governance/data profile/data webhooks/data experiments/data optimizer/data \
+ && chown -R app monitor/data governance/data profile/data webhooks/data experiments/data optimizer/data
 USER app
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
