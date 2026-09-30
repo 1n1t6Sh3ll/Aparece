@@ -31,6 +31,12 @@ if (-not $SkipTests) {
   }
 }
 
+if (-not (Test-Path web\dist\index.html) -and (Get-Command npm -ErrorAction SilentlyContinue)) {
+  Push-Location web
+  try { npm ci; if ($LASTEXITCODE -eq 0) { npm run build } } finally { Pop-Location }
+  if ($LASTEXITCODE -ne 0) { Write-Host "web build failed; API and /dashboard/ still work" }
+}
+
 $port = if ($env:PORT) { $env:PORT } else { '8000' }
 Write-Host "ProductLens API: http://127.0.0.1:$port/docs  dashboard: http://127.0.0.1:$port/dashboard/"
 & $py -m uvicorn main:app --app-dir api --host 127.0.0.1 --port $port

@@ -19,6 +19,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .claims import claims_markdown, claims_report, load_gold
 from .match import load_catalog
 from .metrics import build_report, to_markdown
 
@@ -238,11 +239,13 @@ def run(args, sleep=time.sleep, log=print):
 def report(args, log=print):
     with open(args.results, encoding="utf-8") as f:
         records = [json.loads(l) for l in f if l.strip()]
-    rep = build_report(records, load_catalog(args.catalog), k=args.k)
+    products = load_catalog(args.catalog)
+    rep = build_report(records, products, k=args.k)
+    rep["claims"] = claims_report(records, products, load_gold(args.catalog))
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.json").write_text(json.dumps(rep, indent=2, ensure_ascii=False), encoding="utf-8")
-    (out / "report.md").write_text(to_markdown(rep), encoding="utf-8")
+    (out / "report.md").write_text(to_markdown(rep) + claims_markdown(rep["claims"]), encoding="utf-8")
     log(f"wrote {out / 'report.json'} and {out / 'report.md'}")
     return rep
 

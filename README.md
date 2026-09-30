@@ -10,7 +10,7 @@ flowchart LR
   B --> C[Compare / rank vs peers]
   B --> D[AI visibility benchmark]
   D --> E[Hallucination check<br/>AI answers vs ground truth]
-  C --> F[Actions<br/>dashboard + extension]
+  C --> F[Actions<br/>audit site, dashboard, extension]
   E --> F
   F --> G[Monitoring<br/>snapshots + change events]
   G --> A
@@ -20,18 +20,20 @@ Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 | Path | What |
 |---|---|
-| `api/` | FastAPI service: extraction, dashboard and monitoring routes, OpenAPI at `/docs` |
+| `web/` | Shirt audit site served at `/` (React + TypeScript + Vite): paste a URL or draft listing, get a listing-quality rank among comparable shirts (formula shown; not an AI or search rank), top 3 fixes, side-by-side peers, facts with evidence, price position, monitoring; EN/ES; bulk audit of up to 20 URLs with CSV export |
+| `api/` | FastAPI service: `POST /v1/audit`, extraction, dashboard, monitoring and governance routes, OpenAPI at `/docs` |
+| `governance/` | Action policy (`auto` / `approve` / `forbidden`, each with an owner), append-only audit log, approvals ([docs/GOVERNANCE.md](docs/GOVERNANCE.md)) |
 | `dataset/` | Collectors (live fetch, WDC, Amazon Reviews 2023), normalization rules, ground-truth build ([spec](docs/DATASET_SPEC.md), [README](dataset/README.md)) |
 | `analysis/` | Peer comparison and gap issues (no LLM) |
 | `signals/` | Review and price signals |
 | `benchmark/` | AI-visibility benchmark harness |
 | `monitor/` | Scheduled crawls, snapshots, change events |
-| `dashboard/`, `extension/` | Merchant dashboard (served at `/dashboard/`) and MV3 Chrome popup |
+| `dashboard/`, `extension/` | Analyst dashboard (served at `/dashboard/`) and MV3 Chrome popup |
 | `train/` | Optional Qwen2.5-1.5B QLoRA extractor (GPU; not needed to run the demo) |
 
 ## Quickstart
 
-Docker (one command, API + dashboard on http://127.0.0.1:8000):
+Docker (one command; audit site at http://127.0.0.1:8000/, dashboard at `/dashboard/`, API docs at `/docs`):
 
 ```sh
 docker compose up --build
@@ -53,7 +55,11 @@ tools/demo_data.sh   # then open http://127.0.0.1:8000/dashboard/
 
 Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. Never commit `.env`.
 
-Main routes: `GET /v1/health`, `POST /v1/extract` (`url` | `html` | `text`), `GET /v1/products?q=`, `/v1/products/{id}/gaps`, `/v1/visibility`, `/v1/eval`, `POST /v1/enroll`. Details in [api/](api/) and `/docs`.
+The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps1` build it when `npm` is available (else `cd web && npm ci && npm run build`; dev server: `npm run dev`, proxies `/v1` to :8000). Without it the API and `/dashboard/` still work.
+
+Main routes: `GET /v1/health`, `POST /v1/audit` (`{url}`, `{html|text}` or a draft `{title, text, price?, currency?, language?}`), `POST /v1/extract`, `GET /v1/products?q=`, `/v1/products/{id}/gaps`, `/v1/visibility`, `/v1/eval`, `POST /v1/enroll`, `GET /v1/governance/policy`, `GET /v1/audit-log`, `GET|POST /v1/approvals` (POST disabled unless `GOVERNANCE_TOKEN` is set). Details at `/docs`.
+
+Optional model backend: `MODEL_BACKEND=qwen` with `pip install -r api/requirements-qwen.txt` and a LoRA adapter at `QWEN_ADAPTER_PATH` (base Qwen2.5-1.5B-Instruct; 4-bit on CUDA, else CPU). Rule facts with evidence stay primary; the model only fills fields the rules left null, returned separately as `predicted` with `model_status`, and falls back to rules on any error. The Docker image is rules-only.
 
 ## Tests
 
@@ -85,7 +91,7 @@ python -m benchmark.harness run ... --models anthropic:<model> --max-usd 5
 - Local models: `qwen:<model>` against an OpenAI-compatible server at `QWEN_BASE_URL` (default Ollama).
 - Prompt set: `benchmark/prompts/tshirts.jsonl` (120 brand-free intents, EN US/GB and ES ES/MX, seeded 60/20/20 split). `benchmark/prompts/hidden.jsonl` is the held-out split; optimizers must never read it.
 - Scheduled weekly visibility (`MONITOR_ENABLED=1`) runs only when a key and `BENCHMARK_MAX_USD` are both set; otherwise it logs `skipped`.
-- Hallucination check: the report's `claims` section (`benchmark/claims.py`, PR #51) labels each attribute claim in an AI answer SUPPORTED / CONTRADICTED / UNVERIFIABLE against non-null ground truth (same `normalize.py` rules), per model and language, with examples.
+- Hallucination check (`benchmark/claims.py`): `report` parses the sentences around each matched product with the `normalize.py` rules and labels each attribute claim SUPPORTED / CONTRADICTED / UNVERIFIABLE against that product's non-null ground truth. Per model/language it reports claim accuracy = supported/(supported+contradicted), hallucination rate = contradicted/(supported+contradicted), the unverifiable share (never counted wrong), and quoted examples with gold evidence.
 - Metrics (mention rate, top-k, MRR, citation rate, stability) describe observed outputs of black-box systems, not their internals.
 
 ## Results
@@ -114,7 +120,11 @@ Do not use the collected data commercially without checking each source's terms.
 
 ## Governance
 
-Data handling, evaluation integrity (hidden split), spend limits and human approval rules: [docs/GOVERNANCE.md](docs/GOVERNANCE.md). Task board and decisions: `coordination/`.
+Every action is `auto`, `approve` or `forbidden` with a named owner (account owner, merchant, ProductLens operator); decisions go to an append-only audit log (`GOVERNANCE_DB`). Paid benchmark runs need a key and a spend cap; optimizers never read the hidden prompt split. Full policy: [docs/GOVERNANCE.md](docs/GOVERNANCE.md). Task board and decisions: `coordination/`.
+
+## Checks and merging
+
+CI (`ci / check`) runs `dataset/tests`, compiles `train/`, and runs `api/tests`. PR only: `main` requires the `check` status and 1 approval (repo admins can bypass the approval on PR merge). Every merge also needs independent review, updated docs, and explicit human approval of the exact revision.
 
 ## Team and credits
 

@@ -23,5 +23,11 @@ if [ "${1:-}" != "--skip-tests" ]; then
   "$VPY" -m unittest discover -s api/tests
 fi
 
+# Audit site at "/" (optional): build web/ once when npm is available.
+if [ ! -f web/dist/index.html ] && command -v npm >/dev/null 2>&1; then
+  (cd web && npm ci && npm run build) || echo "web build failed; API and /dashboard/ still work"
+fi
+
+echo "ProductLens site: http://127.0.0.1:${PORT:-8000}/"
 echo "ProductLens API: http://127.0.0.1:${PORT:-8000}/docs  dashboard: http://127.0.0.1:${PORT:-8000}/dashboard/"
 exec "$VPY" -m uvicorn main:app --app-dir api --host 127.0.0.1 --port "${PORT:-8000}"
