@@ -495,6 +495,37 @@ def first_match(text, table):
     return next((v for v, p in table if re.search(p, text or "", re.I)), None)
 
 
+def settle_shirt_type(target, ptype):
+    target.setdefault("identity", {})["product_type"] =         shirt_type(ptype, get(target, "fit_and_style", "sleeve_length")) or "unknown"
+
+
+def shirt_rank(target, recs):
+    """The audit's shirt ranking: peer matching, step-by-step widening, one formula. Shared with Monitor (#116)
+    so a snapshot shows the same rank as the audit. Returns (rank, ranked shirts, match, types, notes)."""
+    notes = []
+    key, note = peer_key(target, recs)
+    notes += [note] if note else []
+    key, types, step, wnote = widen(key, recs)
+    notes += [wnote] if wnote else []
+    rk, ranked = rank(target, recs, match=key, types=types)
+    rk.update(ranked=bool(ranked), match_step=step)
+    return rk, ranked, key, types, notes
+
+
+def record_rank(rec):
+    """Rank a stored normalized record exactly as a URL audit of it would (Monitor snapshots). None when it is
+    not a shirt (the audit leaves those unranked) or cannot be read."""
+    target = dash.adapt(rec)
+    if not target:
+        return None
+    kind, ptype, _, _ = classify(target, {}, None)
+    if kind == "other":
+        return None
+    if get(target, "identity", "product_type") not in SHIRT_TYPES:
+        settle_shirt_type(target, ptype)
+    return shirt_rank(target, not_self(target))[0]
+
+
 def classify(target, raw, d):
     """("shirt", PRODUCT_TYPE value, label, text) | ("other", NON_SHIRT type, label, text) | ("other", None, ...).
     The normalized type wins when it is a shirt; otherwise the first source (strongest first) naming a shirt or
@@ -569,7 +600,7 @@ def audit(payload: dict = Body(...)):
                      f" (we read the {read_from} as \"{(read_text or '')[:120]}\"), so here is its listing quality and "
                      "fixes without a rank. The fixes compare it with the best-listed shirts in our dataset.")
     elif get(target, "identity", "product_type") not in SHIRT_TYPES:
-        ident["product_type"] = shirt_type(ptype, get(target, "fit_and_style", "sleeve_length")) or "unknown"
+        settle_shirt_type(target, ptype)
         if read_from != "title":
             notes.append(f"We read the shirt type from the {read_from} (\"{(read_text or '')[:120]}\").")
     recs = not_self(target)  # the product is never its own peer
@@ -583,13 +614,9 @@ def audit(payload: dict = Body(...)):
         w = weights(pool + [target])  # the best-listed comparable shirts (same language), as the ranking would order them
         reference = sorted(pool, key=lambda x: (-quality(x, w)["score"], str(x.get("product_id") or "")))[:TOP]
     else:
-        key, note = peer_key(target, recs)
-        notes += [note] if note else []
-        key, types, step, wnote = widen(key, recs)
-        notes += [wnote] if wnote else []
+        rk, ranked, key, types, rnotes = shirt_rank(target, recs)
+        notes += rnotes
         matched = peer_group(key, recs, K, types)
-        rk, ranked = rank(target, recs, match=key, types=types)
-        rk.update(ranked=bool(ranked), match_step=step)
         reference = None
         if get(target, "identity", "product_type") == "unknown":
             notes.append("It looks like a shirt, but we couldn't tell which type (e.g. t-shirt, polo, short or long "

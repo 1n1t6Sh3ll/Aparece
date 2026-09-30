@@ -5,7 +5,7 @@
 import { api, manageToken, saveManageToken } from "./lib";
 
 export interface Metrics {
-  completeness_rank: { position: number; of: number; by: string } | null; attribute_completeness_pct: number | null;
+  completeness_rank: { position: number | null; of: number | null; by: string } | null; attribute_completeness_pct: number | null;
   peer_median_completeness_pct: number | null; description_chars: number | null; price: number | null; currency: string | null;
   structured_data_present: boolean | null; language: string | null; visibility: unknown;
 }
