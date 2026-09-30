@@ -732,5 +732,9 @@
   "sug.rw.hallucination": "Alucinación",
   "sug.rw.coverage": "Cobertura",
   "sug.rwMax": "máx. {n}",
-  "sug.rewardNote": "La recompensa puntúa solo el texto sugerido: 1 punto por un título y una descripción válidos, más la fundamentación (proporción de frases respaldadas por datos de tu página), menos 2 por cada frase sin respaldo, más la cobertura (proporción de tus datos verificados que menciona, hasta 2). La precisión de los datos es la proporción de afirmaciones respaldadas por datos verificados: tu texto actual → la sugerencia."
+  "sug.rewardNote": "La recompensa puntúa solo el texto sugerido: 1 punto por un título y una descripción válidos, más la fundamentación (proporción de frases respaldadas por datos de tu página), menos 2 por cada frase sin respaldo, más la cobertura (proporción de tus datos verificados que menciona, hasta 2). La precisión de los datos es la proporción de afirmaciones respaldadas por datos verificados: tu texto actual → la sugerencia.",
+  "vis.siteRate": "Tu tienda apareció en el {rate} de {n} respuestas reales de compra de {models}.",
+  "vis.allRate": "Las tiendas de nuestro benchmark aparecieron en el {rate} de {n} respuestas reales de compra de {models}.",
+  "vis.named": "Marcas que nombraron los asistentes de IA en su lugar (respuestas):",
+  "vis.note": "Respuestas reales a 384 preguntas sobre camisetas en inglés y español (30 sep 2026). Resultados observados, no cómo funcionan los modelos por dentro."
 }

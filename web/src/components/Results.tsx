@@ -377,7 +377,7 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
           )}
           <Panel icon={<Radar className="size-4" aria-hidden />} title={t("vis.title")}
             badge={!audit.visibility.available ? <span className="chip bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">{t("vis.badge")}</span> : undefined}>
-            <p className="text-sm muted">{audit.visibility.available ? t("ws.visAvail") : t("vis.empty")}</p>
+            {audit.visibility.available ? <VisibilityFacts v={audit.visibility} /> : <p className="text-sm muted">{t("vis.empty")}</p>}
             <a href="#/models" className="mt-2 inline-block text-sm font-medium text-[var(--accent)] hover:underline">{t("ws.visNext")}</a>
           </Panel>
           <Panel icon={<CircleHelp className="size-4" aria-hidden />} title={t("unk.title")}>
@@ -390,6 +390,23 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
           {live && <Panel icon={<BellRing className="size-4" aria-hidden />} title={t("mon.title")} sub={t("mon.sub")}><Enroll url={p.url!} /></Panel>}
         </div>
       </div>
+    </div>
+  );
+}
+
+
+function VisibilityFacts({ v }: { v: Audit["visibility"] }) {
+  const { t } = useI18n();
+  const pct = (x: number | null | undefined) => (x == null ? "–" : `${Math.round(x * 100)}%`);
+  const rates = Object.values(v.site_in_benchmark ? v.site_mention_rate ?? {} : v.mention_rate ?? {});
+  const rate = rates.length ? Math.max(...rates.map((x) => x ?? 0)) : null;
+  return (
+    <div className="space-y-2 text-sm">
+      <p>{t(v.site_in_benchmark ? "vis.siteRate" : "vis.allRate", { rate: pct(rate), n: v.responses ?? 0, models: (v.models ?? []).join(", ") })}</p>
+      {!!v.top_named?.length && (
+        <p className="muted">{t("vis.named")} {v.top_named.map((b) => `${b.name} (${b.answers})`).join(", ")}</p>
+      )}
+      <p className="text-xs muted">{t("vis.note")}</p>
     </div>
   );
 }

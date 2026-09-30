@@ -1,0 +1,96 @@
+{
+ "method": "Brand names in bold at the start of each recommended item (**Brand - Product**), counted once per answer. Heuristic; observed outputs, not claims about model internals.",
+ "answers": 384,
+ "by_language": {
+  "en": 192,
+  "es": 192
+ },
+ "top_named": [
+  {
+   "name": "Everlane",
+   "answers": 78
+  },
+  {
+   "name": "Uniqlo",
+   "answers": 74
+  },
+  {
+   "name": "Patagonia",
+   "answers": 59
+  },
+  {
+   "name": "Nike",
+   "answers": 52
+  },
+  {
+   "name": "H&M",
+   "answers": 51
+  },
+  {
+   "name": "Hanes",
+   "answers": 44
+  },
+  {
+   "name": "Gildan",
+   "answers": 33
+  },
+  {
+   "name": "Fruit of the Loom",
+   "answers": 30
+  },
+  {
+   "name": "Zara",
+   "answers": 26
+  },
+  {
+   "name": "Reformation",
+   "answers": 26
+  }
+ ],
+ "top_named_by_language": {
+  "en": [
+   {
+    "name": "Everlane",
+    "answers": 44
+   },
+   {
+    "name": "Uniqlo",
+    "answers": 31
+   },
+   {
+    "name": "Patagonia",
+    "answers": 29
+   },
+   {
+    "name": "Nike",
+    "answers": 22
+   },
+   {
+    "name": "Hanes",
+    "answers": 21
+   }
+  ],
+  "es": [
+   {
+    "name": "Uniqlo",
+    "answers": 43
+   },
+   {
+    "name": "H&M",
+    "answers": 38
+   },
+   {
+    "name": "Everlane",
+    "answers": 34
+   },
+   {
+    "name": "Nike",
+    "answers": 30
+   },
+   {
+    "name": "Patagonia",
+    "answers": 30
+   }
+  ]
+ }
+}

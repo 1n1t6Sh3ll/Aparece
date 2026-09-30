@@ -613,7 +613,6 @@ def audit(payload: dict = Body(...)):
     not_found = sorted(({"field": f, "label": label(f), "peers_with": cov[f]["present"], "of": cov[f]["of"],
                          "predicted": pred.get(f)} for f, ok in attributes_present(target).items() if not ok),
                        key=lambda x: -x["peers_with"])
-    vis = dash.visibility()
     facts_found = sum(attributes_present(target).values())
     return {
         "product": {**dash.summary(target), "url": get(target, "source", "url"),
@@ -643,7 +642,8 @@ def audit(payload: dict = Body(...)):
         "price_position": pp,
         "actions": acts,
         "unknowns": [i["statement"] for i in res["issues"] if i["type"] in ("UNKNOWN", "SUPPORTED_HYPOTHESIS")],
-        "visibility": {"available": isinstance(vis, dict) and bool(vis.get("models"))},
+        "visibility": dash.visibility_summary(get(target, "source", "merchant_domain")
+                                              or (url_key(get(target, "source", "url")) or (None,))[0]),
         "conflicts": norm.get("conflicts") or [],
         "notes": notes,
         "unranked": unranked,
