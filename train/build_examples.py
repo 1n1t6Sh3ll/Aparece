@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import random
 from pathlib import Path
 
 from common import messages
@@ -27,10 +28,16 @@ def main():
     ap.add_argument("--raw", default=str(OUT / "shirts_raw.jsonl"))
     ap.add_argument("--examples", action="store_true", help="use dataset/examples (smoke test)")
     ap.add_argument("--out", default=str(ROOT / "train" / "data"))
+    ap.add_argument("--final", help="dir with train.jsonl, val.jsonl, test_gold.jsonl (records carry raw + gold + split)")
+    ap.add_argument("--max_chars", type=int, default=4000, help="truncate the product text to this many chars")
+    ap.add_argument("--min_values", type=int, default=0, help="--final: train rows need this many stated attributes")
+    ap.add_argument("--sparse_frac", type=float, default=0.15, help="--final: share of sparser train rows kept")
     ap.add_argument("--val", type=float, default=0.1)
     ap.add_argument("--test", type=float, default=0.1)
     args = ap.parse_args()
 
+    if args.final:
+        return build_final(args)
     if args.examples:
         ex = ROOT / "dataset" / "examples"
         norms = [json.loads((ex / "normalized_record.example.json").read_text(encoding="utf-8"))]
@@ -55,7 +62,7 @@ def main():
             continue
         dom = n["source"]["merchant_domain"]
         s = "train" if args.examples else split_of(dom, args.val, args.test)
-        rows[s].append({"product_id": n["product_id"], "domain": dom, "messages": messages(raw, n)})
+        rows[s].append({"product_id": n["product_id"], "domain": dom, "messages": messages(raw, n, args.max_chars)})
         domains[s].add(dom)
     if args.examples:  # one record: reuse it in every split so the pipeline runs end to end
         rows["val"] = rows["test"] = rows["train"]
@@ -69,6 +76,30 @@ def main():
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
         print(f"{s}: {len(rs)} records, {len(domains[s]) or len({r['domain'] for r in rs})} domains")
     print(f"skipped (no raw match): {missing}")
+
+
+def build_final(args):
+    """Splits are fixed upstream; keep the metadata eval.py stratifies on."""
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    rng = random.Random(0)
+    for s, name in (("train", "train"), ("val", "val"), ("test", "test_gold")):
+        path = Path(args.final) / f"{name}.jsonl"
+        if not path.exists():
+            print(f"{s}: skipped ({path.name} missing)")
+            continue
+        recs = read_jsonl(path)
+        if s == "train" and args.min_values:
+            # Keep rows with >= min_values stated attributes (beyond product_type), plus a
+            # sparse_frac sample of the rest so the model still learns to answer null.
+            n_vals = lambda r: sum(v is not None for k, v in r["gold"].items() if k != "identity.product_type")
+            recs = [r for r in recs if n_vals(r) >= args.min_values or rng.random() < args.sparse_frac]
+        with open(out / f"{s}.jsonl", "w", encoding="utf-8") as f:
+            for r in recs:
+                row = {k: r.get(k) for k in ("product_id", "domain", "language", "source", "cross_tld_split")}
+                row["messages"] = messages(r["raw"], max_chars=args.max_chars, gold=r["gold"])
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        print(f"{s}: {len(recs)} records, {len({r['domain'] for r in recs})} domains")
 
 
 if __name__ == "__main__":
