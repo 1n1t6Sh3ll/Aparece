@@ -18,7 +18,7 @@ Without Docker (Python 3.12+; creates `.venv`, installs `api/requirements.txt`, 
 ./run.sh --skip-tests # start faster
 ```
 
-Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. Never commit `.env`.
+Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. The exception is peer data: `PRODUCTLENS_DATA` (default `dataset/output/final/train.jsonl`, about 16,000 shirts, not committed to git) feeds peer matching, so without it an audit ranks "1 of 1" and lists no similar products and no fixes. Never commit `.env`.
 
 The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps1` build it when `npm` is available (else `cd web && npm ci && npm run build`; dev server: `npm run dev`, proxies `/v1` to :8000). Without it the API still works. The old static `/dashboard/` was removed; `/dashboard*` redirects to `/`.
 
