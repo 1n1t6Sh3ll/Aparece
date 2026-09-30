@@ -54,24 +54,25 @@ class ApprovalRequired(GovernanceError):
         self.action, self.approval_id, self.owner = action, approval_id, owner
 
 
-def require(action, actor, target=None, details=None, approval_id=None):
-    """Gate an action. Returns the audit decision dict; raises Forbidden or ApprovalRequired."""
+def require(action, actor, target=None, details=None, approval_id=None, owner=None):
+    """Gate an action. Returns the audit decision dict; raises Forbidden or ApprovalRequired.
+    owner: monitored product id; pass it only after validating that product's manage token (tenant scoping)."""
     rule = POLICY.get(action)
     dhash = audit.details_hash(details)
     if rule is None:
-        audit.log(actor, action, target, "unknown", "denied", dhash)
+        audit.log(actor, action, target, "unknown", "denied", dhash, owner=owner)
         raise Forbidden(f"unknown action {action!r} (deny by default)")
     mode = rule["mode"]
     if mode == "forbidden":
-        audit.log(actor, action, target, mode, "denied", dhash)
+        audit.log(actor, action, target, mode, "denied", dhash, owner=owner)
         raise Forbidden(f"{action} is never automatic: {rule['description']}")
     if mode == "auto":
-        audit.log(actor, action, target, mode, "allowed", dhash)
+        audit.log(actor, action, target, mode, "allowed", dhash, owner=owner)
         return {"action": action, "mode": mode, "approved_by": None}
     approver = audit.consume(approval_id, action, target, dhash, actor) if approval_id else None
     if approver:
         return {"action": action, "mode": mode, "approved_by": approver, "approval_id": approval_id}
-    raise ApprovalRequired(action, audit.request(action, target, actor, dhash), rule["owner"])
+    raise ApprovalRequired(action, audit.request(action, target, actor, dhash, owner), rule["owner"])
 
 
 def _norm(actor):

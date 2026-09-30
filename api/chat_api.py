@@ -4,7 +4,8 @@ Sources (each optional; missing data just means fewer records): monitor snapshot
 from >= 2 dated snapshots), dataset record, gaps, competitor table, price/review signals, benchmark visibility per
 model/language, experiments (if the experiments package is installed), company profile (CHAT_COMPANY_PROFILE JSON).
 CHAT_TOKEN: when set, requests must carry the same `token`. Each answer is written to the governance audit log
-(action chat_answer; only a hash of question/answer/citations) when governance/ is present.
+(action chat_answer; only a hash of question/answer/citations) when governance/ is present. The entry is attributed to
+product_id only when X-Manage-Token owns that monitored product; otherwise it is logged as anonymous with no product.
 """
 import hmac
 import json
@@ -12,7 +13,7 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
@@ -141,22 +142,29 @@ def collect(pid):
             + company_records())
 
 
-def audit_log(req, result):
+def owner_of(product_id, manage_token):
+    """Monitored product id only when the X-Manage-Token owns it; otherwise None (never trust the body's id)."""
+    pid = store.pid_for(product_id) if product_id and not product_id.isdigit() else product_id
+    return int(pid) if pid and manage_token and store.check_token(int(pid), manage_token) else None
+
+
+def audit_log(req, result, manage_token=None):
     try:
         from governance import audit
     except ImportError:
         return False
     details = {"message": req.message, "answer": result["answer"], "citations": result["citations"]}
-    try:
-        audit.log("merchant_chat", "chat_answer", req.product_id, "auto",
-                  "refused" if result["refused"] else "answered", audit.details_hash(details))
+    owner = owner_of(req.product_id, manage_token)
+    try:  # unvalidated callers are logged as anonymous with no product reference
+        audit.log("merchant_chat" if owner else "anonymous", "chat_answer", req.product_id if owner else None, "auto",
+                  "refused" if result["refused"] else "answered", audit.details_hash(details), owner=owner)
         return True
     except Exception:  # noqa: BLE001 -- a logging failure must not hide the answer
         return False
 
 
 @router.post("/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, x_manage_token: str | None = Header(None)):
     expected = os.environ.get("CHAT_TOKEN")
     if expected and not (req.token and hmac.compare_digest(req.token, expected)):
         raise HTTPException(401, "invalid chat token")
@@ -171,5 +179,5 @@ async def chat(req: ChatRequest):
     except Exception as e:  # noqa: BLE001 -- backend/network errors
         raise HTTPException(502, f"chat backend error: {type(e).__name__}")
     result["backend"] = llm.name()
-    result["audit_logged"] = await run_in_threadpool(audit_log, req, result)
+    result["audit_logged"] = await run_in_threadpool(audit_log, req, result, x_manage_token)
     return result
