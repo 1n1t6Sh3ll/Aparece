@@ -674,6 +674,7 @@
   "err.notFound": "No lo encontramos.",
   "err.tooMany": "Has hecho muchas auditorías desde esta red en el último minuto. Espera un minuto y vuelve a intentarlo.",
   "err.empty": "Pega el enlace de un producto que empiece por https://, o abre \"Borrador de ficha\" y añade el título del producto.",
+  "ws.notSaved": "No se guardó en el historial (límite alcanzado; reintenta en {n} s).",
   "err.invalid": "Algún dato no es válido. Revisa los campos e inténtalo de nuevo.",
   "err.unknown": "Algo falló por nuestra parte. Inténtalo de nuevo en un momento.",
   "err.loadProfile": "No pudimos cargar tu perfil. Revisa tu conexión y recarga.",

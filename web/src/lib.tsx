@@ -81,7 +81,7 @@ export function fmtField(field: string, v: unknown, t: T): string {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, public detail: string) { super(detail); }
+  constructor(public status: number, public detail: string, public retryAfter?: number) { super(detail); }
 }
 
 /** Per-enrollment manage tokens (shown once by POST /v1/enroll), kept only in this browser. */
@@ -103,7 +103,8 @@ export async function api<R>(path: string, init?: RequestInit): Promise<R> {
   const body = await r.json().catch(() => ({}));
   if (!r.ok) {
     const d = body?.detail;
-    throw new ApiError(r.status, typeof d === "string" ? d : Array.isArray(d) ? d[0]?.msg ?? "invalid request" : `HTTP ${r.status}`);
+    const wait = Number(r.headers.get("Retry-After")) || undefined;
+    throw new ApiError(r.status, typeof d === "string" ? d : Array.isArray(d) ? d[0]?.msg ?? "invalid request" : `HTTP ${r.status}`, wait);
   }
   return body as R;
 }
@@ -114,16 +115,18 @@ export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean
   if (!(e instanceof ApiError)) return { msg: t("err.unknown"), suggestText: false };
   const d = e.detail || "";
   const code = /^([a-z_]+):/.exec(d)?.[1];
-  const coded: Record<string, [string, boolean]> = {
+  // [message, offer the draft form, open it automatically]. Rate limits (the store's or ours) never switch tabs.
+  const coded: Record<string, [string, boolean, boolean?]> = {
     amazon_not_supported: ["err.amazon", true], blocked_by_store: ["err.blocked", true], host_not_found: ["err.dns", false],
+    store_rate_limited: ["err.rateLimited", true, false],
     not_a_web_page: ["err.notPage", false], page_not_found: ["err.pageNotFound", false], product_gone: ["err.gone", true],
     not_a_product_page: ["err.notProduct", false], not_a_shirt: ["err.notShirt", false], draft_needs_title: ["hero.emptyTitle", false],
     too_many_requests: ["err.tooMany", false], invalid_price: ["err.invalidPrice", false], invalid_currency: ["err.invalidCurrency", false], invalid_field: ["err.invalidField", false],
   };
   if (e.status === 0) return { msg: t("err.network"), suggestText: false };
-  if (code && coded[code]) return { msg: t(coded[code][0]), suggestText: coded[code][1], openDraft: coded[code][1] };
+  if (code && coded[code]) return { msg: t(coded[code][0]), suggestText: coded[code][1], openDraft: coded[code][2] ?? coded[code][1] };
   if (e.status === 429) return { msg: t("err.tooMany"), suggestText: false };  // our own per-network limit, not the store's
-  if (/upstream HTTP (429|503)/.test(d)) return { msg: t("err.rateLimited"), suggestText: true, openDraft: true };
+  if (/upstream HTTP (429|503)/.test(d)) return { msg: t("err.rateLimited"), suggestText: true };
   if (/robots\.txt disallows/.test(d)) return { msg: t("err.robots"), suggestText: true, openDraft: true };
   if (d.includes("does not resolve")) return { msg: t("err.dns"), suggestText: false };
   if (d.includes("http(s)")) return { msg: t("err.scheme"), suggestText: false };

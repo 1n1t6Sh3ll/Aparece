@@ -674,6 +674,7 @@
   "err.notFound": "We couldn't find that.",
   "err.tooMany": "You've run a lot of audits from this network in the last minute. Wait a minute, then try again.",
   "err.empty": "Paste a product link starting with https://, or open \"Draft listing\" and add the product title.",
+  "ws.notSaved": "Not saved to history (limit reached; retry in {n} s).",
   "err.invalid": "Some of the input isn't valid. Check the fields and try again.",
   "err.unknown": "Something went wrong on our side. Try again in a moment.",
   "err.loadProfile": "We couldn't load your profile. Check your connection and reload.",

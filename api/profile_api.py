@@ -13,6 +13,7 @@ GET    /v1/share/{token}                          read-only report: company name
 Everything the merchant enters is merchant-stated and never verified here.
 """
 import importlib.util
+import math
 import os
 import time
 from collections import OrderedDict, deque
@@ -47,8 +48,9 @@ def rate_limit(request: Request, bucket: str, env: str, default: int):
     while q and now - q[0] > 60:
         q.popleft()
     if len(q) >= limit:
-        raise HTTPException(429, "too_many_requests: too many requests from this network; wait a minute and try again",
-                            headers={"Retry-After": "60"})
+        wait = max(1, math.ceil(60 - (now - q[0])))
+        raise HTTPException(429, f"too_many_requests: too many requests from this network; try again in {wait} s",
+                            headers={"Retry-After": str(wait)})
     q.append(now)
 NOINDEX = {"X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer"}
 Str = lambda n: Field("", max_length=n)  # noqa: E731
@@ -198,7 +200,7 @@ def _prepare(payload):
         _, page = safe_fetch.fetch_page(req.url)
     except safe_fetch.FetchError as e:
         raise HTTPException(e.status, e.detail)
-    return {**payload, "html": page}, main.ExtractRequest(url=payload["url"], html=page, language=payload.get("language"))
+    return {**payload, "html": page}, main.ExtractRequest(url=req.url, html=page, language=req.language)
 
 
 def _run(payload):
@@ -218,8 +220,8 @@ def _run(payload):
 def stored_audit(request: Request, payload: dict = Body(...)):
     """/v1/audit plus a stable, unlisted link: the result is kept under a random id (GET /v1/audits/{id}).
     Only the public product page's audit is stored; no personal data. Results expire after AUDIT_RESULT_TTL_DAYS
-    (default 90); the route is rate-limited per client (AUDIT_STORE_RATE_LIMIT per minute, default 20)."""
-    rate_limit(request, "audits", "AUDIT_STORE_RATE_LIMIT", 20)
+    (default 90); the route is rate-limited per client (AUDIT_STORE_RATE_LIMIT per minute, default 60)."""
+    rate_limit(request, "audits", "AUDIT_STORE_RATE_LIMIT", 60)
     result, record = _run(payload)
     return {"id": store.save_result(result, record), "audit": result, "record": record}
 

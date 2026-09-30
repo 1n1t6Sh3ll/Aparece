@@ -68,19 +68,19 @@ class FetchLimitTest(FetchCase):
             "https://shop.example.com/products/heavy-tee.json": [resp(429), resp(429)],
             self.URL: [resp(429, headers={"retry-after": "1"}), resp(429)]})
         self.assertEqual(r.status_code, 502)
-        self.assertEqual(r.json()["detail"], "upstream HTTP 429")
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
 
     def test_long_retry_after_not_waited(self):
         r, _, sleep = self.run_fetch({
             "https://shop.example.com/robots.txt": [resp(404)],
             "https://shop.example.com/products/heavy-tee.json": [resp(404)],
             self.URL: [resp(429, headers={"retry-after": "120"})]})
-        self.assertEqual(r.json()["detail"], "upstream HTTP 429")
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
         sleep.assert_not_called()
 
     def test_robots_429_is_retry_later(self):
         r, calls, _ = self.run_fetch({"https://shop.example.com/robots.txt": [resp(429), resp(429)]})
-        self.assertEqual(r.json()["detail"], "upstream HTTP 429 (robots.txt)")
+        self.assertEqual(r.json()["detail"], "store_rate_limited: upstream HTTP 429 (robots.txt)")
         self.assertNotIn(self.URL, calls)
 
     def test_robots_5xx_disallows_and_is_not_cached(self):
@@ -108,7 +108,7 @@ class FetchLimitTest(FetchCase):
         r, calls, _ = self.run_fetch({
             "https://shop.example.com/robots.txt": [resp(200, "User-agent: *\nDisallow: /products/*.json")],
             self.URL: [resp(429), resp(429)]})
-        self.assertEqual(r.json()["detail"], "upstream HTTP 429")
+        self.assertEqual(r.json()["detail"], safe_fetch.STORE_LIMITED)
         self.assertNotIn("https://shop.example.com/products/heavy-tee.json", calls)
 
 

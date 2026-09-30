@@ -19,7 +19,7 @@ type Recent = { url: string; title: string; score: number; pos: number; total: n
 export function runAudit(body: AuditBody) {
   return api<Audit>("/v1/audit", { method: "POST", body: JSON.stringify(body) });
 }
-export type Stored = { id: string | null; audit: Audit; record: Record<string, unknown> | null };
+export type Stored = { id: string | null; audit: Audit; record: Record<string, unknown> | null; notSaved?: number };
 /** Audit and keep the result under a stable unlisted id (#/report/<id>). Falls back to a plain /v1/audit (no stable
  * link) on older servers (404/405) or when saving fails on our side (500/503), so a storage fault never blocks an audit. */
 export async function runStoredAudit(body: AuditBody): Promise<Stored> {
@@ -28,6 +28,8 @@ export async function runStoredAudit(body: AuditBody): Promise<Stored> {
   } catch (e) {
     const missingRoute = e instanceof ApiError && ((e.status === 404 && e.detail === "Not Found") || e.status === 405);
     if (missingRoute || (e instanceof ApiError && (e.status === 500 || e.status === 503))) return { id: null, audit: await runAudit(body), record: null };
+    // our save limit: still show the audit (plain /v1/audit), only the stable link / history save is skipped
+    if (e instanceof ApiError && e.status === 429) return { id: null, audit: await runAudit(body), record: null, notSaved: e.retryAfter || 60 };
     throw e;
   }
 }
@@ -69,7 +71,7 @@ export default function AuditPage({ reportId }: { reportId?: string }) {
   const [draft, setDraft] = useState({ title: "", description: "", details: "", price: "", currency: "EUR", language: "" });
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [result, setResult] = useState<Audit | null>(null);
-  const [stored, setStored] = useState<{ id: string | null; record: Record<string, unknown> | null }>({ id: reportId || null, record: null });
+  const [stored, setStored] = useState<{ id: string | null; record: Record<string, unknown> | null; notSaved?: number }>({ id: reportId || null, record: null });
   const [err, setErr] = useState<{ msg: string; suggestText: boolean; openDraft?: boolean } | null>(null);
   const [formErr, setFormErr] = useState("");
   const [recent, setRecent] = useState<Recent[]>(recents);
@@ -102,7 +104,7 @@ export default function AuditPage({ reportId }: { reportId?: string }) {
     try {
       const r = await runStoredAudit(body);
       const a = r.audit;
-      setResult(a); setStored({ id: r.id, record: r.record }); setState("done");
+      setResult(a); setStored({ id: r.id, record: r.record, notSaved: r.notSaved }); setState("done");
       if (r.id) window.history.replaceState(null, "", `#/report/${r.id}`);  // stable link without remounting the workspace
       if (body.url) {
         const r: Recent = { url: body.url, title: a.product.title || body.url, score: a.rank.score, pos: a.rank.position, total: a.rank.total, at: new Date().toISOString() };
@@ -113,7 +115,7 @@ export default function AuditPage({ reportId }: { reportId?: string }) {
     } catch (e) {
       const x = errorText(e, t);
       setErr(x); setState("error");
-      if (x.openDraft && body.url) {  // rate-limited store: open the draft form with the link kept
+      if (x.openDraft && body.url) {  // robots / Amazon / bot check: open the draft form with the link kept
         setMode("draft");
         setDraft((d) => ({ ...d, details: d.details || `${t("hero.draftSource")}: ${body.url}` }));
       }
@@ -197,6 +199,7 @@ export default function AuditPage({ reportId }: { reportId?: string }) {
 
       <div className="min-w-0">
         {state === "loading" && <Working />}
+        {state === "done" && stored.notSaved && <p role="status" className="mb-3 text-xs muted">{t("ws.notSaved", { n: stored.notSaved })}</p>}
         {state === "done" && result && <Results audit={result} record={stored.record} reportId={stored.id} onReset={() => { setState("idle"); setResult(null); setStored({ id: null, record: null }); window.history.replaceState(null, "", "#/audit"); setTimeout(() => inputRef.current?.focus()); }} />}
         {state === "error" && err && (
           <ErrorBox title={t("err.title")} msg={err.msg}>

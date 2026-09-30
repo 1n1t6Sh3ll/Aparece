@@ -35,6 +35,7 @@ NOT_HTML = "not_a_web_page: this link is a PDF, image or other file, not a web p
 BLOCKED = ("blocked_by_store: this store blocks automated reading (access denied or a bot check). "
            "Paste the title and description instead.")
 NOT_FOUND = "page_not_found: the store says this page doesn't exist (HTTP {}). Check the URL; the product may be gone."
+STORE_LIMITED = "store_rate_limited: upstream HTTP 429"  # the store rate-limits us (not our own 429)
 GONE = ("product_gone: the link redirected to the store's home or search page, so the product is probably no longer "
         "listed. Check the URL or paste the title and description instead.")
 CHALLENGE_TITLE = re.compile(r"just a moment|attention required|access denied|captcha|robot or human|are you a robot"
@@ -172,7 +173,7 @@ def decode(body, ctype):
 
 
 def robots(p, deadline):
-    """robots.txt text for the host ("" if none), cached 1 h. Raises 'upstream HTTP 429' if it stays rate-limited:
+    """robots.txt text for the host ("" if none), cached 1 h. Raises STORE_LIMITED if it stays rate-limited:
     permission is unknown, so nothing else is fetched."""
     key = ("robots", p.scheme, p.netloc)
     hit = cached(key)
@@ -180,7 +181,7 @@ def robots(p, deadline):
         return hit
     _, status, text = get(f"{p.scheme}://{p.netloc}/robots.txt", deadline)
     if status == 429:
-        raise FetchError(502, "upstream HTTP 429 (robots.txt)")
+        raise FetchError(502, STORE_LIMITED + " (robots.txt)")
     if status >= 500:  # RFC 9309: server error = disallow for now; not cached
         raise FetchError(502, f"upstream HTTP {status} (robots.txt): store temporarily unavailable")
     return remember(key, text if status == 200 else "", ROBOTS_TTL)
@@ -265,6 +266,8 @@ def fetch_page(url):
         raise FetchError(403, BLOCKED)
     if status in (404, 410):
         raise FetchError(404, NOT_FOUND.format(status))
+    if status == 429:
+        raise FetchError(502, STORE_LIMITED)
     if status != 200:
         raise FetchError(502, f"upstream HTTP {status}")
     if went_home(url, final):

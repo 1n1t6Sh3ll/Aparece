@@ -87,7 +87,7 @@ class StoreAuditSmoke(unittest.TestCase):
 
     def test_fetch_failures_keep_their_reason(self):
         """Each store-side failure reaches the UI with the status and reason it maps to a specific message."""
-        cases = [(403, "robots.txt disallows this URL"), (502, "upstream HTTP 429"), (502, "upstream HTTP 429 (robots.txt)"),
+        cases = [(403, "robots.txt disallows this URL"), (502, safe_fetch.STORE_LIMITED), (502, safe_fetch.STORE_LIMITED + " (robots.txt)"),
                  (403, safe_fetch.BLOCKED), (422, safe_fetch.NO_AMAZON), (404, safe_fetch.NOT_FOUND.format(404)),
                  (404, safe_fetch.GONE), (400, safe_fetch.NO_HOST), (504, "fetch deadline exceeded"),
                  (415, safe_fetch.NOT_HTML)]
