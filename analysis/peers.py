@@ -3,6 +3,7 @@
 Hard filters (a candidate is excluded if any fails):
   - same identity.product_type (target must have one)
   - same source.language
+  - same commerce.currency, when the target's currency is known (even if its price is not)
   - price within +/-30% of the target price, when both prices are known and in the
     same known currency (otherwise the price criterion is skipped)
   - same identity.audience, when both audiences are known
@@ -45,6 +46,9 @@ def _eligible(t, c):
     if get(c, "identity", "product_type") != get(t, "identity", "product_type"):
         return False
     if get(c, "source", "language") != get(t, "source", "language"):
+        return False
+    tc = get(t, "commerce", "currency")
+    if tc and get(c, "commerce", "currency") != tc:
         return False
     if price_comparable(t, c) and abs(price(c) - price(t)) > PRICE_BAND * price(t):
         return False

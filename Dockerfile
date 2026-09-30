@@ -1,3 +1,11 @@
+# Audit UI (web/): Vite build, served by the API at "/"
+FROM node:22-slim AS web
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+RUN npm run build
+
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 MODEL_BACKEND=rules
 WORKDIR /app
@@ -8,6 +16,7 @@ COPY dataset/collect dataset/collect
 COPY api api
 COPY analysis analysis
 COPY dashboard dashboard
+COPY --from=web /web/dist web/dist
 COPY monitor monitor
 COPY benchmark benchmark
 RUN useradd --create-home --uid 10001 app && mkdir -p monitor/data && chown app monitor/data

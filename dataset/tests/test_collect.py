@@ -111,6 +111,12 @@ class Collection(unittest.TestCase):
 class EndToEnd(unittest.TestCase):
     """A synthetic Shopify product + page must yield schema-valid records with resolvable evidence."""
 
+    def test_no_variants_availability_unknown(self):
+        raw = build_raw({"title": "Plain Tee"}, "<html lang='en'><title>Plain Tee</title></html>", "https://shop.com/p/t",
+                        "https://shop.com/p/t", {"merchant": "Shop", "domain": "shop.com"}, "2026-09-29T00:00:00Z")
+        self.assertIsNone(raw["raw_availability_text"])
+        self.assertIsNone(build_normalized(raw)["commerce"]["availability"])
+
     def test_records_validate(self):
         product = {"title": "Heavy Tee Black", "handle": "heavy-tee", "vendor": "Shop", "product_type": "T-Shirts",
                    "body_html": "<p>Oversized tee.</p><ul><li>100% organic cotton</li><li>240 gsm</li><li>Short sleeves</li></ul>",

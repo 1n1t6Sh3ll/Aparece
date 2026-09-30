@@ -233,7 +233,8 @@ def build_raw(product, html, url, final_url, store, scraped_at):
         "raw_return_text": section_text("returns"),
         "raw_price_text": text_or_none(str(compare if on_sale else first.get("price") or "")),
         "raw_sale_price_text": str(first["price"]) if on_sale else None,
-        "raw_availability_text": "true" if any(v.get("available") for v in product.get("variants", [])) else "false",
+        "raw_availability_text": ("true" if any(v.get("available") for v in product["variants"]) else "false")
+        if product.get("variants") else None,  # no variants/offers: availability unknown, not out of stock
         "raw_rating_text": text_or_none(str(rating.get("ratingValue", ""))) if rating else None,
         "raw_review_count_text": text_or_none(str(rating.get("reviewCount") or rating.get("ratingCount") or "")) if rating else None,
         "raw_category_text": text_or_none(product.get("product_type")),
