@@ -92,6 +92,12 @@ export default function Shell({ page, children }: { page: string; children: Reac
   const [drawer, setDrawer] = useState(false);
   const [help, setHelp] = useState(false);
   useEffect(() => setDrawer(false), [page]);
+  useEffect(() => {
+    if (!drawer) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawer(false); };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [drawer]);
 
   const go = useMemo(() => Object.fromEntries(NAV.map((n) => [n.key, n.to])), []);
   const keys = useMemo(() => ({
@@ -132,11 +138,13 @@ export default function Shell({ page, children }: { page: string; children: Reac
       {drawer && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label={t("nav.menu")}>
           <div className="absolute inset-0 bg-stone-950/50" onClick={() => setDrawer(false)} />
-          <aside className="absolute inset-y-0 left-0 flex w-64 flex-col bg-[var(--sidebar)] rise">{brand}{nav}{foot}</aside>
+          <aside className="absolute inset-y-0 left-0 flex w-64 flex-col bg-[var(--sidebar)] rise">
+            <button className="absolute right-3 top-5 rounded-md p-1.5 text-[var(--sidebar-ink)] hover:bg-white/10" onClick={() => setDrawer(false)} aria-label={t("nav.closeMenu")} autoFocus><X className="size-5" aria-hidden /></button>
+            {brand}{nav}{foot}</aside>
         </div>
       )}
       <header className="no-print sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-[var(--border)] bg-[var(--surface)] px-4 sm:px-6">
-        <button className="btn-ghost -ml-2 p-2 lg:hidden" onClick={() => setDrawer(true)} aria-label={t("nav.menu")}><Menu className="size-5" aria-hidden /></button>
+        <button className="btn-ghost -ml-2 p-2 lg:hidden" onClick={() => setDrawer(true)} aria-label={t("nav.menu")} aria-expanded={drawer}><Menu className="size-5" aria-hidden /></button>
         <p className="mr-auto min-w-0 truncate text-sm font-semibold max-sm:sr-only">{t(NAV.find((n) => active(n.to))?.label || (page === "onboarding" ? "ob.title" : page === "signin" ? "home.signin" : "nf.title"))}</p>
         <span className="flex-1 sm:hidden" aria-hidden />
         <button className="btn-ghost p-2" onClick={() => setLang(lang === "en" ? "es" : "en")} aria-label={t("nav.lang")} title={t("nav.lang")}>

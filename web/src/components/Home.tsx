@@ -84,7 +84,7 @@ export function Landing() {
 
       <section className="border-y border-[var(--border)] bg-[var(--bg)]">
         <dl className="mx-auto grid max-w-5xl grid-cols-2 gap-6 px-4 py-8 text-center sm:grid-cols-4">
-          {[[total ? total.toLocaleString(lang) : "–", t("land.stat.products")], ["23", t("land.stat.facts")], ["EN · ES", t("land.stat.langs")], ["0", t("land.stat.invented")]].map(([v, l]) => (
+          {[[total ? total.toLocaleString(lang) : "–", t("land.stat.products")], ["22", t("land.stat.facts")], ["EN · ES", t("land.stat.langs")], ["0", t("land.stat.invented")]].map(([v, l]) => (
             <div key={l}><dt className="text-xs muted">{l}</dt><dd className="mt-1 text-2xl font-bold tabular-nums">{v}</dd></div>
           ))}
         </dl>

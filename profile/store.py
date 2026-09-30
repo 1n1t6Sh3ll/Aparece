@@ -1,6 +1,9 @@
 """Merchant profile store (TEAM-45). Own SQLite file; nothing here is shared with monitor/ or governance/.
 
 PROFILE_DB: database path (default profile/data/profile.db).
+Why a hash lookup is enough (no constant-time compare): tokens are 256-bit random values and only their SHA-256 is
+stored; lookup is `WHERE token_hash = ?` on the hash, so timing can at most leak bytes of a hash of an unguessable
+secret, which does not help an attacker find the token. Share and result ids are 128/192-bit random and unlisted.
 Access tokens and share tokens are random (secrets.token_urlsafe); only the SHA-256 of the access token is stored,
 so a token is shown once at sign-up and cannot be recovered. Everything the merchant types is merchant-stated and
 never verified by ProductLens; audits are stored as returned by /v1/audit.
@@ -11,7 +14,7 @@ import os
 import secrets
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 DEFAULT_DB = Path(__file__).resolve().parent / "data" / "profile.db"
@@ -182,10 +185,16 @@ def shared(share_token):
         return _profile(db, row, full=False) if row else None
 
 
+def ttl_cutoff():
+    days = float(os.environ.get("AUDIT_RESULT_TTL_DAYS") or 90)
+    return (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
 def save_result(audit, record):
-    """Keeps one audit under a random unlisted id (the stable report link). Returns the id."""
+    """Keeps one audit under a random unlisted id (the stable report link) and purges expired ones. Returns the id."""
     rid = secrets.token_urlsafe(16)
     with connect() as db:
+        db.execute("DELETE FROM results WHERE created_at < ?", (ttl_cutoff(),))
         db.execute("INSERT INTO results (id, audit, record, created_at) VALUES (?, ?, ?, ?)",
                    (rid, json.dumps(audit), json.dumps(record), utcnow()))
     return rid
@@ -193,6 +202,6 @@ def save_result(audit, record):
 
 def result(rid):
     with connect() as db:
-        r = db.execute("SELECT * FROM results WHERE id = ?", (rid,)).fetchone()
+        r = db.execute("SELECT * FROM results WHERE id = ? AND created_at >= ?", (rid, ttl_cutoff())).fetchone()
         return r and {"id": r["id"], "audit": json.loads(r["audit"]), "record": json.loads(r["record"]) if r["record"] else None,
                       "created_at": r["created_at"]}

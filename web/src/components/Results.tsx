@@ -11,6 +11,7 @@ import { useToast } from "../ui";
 import { PriceChart, RankChart, ScoreBreakdown } from "./Charts";
 import { CompareTable, Tip } from "./RankParts";
 import FixPanel, { type FixDecision } from "./FixPanel";
+import { factCount } from "../facts";
 import { CompareLink } from "../pages/AiComparison";
 
 const LABEL_STYLE: Record<Label, string> = {
@@ -248,6 +249,7 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
   const comparable = audit.rank.total - 1;
   const cmp = audit.comparison;
   const s = audit.summary;
+  const fc = factCount(audit);
   const pp = audit.price_position;
   const live = !!p.url && !p.url.includes("unknown.invalid");
 
@@ -294,8 +296,8 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
         </div>
         <div className="card p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium muted"><ScanSearch className="size-3.5" aria-hidden /> {t("compare.facts")}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{s.facts_found}<span className="text-sm font-medium muted"> / {s.attributes_checked}</span></p>
-          <p className="text-xs muted">{cmp.of && s.top_median_facts != null ? t("ws.topMedian", { m: s.top_median_facts }) : t("ws.noCompare")}</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">{fc.n}<span className="text-sm font-medium muted"> / {fc.of}</span></p>
+          <p className="text-xs muted">{fc.topMedian != null ? t("ws.topMedian", { m: fc.topMedian }) : t("ws.noCompare")}</p>
         </div>
         <div className="card p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium muted"><Tag className="size-3.5" aria-hidden /> {t("price.title")}</p>
@@ -309,7 +311,7 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
           {top.length === 0 ? t("res.headline0") : top.length === 3 ? t("res.headline") : top.length === 1 ? t("res.headline1") : t("res.headlineN", { n: top.length })}
         </h2>
         <p className="mt-1 text-sm muted">
-          {cmp.of ? t("res.sentence", { facts: s.facts_found, of: s.attributes_checked, median: s.top_median_facts ?? 0 }) : t("res.sentenceNoPeers", { facts: s.facts_found, of: s.attributes_checked })}
+          {fc.topMedian != null ? t("res.sentence", { facts: fc.n, of: fc.of, median: fc.topMedian }) : t("res.sentenceNoPeers", { facts: fc.n, of: fc.of })}
         </p>
         {top.length > 0 && (
           <ol className="mt-4 grid gap-3 md:grid-cols-3">

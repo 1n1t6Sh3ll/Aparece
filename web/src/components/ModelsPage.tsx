@@ -8,6 +8,7 @@ type Model = Rates & {
   label: string; field_exact?: Record<string, number>; by_language?: Record<string, Rates>;
   cost_per_1k_usd?: number | null; latency_ms?: number | null; time_s?: number | null;
   settings?: string | Record<string, unknown> | null;
+  answered?: number; total?: number; partial?: boolean;
 };
 type Comparison = { available: boolean; sample: boolean; generated_at: string | null; test: { products?: number; stores?: number; note?: string };
   models: Record<string, Model>; new_fields: string[] };
@@ -57,6 +58,11 @@ export default function ModelsPage() {
   const showLatency = ms.some(({ m }) => latency(m));
   const best = (f: (m: Model) => number | null | undefined) => Math.max(...contenders.map(({ m }) => f(m) ?? -1));
   const n = data.test.products;
+  /** [answered, total] when a model answered fewer products than the test set (or the run marks it partial). */
+  const partial = (m: Model): [number, number] | null => {
+    const a = m.answered ?? m.n, tot = m.total ?? n;
+    return a != null && tot != null && (m.partial || a < tot) ? [a, tot] : null;
+  };
 
   const cell = (v: string | null, isBest = false) => v == null
     ? <span className="text-xs text-stone-400">{t("mod.notMeasured")}</span>
@@ -109,6 +115,7 @@ export default function ModelsPage() {
                       {m.label}
                       {k === BASELINE && <span className="chip bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300">{t("mod.baseline")}</span>}
                       {k === winner?.k && <span className="chip bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">{t("mod.best")}</span>}
+                      {partial(m) && <span className="chip bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">{t("mod.partial", { a: partial(m)![0], n: partial(m)![1] })}</span>}
                     </span>
                   </th>
                   <td className="px-3 py-3">{cell(pct(m.non_null_acc), k !== BASELINE && m.non_null_acc === best((x) => x.non_null_acc))}</td>
@@ -218,7 +225,7 @@ function FieldTable({ title, sub, ms, fields }: { title: string; sub?: string; m
 }
 
 function Method({ data }: { data: Comparison }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const s = data.test.products ? (data.test.stores ? t("mod.productsStores", { p: data.test.products, s: data.test.stores }) : t("mod.products", { p: data.test.products })) : "";
   const fmt = (v: unknown) => typeof v === "string" ? v
     : v && typeof v === "object" ? Object.entries(v as Record<string, unknown>).map(([k, x]) => `${k.replace(/_/g, " ")} ${typeof x === "object" ? JSON.stringify(x) : String(x)}`).join(", ") : "";
@@ -232,7 +239,7 @@ function Method({ data }: { data: Comparison }) {
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
           <li>{s ? t("mod.m1", { s }) : t("mod.m1NoN")}</li><li>{t("mod.m2")}</li><li>{t("mod.m3")}</li>
           {hasBaseline && <li>{t("mod.m4")}</li>}
-          {data.test.note && <li>{t("mod.runNote", { n: data.test.note })}</li>}
+          {data.test.note && <li>{t("mod.runNote", { n: data.test.note })}{lang !== "en" && <span className="muted"> ({t("mod.origEn")})</span>}</li>}
         </ul>
         {settings.length > 0 && (
           <>

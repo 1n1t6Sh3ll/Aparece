@@ -5,6 +5,7 @@ import { papi, productName, type Decision, type Product, type Profile, type Shar
 import { useSession } from "../session";
 import { Empty } from "../ui";
 import { csvCell } from "./BulkPage";
+import { factCount } from "../facts";
 import FixPanel, { type FixDecision } from "./FixPanel";
 import { actionText } from "./Results";
 
@@ -20,13 +21,15 @@ function ProductCard({ p, owner, onChange }: { p: Product; owner: boolean; onCha
   const a = p.audit;
   return (
     <article className="card break-inside-avoid p-5">
-      <header className="flex flex-wrap items-start gap-2">
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-start">
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold">{productName(p)}</h3>
+          <h3 className="break-words font-semibold">{productName(p)}</h3>
           {p.url && <p className="truncate text-xs muted">{p.url}</p>}
         </div>
+        <div className="flex shrink-0 flex-wrap gap-1.5">
         {p.merchant_stated && <span className="chip bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("label.merchantStated")}</span>}
         {a && <span className="chip bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">{a.rank.total > 1 ? t("rep.rank", { pos: a.rank.position, total: a.rank.total }) : t("rep.noPeers")} · {a.rank.score}/100</span>}
+        </div>
       </header>
       {!a ? <p className="mt-3 text-sm muted">{t("rep.notAudited")}</p> : (
         <div className="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
@@ -36,7 +39,7 @@ function ProductCard({ p, owner, onChange }: { p: Product; owner: boolean; onCha
             {!a.actions.length && <p className="muted">{t("rep.noFixes")}</p>}
           </div>
           <div>
-            <p className="font-medium">{t("rep.found", { n: a.summary.facts_found, of: a.summary.attributes_checked })}</p>
+            <p className="font-medium">{t("rep.found", { n: factCount(a).n, of: factCount(a).of })}</p>
             <p className="mt-1 muted">{t("rep.notFound")}: {a.not_found.slice(0, 6).map((x) => fieldLabel(lang, x.field)).join(", ") || "-"}</p>
           </div>
           <div>
@@ -76,8 +79,8 @@ function csv(name: string, products: Product[], t: T, lang: Lang) {
   const rows = products.map((p) => {
     const a = p.audit;
     const f = a ? a.actions.slice(0, 3).map((x) => actionText(x, a, t, lang).title) : [];
-    return [productName(p), p.source, p.merchant_stated, p.url, a?.rank.position, a?.rank.total, a?.rank.score, a?.summary.facts_found,
-      a?.summary.attributes_checked, f[0], f[1], f[2], a?.product.price, a?.product.currency, a?.price_position.position,
+    return [productName(p), p.source, p.merchant_stated, p.url, a?.rank.position, a?.rank.total, a?.rank.score, a && factCount(a).n,
+      a && factCount(a).of, f[0], f[1], f[2], a?.product.price, a?.product.currency, a?.price_position.position,
       a ? a.visibility.available : ""].map(csvCell).join(",");
   });
   const link = document.createElement("a");

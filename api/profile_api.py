@@ -13,10 +13,13 @@ GET    /v1/share/{token}                          read-only report: company name
 Everything the merchant enters is merchant-stated and never verified here.
 """
 import importlib.util
+import os
+import time
+from collections import OrderedDict, deque
 from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, Body, Header, HTTPException, Response
+from fastapi import APIRouter, Body, Header, HTTPException, Request, Response
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 import audit_api
@@ -28,6 +31,24 @@ store = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(store)
 
 router = APIRouter(prefix="/v1", tags=["profile"])
+_hits: "OrderedDict[tuple[str, str], deque]" = OrderedDict()
+
+
+def rate_limit(request: Request, bucket: str, env: str, default: int):
+    """Per-client sliding window (60 s) for the anonymous write routes. Proxy headers are trusted only with
+    PROFILE_TRUST_PROXY=1 (same rule as monitor_api)."""
+    fwd = request.headers.get("x-forwarded-for")
+    ip = fwd.split(",")[-1].strip() if fwd and os.environ.get("PROFILE_TRUST_PROXY") == "1" else (request.client.host if request.client else "?")
+    limit, now, key = int(os.environ.get(env) or default), time.monotonic(), (bucket, ip)
+    q = _hits.pop(key, None) or deque()
+    _hits[key] = q
+    while len(_hits) > 10000:
+        _hits.popitem(last=False)
+    while q and now - q[0] > 60:
+        q.popleft()
+    if len(q) >= limit:
+        raise HTTPException(429, "too many requests; try again in a minute")
+    q.append(now)
 NOINDEX = {"X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer"}
 Str = lambda n: Field("", max_length=n)  # noqa: E731
 Lst = lambda n: Field(default_factory=list, max_length=n)  # noqa: E731
@@ -110,7 +131,8 @@ def need(value):
 
 
 @router.post("/profile", status_code=201)
-def create(body: CreateIn):
+def create(body: CreateIn, request: Request):
+    rate_limit(request, "profile", "PROFILE_CREATE_RATE_LIMIT", 5)
     token, prof = store.create(stored_profile(body), [p.stored() for p in body.products])
     return {"token": token, "token_note": "Shown once. Store it safely; it cannot be recovered.", "profile": prof}
 
@@ -186,9 +208,11 @@ def _run(payload):
 
 
 @router.post("/audits", status_code=201)
-def stored_audit(payload: dict = Body(...)):
+def stored_audit(request: Request, payload: dict = Body(...)):
     """/v1/audit plus a stable, unlisted link: the result is kept under a random id (GET /v1/audits/{id}).
-    Only the public product page's audit is stored; no personal data."""
+    Only the public product page's audit is stored; no personal data. Results expire after AUDIT_RESULT_TTL_DAYS
+    (default 90); the route is rate-limited per client (AUDIT_STORE_RATE_LIMIT per minute, default 20)."""
+    rate_limit(request, "audits", "AUDIT_STORE_RATE_LIMIT", 20)
     result, record = _run(payload)
     return {"id": store.save_result(result, record), "audit": result, "record": record}
 
