@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "dataset" / "collec
 from bs4 import BeautifulSoup  # noqa: E402
 from fastapi import FastAPI, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from fastapi.staticfiles import StaticFiles  # noqa: E402
+from fastapi.responses import RedirectResponse  # noqa: E402
 from pydantic import BaseModel, Field, model_validator  # noqa: E402
 
 from extract import as_list, build_raw, json_ld_nodes, ld_type  # noqa: E402
@@ -59,7 +59,13 @@ try:  # TEAM-51 outgoing webhooks; webhooks/ may be missing from older images
     app.include_router(webhooks_api.router)
 except ModuleNotFoundError:
     pass
-app.mount("/dashboard", StaticFiles(directory=Path(__file__).resolve().parents[1] / "dashboard", html=True), name="dashboard")
+
+
+@app.get("/dashboard", include_in_schema=False)
+@app.get("/dashboard/{rest:path}", include_in_schema=False)
+def old_dashboard(rest: str = ""):
+    """The static analyst dashboard was replaced by the web app at "/"; keep old links working."""
+    return RedirectResponse("/", status_code=307)
 
 
 class ExtractRequest(BaseModel):

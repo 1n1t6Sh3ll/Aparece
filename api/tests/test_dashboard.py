@@ -117,10 +117,10 @@ class DashboardApiTest(unittest.TestCase):
                 self.assertEqual(client.get(f"/v1/products/p_badfields{path}").status_code, 200, path)
             self.assertEqual(client.get("/v1/languages").status_code, 200)
 
-    def test_dashboard_served(self):
-        r = client.get("/dashboard/")
-        self.assertEqual(r.status_code, 200)
-        self.assertIn("ProductLens", r.text)
+    def test_old_dashboard_redirects(self):
+        for path in ("/dashboard", "/dashboard/", "/dashboard/app.js"):
+            r = client.get(path, follow_redirects=False)
+            self.assertEqual((r.status_code, r.headers["location"]), (307, "/"), path)
 
 
 if __name__ == "__main__":

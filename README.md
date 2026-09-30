@@ -10,7 +10,7 @@ flowchart LR
   B --> C[Compare / rank vs peers]
   B --> D[AI visibility benchmark]
   D --> E[Hallucination check<br/>AI answers vs ground truth]
-  C --> F[Actions<br/>audit site, dashboard, extension]
+  C --> F[Actions<br/>web app, extension]
   E --> F
   F --> G[Monitoring<br/>snapshots + change events]
   G --> A
@@ -29,12 +29,12 @@ Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | `benchmark/` | AI-visibility benchmark harness |
 | `monitor/` | Scheduled crawls, snapshots, change events |
 | `webhooks/` | Outgoing merchant webhooks: signed, retried, SSRF-checked deliveries (`/v1/webhooks`, [docs/WEBHOOKS.md](docs/WEBHOOKS.md)) |
-| `dashboard/`, `extension/` | Analyst dashboard (served at `/dashboard/`) and MV3 Chrome popup |
+| `extension/` | MV3 Chrome popup |
 | `train/` | Optional Qwen2.5-1.5B QLoRA extractor (GPU; not needed to run the demo) |
 
 ## Quickstart
 
-Docker (one command; audit site at http://127.0.0.1:8000/, dashboard at `/dashboard/`, API docs at `/docs`):
+Docker (one command; audit site at http://127.0.0.1:8000/, API docs at `/docs`):
 
 ```sh
 docker compose up --build
@@ -51,12 +51,12 @@ Without Docker (Python 3.12+; creates `.venv`, installs `api/requirements.txt`, 
 Demo with bundled fixtures (no downloads, no keys):
 
 ```sh
-tools/demo_data.sh   # then open http://127.0.0.1:8000/dashboard/
+tools/demo_data.sh   # then open http://127.0.0.1:8000/
 ```
 
 Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. Never commit `.env`.
 
-The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps1` build it when `npm` is available (else `cd web && npm ci && npm run build`; dev server: `npm run dev`, proxies `/v1` to :8000). Without it the API and `/dashboard/` still work.
+The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps1` build it when `npm` is available (else `cd web && npm ci && npm run build`; dev server: `npm run dev`, proxies `/v1` to :8000). Without it the API still works. The old static `/dashboard/` was removed; `/dashboard*` redirects to `/`.
 
 Main routes: `GET /v1/health`, `POST /v1/audit` (`{url}`, `{html|text}` or a draft `{title, text, price?, currency?, language?}`), `POST /v1/extract`, `GET /v1/products?q=`, `/v1/products/{id}/gaps`, `/v1/visibility`, `/v1/eval`, `POST /v1/enroll`, `GET /v1/governance/policy`, `GET /v1/audit-log` and `GET /v1/approvals` (need `X-Manage-Token`, which returns only your products, or `X-Governance-Admin-Token` = `GOVERNANCE_ADMIN_TOKEN` for the full view), `POST /v1/approvals` (disabled unless `GOVERNANCE_TOKEN` is set). Details at `/docs`.
 
@@ -118,8 +118,8 @@ python -m benchmark.harness run ... --models anthropic:<model> --max-usd 5
 
 No results are claimed in this README. Numbers appear only when the evaluation files exist in your checkout:
 
-- Extraction eval: `train/runs/eval.json` (from `train/eval.py`), shown at `/dashboard/` (Models) and `GET /v1/eval`.
-- AI visibility: `benchmark/reports/report.json` (from `benchmark.harness report`), shown at `/dashboard/` (AI visibility) and `GET /v1/visibility`.
+- Extraction eval: `train/runs/eval.json` (from `train/eval.py`), served at `GET /v1/eval`.
+- AI visibility: `benchmark/reports/report.json` (from `benchmark.harness report`), served at `GET /v1/visibility`.
 - Dataset stats: `dataset/output/final/stats.json`.
 
 These outputs are git-ignored or generated locally; the files under `api/tests/fixtures/` are test fixtures, not results.

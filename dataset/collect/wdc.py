@@ -255,9 +255,6 @@ def build_raw_wdc(tree, page_url):
     }
 
 
-ENTITY = re.compile(r"&(?:#\d+|#x[0-9a-f]+|[a-z]+\d*);", re.I)
-
-
 def decode(text):
     """HTML entities (also double-encoded) and literal \\uXXXX escapes -> characters. Normalized text only."""
     if not isinstance(text, str):
