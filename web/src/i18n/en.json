@@ -720,5 +720,12 @@
   "mod.origEn": "original text in English",
   "pd.enterToken": "Manage key",
   "pd.useToken": "Open history",
-  "nav.closeMenu": "Close menu"
+  "nav.closeMenu": "Close menu",
+  "ob.whyCompany": "These answers shape your audits: your store link prefills product links, your first market and language set draft defaults, and competitor links become one-click audits to compare against.",
+  "ob.websiteHint": "Your store's home page. New product links start from it.",
+  "ob.sellsHint": "Your category, e.g. men's organic cotton T-shirts.",
+  "ob.marketsHint": "Country codes, comma-separated. The first one sets the draft currency.",
+  "ob.languagesHint": "en or es, comma-separated. The first one is the draft language.",
+  "ob.competitorsHint": "One link per line. You can audit each one from My products.",
+  "pr.auditCompetitor": "Audit a competitor"
 }

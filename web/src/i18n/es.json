@@ -720,5 +720,12 @@
   "mod.origEn": "texto original en inglés",
   "pd.enterToken": "Clave de gestión",
   "pd.useToken": "Abrir historial",
-  "nav.closeMenu": "Cerrar menú"
+  "nav.closeMenu": "Cerrar menú",
+  "ob.whyCompany": "Estas respuestas guían tus auditorías: el enlace de tu tienda rellena los enlaces de producto, tu primer mercado e idioma fijan los valores del borrador y los enlaces de la competencia se auditan con un clic para comparar.",
+  "ob.websiteHint": "La página de inicio de tu tienda. Los nuevos enlaces de producto parten de ella.",
+  "ob.sellsHint": "Tu categoría, p. ej. camisetas de algodón orgánico para hombre.",
+  "ob.marketsHint": "Códigos de país separados por comas. El primero fija la moneda del borrador.",
+  "ob.languagesHint": "en o es, separados por comas. El primero es el idioma del borrador.",
+  "ob.competitorsHint": "Un enlace por línea. Puedes auditar cada uno desde Mis productos.",
+  "pr.auditCompetitor": "Auditar a un competidor"
 }

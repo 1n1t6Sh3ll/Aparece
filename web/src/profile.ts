@@ -53,3 +53,19 @@ export const emptyCompany = (): Company => ({ name: "", website: "", sells: "", 
 export function productName(p: Product) {
   return p.audit?.product.title || p.title || p.url || `#${p.id}`;
 }
+
+/** Audit defaults from the company profile: store origin for product links, draft language and currency. */
+export function auditDefaults(c: Pick<Company, "website" | "languages" | "markets">, fallbackLang: string) {
+  let origin = "";
+  try { if (c.website) origin = new URL(c.website).origin; } catch { /* not a full URL */ }
+  const l = (c.languages[0] || "").toLowerCase().slice(0, 2);
+  const m = (c.markets[0] || "").trim().toUpperCase();
+  const currency = m === "US" ? "USD" : m === "GB" || m === "UK" ? "GBP" : m === "MX" ? "MXN" : "EUR";
+  return { origin, currency, language: l === "en" || l === "es" ? l : fallbackLang, placeholder: origin ? `${origin}/products/...` : "" };
+}
+
+/** Send a URL to the audit page (it runs on arrival). */
+export function auditUrl(url: string) {
+  sessionStorage.setItem("pl.pendingUrl", url);
+  window.location.hash = "/audit";
+}
