@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 from benchmark.match import load_catalog
-from benchmark.metrics import (claim_accuracy_passthrough, competitor_win_rate,
+from benchmark.metrics import (build_report, claim_accuracy_passthrough, competitor_win_rate,
                                language_visibility_gap)
 
 CATALOG = str(Path(__file__).resolve().parent.parent / "examples" / "catalog.example.jsonl")
@@ -38,6 +38,23 @@ class CompetitorMetricTests(unittest.TestCase):
         self.assertEqual((g["v_en"], g["v_es"], g["lvg"]), (0.5, 0.0, 0.5))
         only_en = language_visibility_gap([resp("x")], self.products)["models"]["m1"]["p_solana_heavy"]
         self.assertIsNone(only_en["lvg"])
+
+    def test_report_product_rows_and_lvg(self):
+        recs = [dict(resp("1. Solana Basics Heavy Tee"), split="dev"),
+                dict(resp("nada"), split="dev"),
+                dict(resp("1. Solana Basics Heavy Tee", lang="es"), split="val"),
+                dict(resp("nada", lang="es"), split="dev")]
+        rep = build_report(recs, self.products)
+        self.assertIn("models", rep)  # existing keys kept
+        rows = {(r["model"], r["product_id"], r["language"], r["split"]): r for r in rep["product_rows"]}
+        en_dev = rows[("m1", "p_solana_heavy", "en", "dev")]
+        self.assertEqual((en_dev["runs"], en_dev["mention_rate"], en_dev["top3_rate"], en_dev["mrr"]),
+                         (2, 0.5, 0.5, 0.5))
+        self.assertIn("citation_rate", en_dev)
+        self.assertEqual(rows[("m1", "p_solana_heavy", "es", "val")]["mention_rate"], 1.0)
+        self.assertEqual(rows[("m1", "p_solana_heavy", "es", "dev")]["mention_rate"], 0.0)
+        g = rep["lvg"]["models"]["m1"]["p_solana_heavy"]
+        self.assertEqual((g["v_en"], g["v_es"], g["lvg"]), (0.5, 0.5, 0.0))
 
     def test_claim_passthrough(self):
         rep = {"overall": {"claim_accuracy": 0.8},
