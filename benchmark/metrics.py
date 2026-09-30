@@ -73,7 +73,10 @@ def build_report(records, products, k=3):
         langs = defaultdict(list)
         for r, m in pairs:
             langs[r["language"]].append((r, m))
-        out["languages"] = {lang: _summary([p[0] for p in lp], [p[1] for p in lp], products, k)
+        ids = {p["product_id"]: p["product_id"] for p in products}
+        out["languages"] = {lang: dict(_summary([p[0] for p in lp], [p[1] for p in lp], products, k),
+                                       products=_entity_rows([p[1] for p in lp], ids,
+                                                             lambda m: m["cited_products"], k))
                             for lang, lp in sorted(langs.items())}
         models[model] = out
     unmatched = Counter((u["kind"], u["text"]) for m in matched for u in m["unmatched"])
