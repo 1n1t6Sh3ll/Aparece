@@ -151,6 +151,21 @@ Each part is then scored as follows. `score.py` is `benchmark/shootout/score.py`
 | Live run (any product) | Same generators, fact-check, scores and winners, with no shopping test and no visibility numbers | `benchmark/shootout/live.py` → `compare` |
 
 
+### How tags work
+
+1. **Making tags.**
+   - **Aparece** builds up to 8 tags straight from the verified facts, in this order: product type, materials (largest share first), fit, sleeve, neckline, pattern, audience, colours, weight in gsm. For example: `t-shirt, viscose, elastane, short sleeves, crew neck, for men, black`. See `benchmark/shootout/score.py` → `fact_tags`.
+   - **AI models** write their own tags from the same facts.
+2. **Checking each tag.** Every tag goes through the same fact-check as a sentence: every word must come from the verified facts, or be the product's own brand or name. A tag like `organic cotton` on a viscose shirt is marked false and crossed out on the page. See `score.py` → `tags_audit`.
+3. **Scoring the tag set.**
+   ```
+   tags score = average(fact relevance, intent relevance, language match) × (unique tags ÷ tags) × (passing tags ÷ unique tags)
+   ```
+   - **fact relevance** is the share of tags that name a verified fact or the product type.
+   - **intent relevance** is the share that match words shoppers use in the benchmark questions.
+   - **language match** is the share written in the page's language.
+4. **Winner and recommendation.** The tag set with the best score among those with no false tag wins. The recommended tags start with the winner's passing tags, then add passing tags from the other writers, up to 8 with no duplicates. See `report.py` → `part_winners`, `merged`.
+
 ### Vision and where it is in the code
 
 The goal ([VISION.md](VISION.md)) is a platform that helps small shops understand, improve and track how search and AI shopping assistants see their products. It runs a loop: **measure → compare → recommend → track → experiment → learn**, where every recommendation is backed by evidence. It answers five questions:
