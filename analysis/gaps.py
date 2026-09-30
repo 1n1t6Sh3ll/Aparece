@@ -60,27 +60,46 @@ def description_text(rec):
     return "\n".join(p for p in parts if p)
 
 
-# Shopper questions a shirt description can answer (EN/ES). Each counts once however often it is mentioned,
-# so repeating keywords adds nothing.
+# Shopper questions a shirt description can answer (EN/ES), each tied to a VERIFIED fact of the same record:
+# an intent counts only when the description mentions it in prose AND the matching fact was extracted
+# (e.g. "organic" only when the material fact is organic; care words only with care facts). Claims we cannot
+# verify (certifications such as GOTS, "made in", size guides, "soft") never count. Each intent counts once.
+def _has(*fields):
+    return lambda r: any(_present(get(r, *f.split("."))) for f in fields)
+
+
 INTENTS = {
-    "material": r"\b(?:cotton|polyester|linen|wool|merino|viscose|modal|lyocell|tencel|elastane|spandex|nylon|hemp|"
-                r"bamboo|algod[oó]n|poli[eé]ster|lino|lana)\b",
-    "composition": r"\b\d{1,3}\s?%",
-    "fabric": r"\b(?:jersey|piqu[eé]|pique|oxford|poplin|popelina|twill|flannel|franela|rib|interlock|slub|knit|"
-              r"punto|gsm|oz|g/m)\b",
-    "fit": r"\b(?:slim|regular|relaxed|oversized?|boxy|classic|athletic|loose|tailored|holgad[oa]|ajustad[oa])\b"
-           r"|\bfit\b|\bcorte\b",
-    "neck_or_collar": r"\b(?:crew|v-neck|neck|neckline|collar|henley|cuello|mock)\b",
-    "sleeve": r"\bsleeves?\b|\bmangas?\b|\bsleeveless\b",
-    "size_guide": r"\b(?:model|wearing|size guide|sizing|true to size|measurements|chest|lleva|talla|gu[ií]a de tallas|"
-                  r"medidas)\b",
-    "care": r"\b(?:wash|washing|machine|tumble|dry|iron|bleach|lavar|lavado|secadora|planchar)\b",
-    "origin_or_certification": r"\b(?:made in|hecho en|fabricado en|organic|org[aá]nico|gots|oeko|fair ?trade|"
-                               r"recycled|reciclad[oa]|certified|certificad[oa])\b",
-    "feel_or_feature": r"\b(?:soft|breathable|stretch|durable|lightweight|heavyweight|pre-?shrunk|moisture|"
-                       r"suave|transpirable|el[aá]stic[oa]|ligera|resistente)\b",
+    "material": (r"\b(?:cotton|polyester|linen|wool|merino|viscose|modal|lyocell|tencel|elastane|spandex|nylon|hemp|"
+                 r"bamboo|algod[oó]n|poli[eé]ster|lino|lana)\b", _has("materials.primary_material")),
+    "organic_material": (r"\borganic\b|\borg[aá]nic[oa]\b",
+                         lambda r: "organic" in str(get(r, "materials", "primary_material") or "")),
+    "composition": (r"\b\d{1,3}\s?%", _has("materials.material_percentages")),
+    "fabric": (r"\b(?:jersey|piqu[eé]|pique|oxford|poplin|popelina|twill|flannel|franela|rib|interlock|slub|knit|"
+               r"punto|gsm|oz|g/m)\b", _has("materials.fabric_type", "materials.fabric_weight_gsm")),
+    "stretch": (r"\bstretch(?:y)?\b|\bel[aá]stic[oa]?\b", _has("materials.stretch")),
+    "fit": (r"\b(?:slim|regular|relaxed|oversized?|boxy|classic|athletic|loose|tailored|holgad[oa]|ajustad[oa])\b"
+            r"|\bfit\b|\bcorte\b", _has("fit_and_style.fit")),
+    "neck_or_collar": (r"\b(?:crew|v-neck|neck|neckline|collar|henley|cuello|mock)\b",
+                       _has("fit_and_style.neckline", "fit_and_style.collar_type")),
+    "sleeve": (r"\bsleeves?\b|\bmangas?\b|\bsleeveless\b", _has("fit_and_style.sleeve_length")),
+    "care": (r"\b(?:wash|washing|washable|tumble|dry|iron|bleach|lavar|lavado|secadora|planchar)\b",
+             lambda r: bool(r.get("care"))),
 }
+FUNCTION_WORDS = {"the", "a", "an", "with", "and", "in", "of", "for", "is", "are", "to", "this", "our", "it", "its",
+                  "from", "on", "by", "de", "con", "y", "el", "la", "los", "las", "en", "para", "es", "un", "una",
+                  "del", "al", "que", "por"}
 REPEAT_FREE = 0.15  # share of repeated word 3-grams tolerated before the description score is reduced
+
+
+def prose(text):
+    """The parts of the text written as sentences: segments (split on . ! ? ; and new lines) that use a function
+    word, or short phrases of up to 4 words ('Regular fit, short sleeves'). Bare keyword lists are dropped."""
+    keep = []
+    for seg in re.split(r"[.!?;\n•|]+", text or ""):
+        words = re.findall(r"[^\W\d_]+", seg.lower())
+        if words and (len(words) <= 4 or FUNCTION_WORDS & set(words)):
+            keep.append(seg)
+    return "\n".join(keep)
 
 
 def repetition(text):
@@ -91,10 +110,12 @@ def repetition(text):
 
 
 def description_coverage(rec):
-    """Distinct shopper intents the description covers (each once, so stuffing adds nothing) times a repetition
-    factor: full credit up to REPEAT_FREE repeated 3-grams, falling linearly to 0 at twice that plus 0.5."""
+    """Distinct shopper intents the description answers in prose and that match a verified fact (each once, so
+    stuffing adds nothing), times a repetition factor: full credit up to REPEAT_FREE repeated 3-grams, falling
+    linearly to 0 at REPEAT_FREE + 0.5."""
     text = description_text(rec)
-    hits = sorted(k for k, rx in INTENTS.items() if re.search(rx, text, re.I))
+    body = prose(text)
+    hits = sorted(k for k, (rx, verified) in INTENTS.items() if re.search(rx, body, re.I) and verified(rec))
     rep = repetition(text)
     factor = 1.0 if rep <= REPEAT_FREE else max(0.0, 1 - (rep - REPEAT_FREE) / 0.5)
     return {"intents": hits, "covered": len(hits), "of": len(INTENTS), "repetition": rep,

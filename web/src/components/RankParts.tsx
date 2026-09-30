@@ -31,6 +31,10 @@ export function RankCard({ audit }: { audit: Audit }) {
   const w = r.weights;
   const [how, setHow] = useState(false);
   const draft = audit.product.draft;
+  // ties share a position: "2–3" when shirts with the same score span positions 2 to 3 (API position_from/to)
+  const tie = r as typeof r & { position_from?: number; position_to?: number };
+  const pos = tie.position_from && tie.position_to && tie.position_to > tie.position_from
+    ? `${tie.position_from}–${tie.position_to}` : String(r.position);
   if (r.total <= 1) {
     return (
       <section className="card p-6 rise">
@@ -55,7 +59,7 @@ export function RankCard({ audit }: { audit: Audit }) {
         <div className="flex items-center gap-5">
           <div className="relative grid size-28 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25">
             <div className="text-center leading-none">
-              <span className="text-sm font-semibold opacity-80">#</span><span className="text-5xl font-extrabold tracking-tight">{r.position}</span>
+              <span className="text-sm font-semibold opacity-80">#</span><span className={`${pos.length > 3 ? "text-3xl" : "text-5xl"} font-extrabold tracking-tight`}>{pos}</span>
             </div>
             <Trophy className="absolute -right-1 -top-1 size-8 rounded-full bg-white p-1.5 text-amber-500 shadow dark:bg-slate-900" aria-hidden />
           </div>
@@ -63,7 +67,7 @@ export function RankCard({ audit }: { audit: Audit }) {
             <p className="flex items-center text-sm font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
               {t("rank.eyebrow")}{draft && <span className="chip ml-2 bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">{t("draft.badge")}</span>}
             </p>
-            <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">#{r.position} {t("rank.of", { n: r.total })}</h2>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">#{pos} {t("rank.of", { n: r.total })}</h2>
             <p className="mt-1 text-sm muted">{t("rank.score", { s: r.score })}</p>
           </div>
         </div>

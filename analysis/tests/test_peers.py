@@ -1,7 +1,7 @@
 import unittest
 
 from analysis.gaps import description_coverage, repetition
-from analysis.peers import find_peers, pack_size
+from analysis.peers import find_peers, pack_size, unknown_sleeve
 
 
 def rec(pid, title="Crew tee", sleeve="short", audience=None, price=None, currency=None, **extra):
@@ -47,11 +47,15 @@ class PeerFilters(unittest.TestCase):
 
 
 class Description(unittest.TestCase):
-    """#83: the description scores distinct shopper intents once each; repetition lowers it."""
+    """#83: the description scores distinct shopper intents once each, only in prose and only when tied to a
+    verified fact of the record; repetition lowers it."""
     BASE = "Classic men's crew neck t-shirt in soft 100% cotton jersey. Regular fit, short sleeves. Machine washable."
+    FACTS = {"materials": {"primary_material": "cotton", "material_percentages": {"cotton": 100}, "fabric_type": "jersey"},
+             "fit_and_style": {"fit": "regular", "neckline": "crew", "sleeve_length": "short"},
+             "care": ["Machine washable"]}
 
-    def cov(self, text):
-        return description_coverage({"content": {"full_description": text}})
+    def cov(self, text, **facts):
+        return description_coverage({"content": {"full_description": text}, **{**self.FACTS, **facts}})
 
     def test_stuffing_and_repetition_earn_nothing(self):
         base = self.cov(self.BASE)
@@ -59,8 +63,35 @@ class Description(unittest.TestCase):
         self.assertLessEqual(self.cov(self.BASE + " cotton t-shirt men tee crew neck black cotton" * 12)["value"],
                              base["value"])
         self.assertEqual(self.cov(" ".join([self.BASE] * 6))["value"], 0.0)
-        self.assertGreater(self.cov(self.BASE + " Made in Portugal.")["value"], base["value"])  # a new fact counts
         self.assertEqual(repetition(self.BASE), 0.0)
+
+    def test_only_verified_facts_in_prose_count(self):
+        base = self.cov(self.BASE)
+        # a bare keyword list, and unverifiable claims, add nothing
+        self.assertEqual(self.cov(self.BASE + " wash iron organic gots model wearing size guide")["value"], base["value"])
+        self.assertEqual(self.cov(self.BASE + " GOTS certified and made in Portugal.")["value"], base["value"])
+        # "organic" counts only when the material fact is organic cotton
+        organic = self.BASE + " Made from organic cotton."
+        self.assertEqual(self.cov(organic)["value"], base["value"])
+        self.assertGreater(self.cov(organic, materials={**self.FACTS["materials"], "primary_material": "organic_cotton"}
+                                    )["value"], base["value"])
+        # care words count only with care facts
+        self.assertNotIn("care", self.cov(self.BASE, care=[])["intents"])
+        self.assertEqual(self.cov(self.BASE, materials={}, fit_and_style={}, care=[])["value"], 0.0)
+
+
+class SleevePreference(unittest.TestCase):
+    """PR #86 review: known sleeve matches first; unknown-sleeve shirts only fill in below SLEEVE_FILL."""
+
+    def test_unknown_only_fills(self):
+        t = rec("t")
+        few = [rec(f"k{i}") for i in range(3)] + [rec(f"u{i}", sleeve=None) for i in range(3)]
+        got = [c["product_id"] for _, c in find_peers(t, few, 50)]
+        self.assertEqual(got[:3], ["k0", "k1", "k2"])
+        self.assertEqual(len(got), 6)
+        self.assertEqual(unknown_sleeve(t, find_peers(t, few, 50)), 3)
+        many = [rec(f"k{i:02}") for i in range(10)] + [rec("u", sleeve=None)]
+        self.assertNotIn("u", [c["product_id"] for _, c in find_peers(t, many, 50)])
 
 
 if __name__ == "__main__":

@@ -331,11 +331,15 @@ class AuditTest(unittest.TestCase):
         base = "Classic men's crew neck t-shirt in soft 100% cotton jersey. Regular fit, short sleeves. Machine washable."
         runs = {k: self.audit(title="Men's Crew Neck Cotton Tee", description=d, language="en")["rank"] for k, d in (
             ("base", base), ("stuffed", base + " cotton t-shirt men tee crew neck black cotton" * 12),
-            ("repeated", " ".join([base] * 6)), ("fact", base + " Fabric weight 180 gsm."))}
+            ("repeated", " ".join([base] * 6)), ("fact", base + " Fabric weight 180 gsm."),
+            ("keywords", base + " wash iron organic gots model wearing size guide"))}
         self.assertLessEqual(runs["stuffed"]["score"], runs["base"]["score"])
         self.assertGreaterEqual(runs["stuffed"]["position"], runs["base"]["position"])
         self.assertLessEqual(runs["repeated"]["score"], runs["base"]["score"])
         self.assertGreater(runs["fact"]["score"], runs["base"]["score"])
+        # PR #86 review: a bare keyword list (care, organic, GOTS, size guide) with no verified facts earns nothing
+        self.assertLessEqual(runs["keywords"]["score"], runs["base"]["score"])
+        self.assertGreaterEqual(runs["keywords"]["position_from"], runs["base"]["position_from"])
         self.assertEqual(runs["stuffed"]["components"]["facts_checked"], 22)  # the description is not also a fact
 
     def test_ties_share_a_position_in_neutral_order(self):

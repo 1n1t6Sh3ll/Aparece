@@ -18,7 +18,7 @@ from pydantic import ValidationError
 
 import dashboard_api as dash
 from analysis.gaps import ATTRIBUTES, INTENTS, analyze, attributes_present, description_chars, description_coverage
-from analysis.peers import find_peers, get, price
+from analysis.peers import SLEEVE_FILL, find_peers, get, price, unknown_sleeve
 from normalize import PRODUCT_TYPE, SHIRT_TYPES, lang_code, match_lookup, shirt_type  # dataset/collect (on path via dashboard_api)
 
 router = APIRouter()
@@ -117,8 +117,8 @@ def formula(w):
     sd = (f" + {w['structured_data']:g} x (schema.org Product and Offer markup found / 2)" if w["structured_data"]
           else "; structured data is not scored because it is unknown for the dataset shirts (or for a draft)")
     return (f"Listing quality = {w['facts']:g} x (key facts stated / {len(FACT_FIELDS)}) + {w['description']:g} x "
-            f"(shopper questions the description answers / {len(INTENTS)}, each counted once, reduced when text "
-            f"repeats){sd}. Drafts and pages use the same formula. Ties share a position. It ranks listing "
+            f"(shopper questions the description answers in sentences and that match a verified fact / "
+            f"{len(INTENTS)}, each counted once; keyword lists and repeated text do not count){sd}. Drafts and pages use the same formula. Ties share a position. It ranks listing "
             "completeness among comparable shirts only; it is not an AI-visibility or search rank.")
 
 
@@ -458,6 +458,10 @@ def audit(payload: dict = Body(...)):
     rk, ranked = rank(target, recs, match=key)
     if not ranked and get(target, "identity", "product_type") != "unknown":
         notes.append("No comparable shirts found: we need the same product type and language in our dataset.")
+    n_unknown = unknown_sleeve(target, ranked)
+    if n_unknown:
+        notes.append(f"Fewer than {SLEEVE_FILL} comparable shirts state the same sleeve length as yours, so {n_unknown} "
+                     "shirts that don't state a sleeve length were included.")
     top = ranked[:TOP]
     res = analyze(target, top)  # the plan: what the top-ranked comparable shirts state that this one doesn't
     m = res["metrics"]

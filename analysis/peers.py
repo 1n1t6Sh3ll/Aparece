@@ -7,7 +7,8 @@ Hard filters (a candidate is excluded if any fails):
   - price within +/-30% of the target price, when both prices are known and in the
     same known currency (otherwise the price criterion is skipped)
   - same identity.audience, when both audiences are known; kids vs adult always (unknown counts as adult)
-  - same fit_and_style.sleeve_length, when both are known
+  - same fit_and_style.sleeve_length, when both are known; shirts with no stated sleeve are used only when
+    fewer than SLEEVE_FILL known matches exist
   - same pack size (single vs '3-pack' etc., from the title)
   - no recorded dead/redirected link status (when a link_status exists)
 
@@ -25,6 +26,7 @@ import re
 from collections import Counter
 
 PRICE_BAND = 0.30
+SLEEVE_FILL = 10  # known sleeve-length matches needed before unknown-sleeve shirts are left out
 SOFT_FIELDS = [("identity", "subcategory"), ("fit_and_style", "fit"),
                ("fit_and_style", "pattern"), ("materials", "primary_material")]
 
@@ -134,7 +136,18 @@ def find_peers(target, records, k=10):
         return (-score(target, c), diff, c.get("product_id") or "")
 
     cands = sorted((c for c in records if _eligible(target, c)), key=order)
+    ts = get(target, "fit_and_style", "sleeve_length")
+    if ts:  # known sleeve matches first; unknown-sleeve shirts only fill in when fewer than SLEEVE_FILL match
+        known = [c for c in cands if get(c, "fit_and_style", "sleeve_length") == ts]
+        cands = known if len(known) >= SLEEVE_FILL else known + [c for c in cands if c not in known]
     return [(score(target, c), c) for c in cands[:k]]
+
+
+def unknown_sleeve(target, peers):
+    """How many peers were included with no stated sleeve length although the target states one."""
+    if not get(target, "fit_and_style", "sleeve_length"):
+        return 0
+    return sum(not get(p[1] if isinstance(p, tuple) else p, "fit_and_style", "sleeve_length") for p in peers)
 
 
 # --- Weighted similarity (TEAM-43, vision section 6) ------------------------------
