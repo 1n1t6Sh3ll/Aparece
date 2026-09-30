@@ -33,6 +33,10 @@ export function actionText(a: Action, audit: Audit, t: T, lang: Lang): { title: 
         return { title: t("act.readable.t", { label }), why: t("act.readable.w", { label, c: ev.peers_with_attribute, n: ev.of }), seo: t("seo.markup") };
       }
       return { title: t("act.missing_attribute.t", { label }), why: t("act.missing_attribute.w", { label, c: ev.peers_with_attribute, n: ev.of }), seo: t("seo.safe") };
+    case "checklist":
+      if (a.field === "content.full_description") return { title: t("act.checklist.desc.t"), why: t("act.checklist.desc.w", { n: (a.evidence.unanswered as string[]).length, of: ev.of }), seo: t("seo.safe") };
+      if (a.field?.startsWith("structured_data.")) return { title: t("act.structured_data.t", { what: t(`sd.${a.field.split(".").pop()}`) }), why: t("act.structured_data.w0", { what: t(`sd.${a.field.split(".").pop()}`) }), seo: t("seo.markup") };
+      return { title: t("act.missing_attribute.t", { label }), why: t("act.checklist.w", { label }), seo: t("seo.safe") };
     case "description":
       return { title: t("act.description.t"), why: t("act.description.w", { t: ev.target_chars, m: Math.round(ev.peer_median_chars) }), seo: t("seo.safe") };
     case "structured_data": {
@@ -305,7 +309,7 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
         <div className="card p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium muted"><Trophy className="size-3.5" aria-hidden /> {t("rank.eyebrow")}</p>
           <p className="mt-1 text-2xl font-bold tabular-nums">{comparable > 0 ? <>#{audit.rank.position}<span className="text-sm font-medium muted"> / {audit.rank.total}</span></> : "–"}</p>
-          <p className="text-xs muted">{comparable > 0 ? tn(t, "ws.amongN", comparable) : t("rank.alone")}</p>
+          <p className="text-xs muted">{comparable > 0 ? tn(t, "ws.amongN", comparable) : t(audit.rank.peer_data === false ? "rank.noData" : "rank.alone")}</p>
         </div>
         <div className="card p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium muted"><Gauge className="size-3.5" aria-hidden /> <Tip text={t("rank.formula", { wf: audit.rank.weights.facts, wd: audit.rank.weights.description, ref: Math.round(audit.rank.components.description_ref).toLocaleString(lang), sd: p.draft ? "" : t("rank.formulaSd", { ws: audit.rank.weights.structured_data }) })}>{t("ws.quality")}</Tip></p>

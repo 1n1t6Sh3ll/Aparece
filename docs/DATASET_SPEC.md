@@ -1,6 +1,6 @@
 # Shirt dataset spec (TEAM-11)
 
-Decision record for the PowerLens shirt dataset. Part A is the human's spec, kept verbatim (received 2026-09-29, including the human addendum). Part B records the decisions made while turning it into schemas. Items marked **pending human** are proposals, not approved decisions.
+Decision record for the Aparece shirt dataset. Part A is the human's spec, kept verbatim (received 2026-09-29, including the human addendum). Part B records the decisions made while turning it into schemas. Items marked **pending human** are proposals, not approved decisions.
 
 Human note (2026-09-29): scraped product descriptions must be the real, complete source text; they are the ground truth for later training and evaluation.
 

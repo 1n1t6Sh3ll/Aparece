@@ -19,9 +19,11 @@ RUN pip install --no-cache-dir -r api/requirements.txt -r benchmark/requirements
 COPY . .
 COPY --from=web /web/dist web/dist
 RUN useradd --create-home --uid 10001 app \
- && mkdir -p monitor/data governance/data && chown app monitor/data governance/data
-USER app
+ && mkdir -p monitor/data governance/data profile/data webhooks/data experiments/data optimizer/data \
+ && chown -R app monitor/data governance/data profile/data webhooks/data experiments/data optimizer/data
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/v1/health', timeout=4)"
+# Starts as root, chowns /data, then drops to app (uid 10001) via setpriv.
+ENTRYPOINT ["/app/docker/entrypoint.sh"]
 CMD ["uvicorn", "main:app", "--app-dir", "api", "--host", "0.0.0.0", "--port", "8000"]

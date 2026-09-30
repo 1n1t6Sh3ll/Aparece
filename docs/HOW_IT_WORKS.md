@@ -23,11 +23,13 @@ Aparece shows a shop owner what machines can and cannot read on each product pag
 flowchart LR
   U[Product URL<br/>or pasted draft] --> F[1. Fetch<br/>respects robots.txt]
   F --> X[2. Verified facts<br/>each with its evidence]
-  X --> R[3. Rank vs similar shirts<br/>20k-shirt dataset]
+  P[(Peer dataset<br/>PRODUCTLENS_DATA)] --> R
+  X --> R[3. Rank vs similar shirts]
   R --> A[4. Top 3 fixes]
-  A --> G[5. Generate Fix<br/>grounded text + guardrail]
-  X --> V[6. AI visibility<br/>real model answers]
-  G --> M[7. Monitor<br/>snapshots, changes, chat]
+  X --> G[5. Generate Fix<br/>grounded text + guardrail]
+  X --> K[6. AI comparison<br/>shop vs Aparece + keywords vs models]
+  X --> V[7. Check now<br/>do AI assistants name it?]
+  R --> M[8. Monitor<br/>snapshots, changes, chat]
 ```
 
 1. **Fetch.** We download the page once, politely. robots.txt is respected, never bypassed. We identify ourselves as Aparece and never fetch Amazon directly. If a store blocks us, you can paste the listing text or use the Chrome extension, which reads the page already open in your own browser.
@@ -35,8 +37,9 @@ flowchart LR
 3. **Rank.** The page is scored against comparable shirts from a 20,037-record dataset: same type, language and audience, widened step by step when there are too few matches. The score is how many key facts the page states, plus how many shopper questions the description answers. The formula is shown on the page. This is a listing-quality rank, not a Google or AI ranking.
 4. **Top 3 fixes.** For each missing fact that the best-ranked similar shirts do state, you get a concrete fix and the evidence behind it: "8 of the 10 top-ranked similar shirts state their fabric weight."
 5. **Generate Fix.** A title and description are written only from your verified facts, as several candidates. Every sentence goes through a guardrail: each word and number must come from your facts or a small neutral vocabulary, so anything unsupported is rejected. The candidates are then scored by a reward (grounding, coverage, no hallucination), and the best one wins. You approve it; nothing is published for you.
-6. **AI visibility.** We ask real AI assistants realistic shopping questions and record which shops and brands they name, how high, and whether their claims match the verified facts. The audit shows whether your store was named, and which brands were named instead.
-7. **Monitor.** Enrol a product and Aparece re-checks it on a schedule, keeps snapshots, shows what changed and how the rank moved, and answers questions in a chat that may only cite stored data.
+6. **AI comparison.** For any audited page, the shop's own text, Aparece's text (with grounded shopper keywords added) and text written by GPT-4o-mini and Claude Haiku from the same facts are fact-checked and scored side by side. Only text the facts support can win.
+7. **AI visibility.** We ask real AI assistants realistic shopping questions and record which shops and brands they name, how high, and whether their claims match the verified facts. The saved benchmark covers 103 small shops. For your own page, the *Check now* button asks two assistants a few of the same questions on request and shows whether your product was named, and which brands were named instead.
+8. **Monitor.** Enrol a product and Aparece re-checks it on a schedule, keeps snapshots, shows what changed and how the rank moved, and answers questions in a chat that may only cite stored data.
 
 ## The models
 
@@ -70,11 +73,12 @@ For 5 products, we compared the shop's original text, Aparece's text and text wr
 | Rank and fixes | `api/audit_api.py`, `analysis/` |
 | Generate Fix | `optimizer/`, `train/reward.py` |
 | AI visibility and comparison | `benchmark/`, `benchmark/shootout/` |
+| Keyword boost, Check now | `benchmark/shootout/boost.py`, `api/visibility_live_api.py` |
 | Monitor and chat | `monitor/`, `chat/` |
 | Web app and extension | `web/`, `extension/` |
 | Model training | `train/` |
 
-Full technical detail: [REFERENCE.md](REFERENCE.md). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). Product vision: [VISION.md](VISION.md).
+Where it runs: the hosted app is https://aparece.fly.dev (one Fly.io machine built from the Docker image; see *Deployment* in [ARCHITECTURE.md](ARCHITECTURE.md)). Full technical detail: [REFERENCE.md](REFERENCE.md). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). Product vision: [VISION.md](VISION.md).
 
 ## Technical details (for developers)
 

@@ -12,6 +12,8 @@
 
 </div>
 
+**Live app: [aparece.fly.dev](https://aparece.fly.dev/)** (hosted on Fly.io). Some shops block cloud servers, so if a link cannot be read there, paste the page text as a draft instead.
+
 Shoppers now ask AI what to buy. We asked four AI models 768 real shopping questions: none of the 103 small shirt shops we tested was named; Uniqlo, Patagonia and Everlane were. Paste a product link and Aparece shows what machines can read on your page, ranks it against comparable shirts, lists the 3 fixes to make first, and can check on request whether AI assistants recommend it. Suggested text states only what your page proves, and you approve everything.
 
 > Formerly ProductLens: the repository and some settings (`PRODUCTLENS_*`) keep the old name.
@@ -95,8 +97,9 @@ In PowerShell you can pass keys from your environment without typing them: `fly 
 
 - **Keys** live only in the host's secrets, never in git and never in a website's public environment (for example a Vercel `VITE_` variable). Use dedicated keys with a monthly spend limit set at OpenAI and Anthropic.
 - **The paid routes have no login.** Anyone who can reach the site can spend up to the caps (0.05 USD per request, 1 USD per day per running server) at a limited rate. Put the site behind your host's password protection or a proxy if it is public.
-- **State is not persistent in this config.** Stored audits and share links, monitoring, governance and webhooks use SQLite files that are lost on redeploy. To keep them, mount a writable volume and point `PROFILE_DB`, `MONITOR_DB`, `GOVERNANCE_DB`, `WEBHOOKS_DB` and `EXPERIMENTS_DB` at it.
-- **Peer data is not in the image.** Until `PRODUCTLENS_DATA` points at a peer file on the server, audits show rank "1 of 1" and no fixes.
+- **State and peer data live on a volume.** `fly.toml` mounts a volume named `data` at `/data` and points `PROFILE_DB`, `MONITOR_DB`, `GOVERNANCE_DB`, `WEBHOOKS_DB`, `EXPERIMENTS_DB` and `PRODUCTLENS_DATA` (`/data/peers.jsonl`) there, so stored audits, share links, monitoring, governance and webhooks survive restarts and deploys. Create the volume once, before the first deploy of this config: `fly volumes create data --size 3 --region iad`. The image starts as root only to `chown` `/data`, then runs the app as user `app`.
+- **Peer data is not in git or in the image.** Upload your peers file once: `fly ssh sftp put peers.jsonl /data/peers.jsonl` (or `fly ssh sftp shell`, then `put peers.jsonl /data/peers.jsonl`). No restart is needed for new audits; without the file audits still work but rank "1 of 1" and list no fixes.
+- **One machine only.** A volume attaches to a single machine in one region; do not scale beyond one machine with this config (it also keeps the in-memory spend caps meaningful). Volumes are not replicated automatically: take snapshots (`fly volumes snapshots list`) if the data matters.
 - **Vercel** can host only the web app (`web/`), with `/v1/*` rewritten to the API. The API needs a long-running host (slow requests, SQLite, in-memory caps).
 
 ## Tests
@@ -135,5 +138,12 @@ Caveats: these check facts and listing quality, not how a real assistant will ra
 `api/` FastAPI · `web/` React + Vite · `extension/` Chrome MV3 · `dataset/` `analysis/` `signals/` data and peers · `optimizer/` `train/` writer, fact-check, Qwen · `benchmark/` visibility and comparison · `monitor/` `chat/` `governance/` `webhooks/` `experiments/` over time · `docs/`.
 
 [Architecture](docs/ARCHITECTURE.md) · [How it works](docs/HOW_IT_WORKS.md) · [Reference](docs/REFERENCE.md) · [Vision](docs/VISION.md) · [Dataset spec](docs/DATASET_SPEC.md) · [Governance](docs/GOVERNANCE.md) · [Webhooks](docs/WEBHOOKS.md) · [User stories](docs/USER_STORIES.md) · [Model weights](https://github.com/1n1t6Sh3ll/powerlens/releases/tag/weights-v1)
+
+## AI and tech, briefly
+
+- **Stack:** Python 3.12 with FastAPI and uvicorn, SQLite for state, APScheduler for monitoring. Web app in React 19, TypeScript, Vite and Tailwind 4. Chrome extension (Manifest V3). Docker image, deployed on Fly.io. GitHub Actions for CI.
+- **Rules first.** Facts are read with rules, and every fact keeps its evidence. The rank formula, the fix recommendations, the fact-check of every written sentence and the keyword boost are all deterministic rules, not AI.
+- **Small fine-tuned model (optional).** Qwen2.5-0.5B and 1.5B, fine-tuned with QLoRA (PEFT, TRL, bitsandbytes) to read a product page into a fixed set of fields. It only fills fields the rules left empty, marked as *predicted*, and never overrides a rule fact. Off by default (`MODEL_BACKEND=qwen` turns it on).
+- **Hosted models, used in three roles:** writers (GPT-4o-mini, Claude Haiku, Qwen) for titles and descriptions, always behind the fact-check; the shopping assistants we measure in the visibility runs and *Check now*; and judges in the copy comparison. Paid calls need your keys and stay under spend caps.
 
 License: MIT ([LICENSE](LICENSE)). Data and weights are for research use.

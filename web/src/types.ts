@@ -2,7 +2,7 @@ export type Label = "OBSERVED_FACT" | "SUPPORTED_HYPOTHESIS" | "UNKNOWN";
 
 export interface Action {
   id: string;
-  kind: "missing_attribute" | "description" | "structured_data" | "price" | "language";
+  kind: "missing_attribute" | "checklist" | "description" | "structured_data" | "price" | "language";
   priority: number;
   title: string;
   why: string;
@@ -43,7 +43,7 @@ export interface Audit {
   facts: Fact[];
   not_found: NotFound[];
   summary: { facts_found: number; attributes_checked: number; top_median_facts: number | null; top_count: number; top_missing: string[]; price_position: string | null };
-  rank: { position: number | null; total: number; ranked?: boolean; match_step?: string; score: number; components: Quality; formula: string; weights: { facts: number; description: number; structured_data: number } };
+  rank: { position: number | null; total: number; peer_data?: boolean; ranked?: boolean; match_step?: string; score: number; components: Quality; formula: string; weights: { facts: number; description: number; structured_data: number } };
   leaderboard: BoardRow[];
   table: { fields: string[]; rows: (Summary & { is_you: boolean; values: Record<string, unknown> })[] };
   context: { language: string | null; currency: string | null; merchant: string | null; dataset_size: number; quality_status: string };
