@@ -20,8 +20,28 @@ export interface Profile {
 }
 export interface Shared { company: { name: string; website: string }; language: string; products: Product[] }
 
+/** Access keys live only in this browser. Several companies can be kept; one is active (the company switcher). */
 const KEY = "pl.profileToken";
-export const token = { get: () => store.get(KEY), set: (t: string) => store.set(KEY, t), clear: () => { try { localStorage.removeItem(KEY); } catch { /* */ } } };
+const LIST = "pl.accounts";
+export type Account = { token: string; name: string };
+export const accounts = (): Account[] => { try { return JSON.parse(store.get(LIST) || "[]"); } catch { return []; } };
+const saveAccounts = (a: Account[]) => store.set(LIST, JSON.stringify(a));
+export const token = {
+  get: () => store.get(KEY),
+  set: (t: string, name = "") => {
+    store.set(KEY, t);
+    const rest = accounts().filter((a) => a.token !== t);
+    saveAccounts([...rest, { token: t, name: name || accounts().find((a) => a.token === t)?.name || "" }]);
+  },
+  /** Forget the active key on this device and fall back to another saved company, if any. */
+  clear: () => {
+    const cur = store.get(KEY);
+    const rest = accounts().filter((a) => a.token !== cur);
+    saveAccounts(rest);
+    try { if (rest.length) localStorage.setItem(KEY, rest[rest.length - 1].token); else localStorage.removeItem(KEY); } catch { /* */ }
+  },
+  name: (t: string, name: string) => saveAccounts(accounts().map((a) => (a.token === t ? { ...a, name } : a))),
+};
 
 export function papi<R>(path: string, init?: RequestInit): Promise<R> {
   return api<R>(path, { ...init, headers: { "X-Profile-Token": token.get() || "" } });

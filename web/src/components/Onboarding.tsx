@@ -2,6 +2,8 @@ import { useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { api, errorText, useI18n } from "../lib";
 import { emptyCompany, papi, token, type Company, type Person, type ProductIn, type Profile } from "../profile";
+import { useSession } from "../session";
+import { useToast } from "../ui";
 
 const PLATFORMS = ["", "shopify", "woocommerce", "magento", "bigcommerce", "custom", "other"] as const;
 const POSITIONS = ["", "budget", "mid", "premium", "luxury"] as const;
@@ -21,6 +23,8 @@ function Field({ id, label, hint, children }: { id: string; label: string; hint?
 /** Create (3 steps) or edit (steps 1-2, PUT) the merchant profile. */
 export default function Onboarding({ edit }: { edit?: Profile }) {
   const { t, lang } = useI18n();
+  const { reload, switchTo } = useSession();
+  const toast = useToast();
   const [step, setStep] = useState(0);
   const [person, setPerson] = useState<Person>(edit?.person ?? { name: "", role: "", about: "" });
   const c0 = edit ? { ...edit.company, claims: edit.company.claims.map((x) => x.text) } : emptyCompany();
@@ -57,7 +61,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
     try {
       if (edit) {
         await papi("/v1/profile", { method: "PUT", body: JSON.stringify(body()) });
-        window.location.hash = "/";
+        await reload(); toast("ok", t("set.saved")); setBusy(false);
         return;
       }
       const list = lines(urls);
@@ -65,7 +69,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
       if (bad) { setBusy(false); return setErr(t("ob.badUrl", { url: bad })); }
       const products = [...list.map((url) => ({ url })), ...manual.filter((m) => m.title?.trim())];
       const r = await api<{ token: string }>("/v1/profile", { method: "POST", body: JSON.stringify({ ...body(), products }) });
-      token.set(r.token);
+      token.set(r.token, company.name);
       setNewToken(r.token);
     } catch (e) {
       setErr(errorText(e, t).msg);
@@ -75,19 +79,19 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
 
   if (newToken) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-16 rise">
+      <div className="mx-auto max-w-xl py-8 rise">
         <div className="card p-6 sm:p-8">
           <span className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300"><KeyRound className="size-5" aria-hidden /></span>
           <h1 className="mt-4 text-2xl font-bold">{t("ob.tokenTitle")}</h1>
           <p className="mt-2 text-sm muted">{t("ob.tokenSub")}</p>
           <div className="mt-4 flex gap-2">
             <input readOnly aria-label={t("ob.tokenTitle")} className="input font-mono text-sm" value={newToken} onFocus={(e) => e.target.select()} />
-            <button className="btn-ghost border border-slate-200 dark:border-slate-700" onClick={() => { navigator.clipboard?.writeText(newToken); setCopied(true); }}>
+            <button className="btn-ghost border border-stone-200 dark:border-stone-700" onClick={() => { navigator.clipboard?.writeText(newToken); setCopied(true); }}>
               {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />} {copied ? t("ob.copied") : t("ob.copy")}
             </button>
           </div>
           <p className="mt-3 flex gap-2 text-sm text-amber-700 dark:text-amber-400"><AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{t("ob.tokenWarn")}</p>
-          <a href="#/" className="btn-primary mt-6 w-full">{t("ob.toDashboard")} <ArrowRight className="size-4" aria-hidden /></a>
+          <button className="btn-primary mt-6 w-full" onClick={() => switchTo(newToken)}>{t("ob.toDashboard")} <ArrowRight className="size-4" aria-hidden /></button>
         </div>
       </div>
     );
@@ -101,13 +105,13 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
   );
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
-      <h1 className="text-3xl font-extrabold tracking-tight">{edit ? t("ob.editTitle") : t("ob.title")}</h1>
+    <div className={edit ? "" : "mx-auto max-w-2xl py-4"}>
+      {!edit && <h1 className="text-2xl font-bold tracking-tight">{t("ob.title")}</h1>}
       <p className="mt-2 muted">{t("ob.sub")}</p>
       <ol className="mt-6 flex gap-2" aria-label={t("ob.progress")}>
         {steps.map((s, i) => (
           <li key={s} aria-current={i === step ? "step" : undefined} className="flex-1">
-            <div className={`h-1.5 rounded-full ${i <= step ? "bg-indigo-500" : "bg-slate-200 dark:bg-slate-800"}`} />
+            <div className={`h-1.5 rounded-full ${i <= step ? "bg-brand-500" : "bg-stone-200 dark:bg-stone-800"}`} />
             <p className={`mt-2 text-xs ${i === step ? "font-semibold" : "muted"}`}>{i + 1}. {s}</p>
           </li>
         ))}
@@ -153,7 +157,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
             {manual.map((m, i) => {
               const set = (k: keyof ProductIn, v: string) => setManual(manual.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
               return (
-                <fieldset key={i} className="mt-3 grid gap-2 rounded-xl border border-dashed border-slate-300 p-3 dark:border-slate-700 sm:grid-cols-4">
+                <fieldset key={i} className="mt-3 grid gap-2 rounded-xl border border-dashed border-stone-300 p-3 dark:border-stone-700 sm:grid-cols-4">
                   <legend className="chip bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("label.merchantStated")}</legend>
                   <input aria-label={t("hero.draftTitle")} className="input sm:col-span-3" placeholder={t("hero.draftTitlePh")} value={m.title || ""} onChange={(e) => set("title", e.target.value)} />
                   <button type="button" className="btn-ghost" onClick={() => setManual(manual.filter((_, j) => j !== i))} aria-label={t("ob.removeProduct")}><Trash2 className="size-4" aria-hidden /></button>
@@ -164,7 +168,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
                 </fieldset>
               );
             })}
-            <button type="button" className="btn-ghost mt-2 border border-slate-200 dark:border-slate-700" onClick={() => setManual([...manual, { currency: "EUR", language: lang }])}>
+            <button type="button" className="btn-ghost mt-2 border border-stone-200 dark:border-stone-700" onClick={() => setManual([...manual, { currency: "EUR", language: lang }])}>
               <Plus className="size-4" aria-hidden /> {t("ob.addManual")}
             </button>
           </div>

@@ -10,14 +10,14 @@ type Snapshot = { id: number; taken_at: string; data: { content?: { title?: stri
 const when = (s: string | null, lang: string) => (s ? new Date(s).toLocaleString(lang, { dateStyle: "medium", timeStyle: "short" }) : "");
 
 function Loading() {
-  return <div className="space-y-3" aria-hidden>{[0, 1, 2].map((i) => <div key={i} className="card h-20 animate-pulse bg-slate-100/60 dark:bg-slate-800/40" />)}</div>;
+  return <div className="space-y-3" aria-hidden>{[0, 1, 2].map((i) => <div key={i} className="card h-20 animate-pulse bg-stone-100/60 dark:bg-stone-800/40" />)}</div>;
 }
 
 function Failed({ msg }: { msg: string }) {
   return <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200">{msg}</p>;
 }
 
-export function ProductsPage() {
+export function ProductsPage({ embedded = false }: { embedded?: boolean }) {
   const { t, lang } = useI18n();
   const [rows, setRows] = useState<Monitored[] | null>(null);
   const [err, setErr] = useState("");
@@ -36,17 +36,18 @@ export function ProductsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:py-14">
-      <h1 className="text-3xl font-extrabold tracking-tight">{t("prod.title")}</h1>
-      <p className="mt-2 muted">{t("prod.sub")}</p>
-      <div className="mt-6 space-y-3">
+    <div className={embedded ? "" : "mx-auto max-w-4xl"}>
+      {embedded ? <p className="text-sm muted">{t("prod.sub")}</p> : <>
+        <h1 className="text-2xl font-bold tracking-tight">{t("prod.title")}</h1>
+        <p className="mt-1 text-sm muted">{t("prod.sub")}</p></>}
+      <div className="mt-4 space-y-3">
         {err && <Failed msg={err} />}
         {!rows && !err && <Loading />}
         {rows && rows.length === 0 && (
           <div className="card flex flex-col items-center p-10 text-center">
-            <ScanSearch className="size-10 text-slate-300" aria-hidden />
+            <ScanSearch className="size-10 text-stone-300" aria-hidden />
             <p className="mt-3 max-w-sm muted">{t("prod.empty")}</p>
-            <a href="#/" className="btn-primary mt-5">{t("hero.cta")}</a>
+            <a href="#/audit" className="btn-primary mt-5">{t("hero.cta")}</a>
           </div>
         )}
         {rows?.map((r) => (
@@ -55,8 +56,8 @@ export function ProductsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   {r.demo && <span className="chip bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">{t("prod.demo")}</span>}
-                  {!r.active && <span className="chip bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"><PauseCircle className="size-3" aria-hidden /> {t("prod.inactive")}</span>}
-                  {r.plan && <span className="chip bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">{cap(r.plan)}</span>}
+                  {!r.active && <span className="chip bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300"><PauseCircle className="size-3" aria-hidden /> {t("prod.inactive")}</span>}
+                  {r.plan && <span className="chip bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">{cap(r.plan)}</span>}
                 </div>
                 <a href={r.url} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 truncate font-medium hover:underline">
                   <span className="truncate">{r.url.replace(/^https?:\/\//, "")}</span><ExternalLink className="size-3.5 shrink-0" aria-hidden />
@@ -114,10 +115,10 @@ export function HistoryPage({ id }: { id: number }) {
         {!data && !err && <Loading />}
         {data && data.events.length === 0 && <p className="card mb-4 p-4 text-sm muted">{t("hist.empty")}</p>}
         {data && (
-          <ol className="relative space-y-4 border-l border-slate-200 pl-6 dark:border-slate-800">
+          <ol className="relative space-y-4 border-l border-stone-200 pl-6 dark:border-stone-800">
             {items.map(({ key, at, ev, snap }) => (
               <li key={key} className="relative">
-                <span className={`absolute -left-[31px] top-4 grid size-3.5 place-items-center rounded-full ring-4 ring-slate-50 dark:ring-slate-950 ${ev ? "bg-indigo-500" : "bg-slate-300 dark:bg-slate-600"}`} aria-hidden />
+                <span className={`absolute -left-[31px] top-4 grid size-3.5 place-items-center rounded-full ring-4 ring-stone-50 dark:ring-stone-950 ${ev ? "bg-brand-500" : "bg-stone-300 dark:bg-stone-600"}`} aria-hidden />
                 <div className="card p-4">
                   <p className="text-xs muted">{when(at, lang)}</p>
                   {ev ? (
@@ -129,7 +130,7 @@ export function HistoryPage({ id }: { id: number }) {
                       </dl>
                     </>
                   ) : (
-                    <p className="mt-1 flex items-center gap-2 text-sm"><Camera className="size-4 text-slate-400" aria-hidden /> {t("hist.snapshot")}{snap?.data?.content?.title ? `: ${snap.data.content.title}` : ""}</p>
+                    <p className="mt-1 flex items-center gap-2 text-sm"><Camera className="size-4 text-stone-400" aria-hidden /> {t("hist.snapshot")}{snap?.data?.content?.title ? `: ${snap.data.content.title}` : ""}</p>
                   )}
                 </div>
               </li>

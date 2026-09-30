@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Bot, Check, Download, Loader2, Printer, Sparkles, X } from "lucide-react";
+import { Radar, Check, Download, FileText, Loader2, PenLine, Printer, Share2, X } from "lucide-react";
 import { api, errorText, fieldLabel, money, useI18n, type Lang, type T } from "../lib";
 import { papi, productName, type Decision, type Product, type Profile, type Shared } from "../profile";
+import { useSession } from "../session";
+import { Empty } from "../ui";
 import { csvCell } from "./BulkPage";
 import { actionText } from "./Results";
 
@@ -30,11 +32,11 @@ function Suggestions({ p, onDecided }: { p: Product; onDecided: (p: Product) => 
   }
   if (!p.record) return null;
   return (
-    <div className="no-print mt-4 rounded-xl border border-dashed border-indigo-200 p-3 dark:border-indigo-900">
+    <div className="no-print mt-4 rounded-xl border border-dashed border-brand-200 p-3 dark:border-brand-900">
       <div className="flex flex-wrap items-center gap-2">
         <p className="mr-auto text-sm font-semibold">{t("sug.title")}</p>
         <button className="btn-ghost px-2 text-sm" onClick={suggest} disabled={state === "loading"}>
-          {state === "loading" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />} {t("sug.run")}
+          {state === "loading" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <PenLine className="size-4" aria-hidden />} {t("sug.run")}
         </button>
       </div>
       <p className="text-xs muted">{t("sug.note")}</p>
@@ -43,10 +45,10 @@ function Suggestions({ p, onDecided }: { p: Product; onDecided: (p: Product) => 
         const d = p.suggestions?.[f];
         return (
           <div key={f} className="mt-3 grid gap-2 sm:grid-cols-2">
-            <div><p className="text-xs font-medium muted">{t(`sug.orig.${f}`)}</p><p className="mt-1 whitespace-pre-line rounded-lg bg-slate-50 p-2 text-sm dark:bg-slate-800/60">{original[f] || t("sug.empty")}</p></div>
+            <div><p className="text-xs font-medium muted">{t(`sug.orig.${f}`)}</p><p className="mt-1 whitespace-pre-line rounded-lg bg-stone-50 p-2 text-sm dark:bg-stone-800/60">{original[f] || t("sug.empty")}</p></div>
             <div><p className="text-xs font-medium muted">{t(`sug.new.${f}`)}</p><p className="mt-1 rounded-lg bg-emerald-50 p-2 text-sm dark:bg-emerald-950/40">{s[f]}</p>
               <div className="mt-1 flex items-center gap-2 text-sm">
-                {d && d.suggested === s[f] ? <span className="chip bg-slate-100 dark:bg-slate-800">{t(`sug.${d.status}`)}</span> : <>
+                {d && d.suggested === s[f] ? <span className="chip bg-stone-100 dark:bg-stone-800">{t(`sug.${d.status}`)}</span> : <>
                   <button className="btn-ghost px-2 py-1 text-emerald-700 dark:text-emerald-400" onClick={() => decide(f, "accepted")}><Check className="size-4" aria-hidden /> {t("sug.accept")}</button>
                   <button className="btn-ghost px-2 py-1" onClick={() => decide(f, "dismissed")}><X className="size-4" aria-hidden /> {t("sug.dismiss")}</button>
                 </>}
@@ -70,10 +72,10 @@ function ProductCard({ p, owner, onChange }: { p: Product; owner: boolean; onCha
           {p.url && <p className="truncate text-xs muted">{p.url}</p>}
         </div>
         {p.merchant_stated && <span className="chip bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("label.merchantStated")}</span>}
-        {a && <span className="chip bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">{a.rank.total > 1 ? t("rep.rank", { pos: a.rank.position, total: a.rank.total }) : t("rep.noPeers")} · {a.rank.score}/100</span>}
+        {a && <span className="chip bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">{a.rank.total > 1 ? t("rep.rank", { pos: a.rank.position, total: a.rank.total }) : t("rep.noPeers")} · {a.rank.score}/100</span>}
       </header>
       {!a ? <p className="mt-3 text-sm muted">{t("rep.notAudited")}</p> : (
-        <div className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <p className="font-medium">{t("rep.fixes")}</p>
             <ol className="mt-1 list-decimal space-y-1 pl-5">{a.actions.slice(0, 3).map((x) => <li key={x.id}>{actionText(x, a, t, lang).title}</li>)}</ol>
@@ -93,7 +95,7 @@ function ProductCard({ p, owner, onChange }: { p: Product; owner: boolean; onCha
             <p className="mt-1">{a.price_position.available && a.price_position.position
               ? t("rep.priceAt", { price: money(a.price_position.price, a.price_position.currency, lang), pos: t(`pos.${a.price_position.position}`), n: a.price_position.peer_count ?? 0 })
               : <span className="muted">{t("rep.priceNa")}</span>}</p>
-            <p className="mt-2 flex items-center gap-1 muted"><Bot className="size-4" aria-hidden />{a.visibility.available ? t("rep.visYes") : t("rep.visNo")}</p>
+            <p className="mt-2 flex items-center gap-1 muted"><Radar className="size-4" aria-hidden />{a.visibility.available ? t("rep.visYes") : t("rep.visNo")}</p>
           </div>
         </div>
       )}
@@ -137,9 +139,9 @@ function ReportView({ name, website, products, owner, profile, onChange }: {
   const { t, lang } = useI18n();
   const s = summary(products);
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
+    <div className={`mx-auto max-w-5xl space-y-6 ${owner ? "" : "px-4 py-10"}`}>
       <div className="no-print flex flex-wrap gap-2">
-        {owner && <a href="#/" className="btn-ghost mr-auto"><ArrowLeft className="size-4" aria-hidden /> {t("rep.back")}</a>}
+        {owner && <a href="#/settings" className="btn-ghost mr-auto"><Share2 className="size-4" aria-hidden /> {t("share.title")}</a>}
         <button className={`btn-ghost ${owner ? "" : "ml-auto"}`} onClick={() => csv(name, products, t, lang)}><Download className="size-4" aria-hidden /> CSV</button>
         <button className="btn-primary" onClick={() => window.print()}><Printer className="size-4" aria-hidden /> {t("rep.print")}</button>
       </div>
@@ -157,7 +159,7 @@ function ReportView({ name, website, products, owner, profile, onChange }: {
         </dl>
         {Object.keys(s.pos).length > 0 && <p className="mt-3 text-sm muted">{t("rep.prices")}: {Object.entries(s.pos).map(([k, n]) => `${t(`pos.${k}`)} ${n}`).join(" · ")}</p>}
         {owner && profile && (profile.company.claims.length > 0 || profile.company.competitors.length > 0) && (
-          <div className="mt-4 grid gap-4 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2 dark:border-slate-800">
+          <div className="mt-4 grid gap-4 border-t border-stone-100 pt-4 text-sm sm:grid-cols-2 dark:border-stone-800">
             {profile.company.claims.length > 0 && <div><p className="font-medium">{t("ob.claims")} <span className="chip bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("label.merchantStated")}</span></p>
               <ul className="mt-1 list-disc pl-5">{profile.company.claims.map((c) => <li key={c.text}>{c.text}</li>)}</ul></div>}
             {profile.company.competitors.length > 0 && <div><p className="font-medium">{t("ob.competitors")} <span className="chip bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("label.merchantStated")}</span></p>
@@ -173,12 +175,15 @@ function ReportView({ name, website, products, owner, profile, onChange }: {
 
 export function Report() {
   const { t } = useI18n();
-  const [prof, setProf] = useState<Profile | null>(null);
-  const [err, setErr] = useState("");
-  useEffect(() => { papi<Profile>("/v1/profile").then(setProf).catch((e) => setErr(errorText(e, t).msg)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!prof) return <div className="grid place-items-center py-24" role="status">{err || <Loader2 className="size-6 animate-spin" aria-hidden />}</div>;
-  return <ReportView name={prof.company.name} website={prof.company.website} products={prof.products} owner profile={prof}
-    onChange={(np) => setProf({ ...prof, products: prof.products.map((q) => (q.id === np.id ? { ...q, suggestions: np.suggestions } : q)) })} />;
+  const { signedIn, profile, loading, updateProduct } = useSession();
+  if (!signedIn) return (
+    <Empty icon={<FileText className="size-6" aria-hidden />} title={t("rep.signupTitle")} body={t("home.signupSub")}>
+      <a href="#/onboarding" className="btn-primary">{t("home.signup")}</a><a href="#/bulk" className="btn-outline">{t("ws.bulk")}</a>
+    </Empty>
+  );
+  if (!profile) return <div className="grid place-items-center py-24" role="status">{loading ? <Loader2 className="size-6 animate-spin" aria-hidden /> : null}</div>;
+  return <ReportView name={profile.company.name} website={profile.company.website} products={profile.products} owner profile={profile}
+    onChange={updateProduct} />;
 }
 
 export function SharedReport({ id }: { id: string }) {
