@@ -1,890 +1,762 @@
 {
- "product_id": "p_7df6497269eb4b70",
- "language": "en",
- "raw": {
-  "product_id": "p_7df6497269eb4b70"
+ "product": {
+  "product_id": "p_9f7a7d05cb649a13",
+  "title": "Heavyweight Oversized Tee - Black | Example Shop",
+  "brand": "Example",
+  "product_type": "t_shirt",
+  "language": "en",
+  "merchant": "shop.example.com",
+  "price": 35.0,
+  "currency": "EUR",
+  "quality_status": "medium",
+  "url": "https://shop.example.com/products/heavy-tee",
+  "image": null,
+  "draft": false
  },
- "normalized": {
-  "schema_version": "0.1.0",
-  "record_type": "normalized",
-  "product_id": "p_7df6497269eb4b70",
-  "source": {
-   "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "canonical_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "merchant": "Thinking MU",
-   "merchant_domain": "thinkingmu.com",
-   "scraped_at": "2026-09-29T22:36:35Z",
-   "language": "en"
-  },
-  "identity": {
-   "brand": "Thinking MU",
-   "product_name": "White hemp Jules shirt",
-   "product_type": "short_sleeve_shirt",
-   "subcategory": null,
-   "audience": "men"
-  },
-  "content": {
-   "title": "Sustainable Shirt White Hemp Jules Man | Thinking Mu",
-   "full_description": "Jules white hemp shirt\nâ†’ V-neckline with shirt collar\nâ†’ Short sleeves\nâ†’ Regular fit\nâ†’ Front closure with buttons\nâ†’ Fabric: hemp mixed with tencel, weight 135 gsm (Lightweight fabric)\nâ†’ Length of garment: Regular\nRef: MSH00210\nMeasurements in size M: 72 cm total length, 49 cm back width and 24 cm sleeve length.\nHemp is an exceptional plant that provides one of the lightest and most breathable sustainable fibers. Main features:\nLESS WATER: It needs 95% less water than cotton and produces 2.5 times more fiber.\nLESS C02: Its cultivation in the field helps the CO2 absorption process.\nLESS PESTICIDES: It does not require the use of chemical pesticides or fertilizers for its cultivation.\nLESS TIME: It is a renewable fiber that grows quickly and vigorously in a wide variety of climates.\nLESS WASTE: The plant produces 250% more fiber than cotton and 600% more than flax using the same area of land.\nLESS CROP: The area required for cultivation is almost half that of cotton.\nLESS SOIL EROSION: Prevents soil erosion caused by logging.\nThe model is 176cm tall and wears a size M.",
-   "short_description": null,
-   "bullet_points": [
-    "V-neckline with shirt collar",
-    "Short sleeves",
-    "Regular fit",
-    "Front closure with buttons",
-    "Fabric: hemp mixed with tencel, weight 135 gsm (Lightweight fabric)",
-    "Length of garment: Regular"
-   ],
-   "meta_title": "Sustainable Shirt White Hemp Jules Man | Thinking Mu",
-   "meta_description": "Discover the Shirt White Hemp Jules by Thinking MU, made with hemp and certified by GOTS, OCS y GRS. Man sustainable fashion with Mediterranean inspiration.",
-   "h1": "White hemp Jules shirt"
-  },
-  "materials": {
-   "primary_material": "hemp",
-   "material_percentages": {
-    "hemp": 55,
-    "other": 45
-   },
-   "fabric_type": null,
-   "fabric_weight_gsm": 135,
-   "fabric_weight_raw": "135 gsm",
-   "stretch": null,
-   "texture": null
-  },
-  "fit_and_style": {
-   "fit": "regular",
-   "neckline": "v_neck",
-   "collar_type": "shirt collar",
-   "sleeve_length": "short",
-   "shirt_length": "regular",
-   "pattern": null,
-   "style": null
-  },
-  "variants": {
-   "product_group_id": "14828248170822",
-   "colors": [
-    {
-     "original_color_name": "Snow White",
-     "normalized": "white"
-    }
-   ],
-   "sizes": [
-    {
-     "raw_size": "XS",
-     "normalized_size": "XS"
-    },
-    {
-     "raw_size": "S",
-     "normalized_size": "S"
-    },
-    {
-     "raw_size": "M",
-     "normalized_size": "M"
-    },
-    {
-     "raw_size": "L",
-     "normalized_size": "L"
-    },
-    {
-     "raw_size": "XL",
-     "normalized_size": "XL"
-    },
-    {
-     "raw_size": "XXL",
-     "normalized_size": "XXL"
-    }
-   ],
-   "variant_count": 6,
-   "items": [
-    {
-     "variant_id": "v_0f12d902379f969d",
-     "merchant_variant_id": "53853668835654",
-     "color": "Snow White",
-     "size": "XS",
-     "sku": "8435512906724",
-     "gtin": "8435512906724",
-     "mpn": null,
-     "price": 99.9,
-     "currency": "EUR",
-     "availability": "out_of_stock"
-    },
-    {
-     "variant_id": "v_d98758aad8e51942",
-     "merchant_variant_id": "53853668868422",
-     "color": "Snow White",
-     "size": "S",
-     "sku": "8435512901828",
-     "gtin": "8435512901828",
-     "mpn": null,
-     "price": 99.9,
-     "currency": "EUR",
-     "availability": "out_of_stock"
-    },
-    {
-     "variant_id": "v_de4bce113f17771d",
-     "merchant_variant_id": "53853668901190",
-     "color": "Snow White",
-     "size": "M",
-     "sku": "8435512901835",
-     "gtin": "8435512901835",
-     "mpn": null,
-     "price": 99.9,
-     "currency": "EUR",
-     "availability": "out_of_stock"
-    },
-    {
-     "variant_id": "v_0cce17323b5370a7",
-     "merchant_variant_id": "53853668933958",
-     "color": "Snow White",
-     "size": "L",
-     "sku": "8435512901842",
-     "gtin": "8435512901842",
-     "mpn": null,
-     "price": 99.9,
-     "currency": "EUR",
-     "availability": "out_of_stock"
-    },
-    {
-     "variant_id": "v_c8175a1f07f345c5",
-     "merchant_variant_id": "53853668966726",
-     "color": "Snow White",
-     "size": "XL",
-     "sku": "8435512901859",
-     "gtin": "8435512901859",
-     "mpn": null,
-     "price": 99.9,
-     "currency": "EUR",
-     "availability": "out_of_stock"
-    },
-    {
-     "variant_id": "v_9b0626a4195bafe4",
-     "merchant_variant_id": "53853668999494",
-     "color": "Snow White",
-     "size": "XXL",
-     "sku": "8435512901866",
-     "gtin": "8435512901866",
-     "mpn": null,
-     "price": 99.9,
-     "currency": "EUR",
-     "availability": "out_of_stock"
-    }
-   ]
-  },
-  "features": [
-   "Front closure with buttons"
-  ],
-  "care": [
-   "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION",
-   "DO NOT BLEACH",
-   "DO NOT TUMBLE DRY",
-   "IRON AT LOW TEMPERATURE",
-   "DOES NOT ALLOW DRY CLEANING"
-  ],
-  "commerce": {
-   "price": 99.9,
-   "sale_price": null,
-   "currency": "EUR",
-   "availability": "out_of_stock",
-   "rating": null,
-   "review_count": null,
-   "sku": null,
-   "gtin": null,
-   "mpn": null
-  },
-  "structured_data": {
-   "product_schema_present": true,
-   "offer_schema_present": true,
-   "product_group_present": true,
-   "raw_json_ld": [
-    {
-     "@context": "http://schema.org",
-     "@type": "Organization",
-     "name": "Thinking MU",
-     "logo": "https://thinkingmu.com/cdn/shop/files/logo.svg?v=1756332168&width=500",
-     "sameAs": [
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      ""
-     ],
-     "url": "https://thinkingmu.com"
-    },
-    {
-     "@context": "https://schema.org",
-     "@type": "BreadcrumbList",
-     "itemListElement": [
-      {
-       "@type": "ListItem",
-       "position": 1,
-       "name": "Thinking MU",
-       "item": "https://thinkingmu.com/en"
-      },
-      {
-       "@type": "ListItem",
-       "position": 2,
-       "name": "White hemp Jules shirt",
-       "item": "https://thinkingmu.com/en/products/white-hemp-jules-shirt"
-      }
-     ]
-    },
-    {
-     "@context": "http://schema.org/",
-     "@id": "/en/products/white-hemp-jules-shirt#product",
-     "@type": "ProductGroup",
-     "brand": {
-      "@type": "Brand",
-      "name": "Thinking MU"
-     },
-     "category": "Shirts",
-     "description": "Jules white hemp shirt\nâ†’ V-neckline with shirt collarâ†’ Short sleevesâ†’ Regular fitâ†’ Front closure with buttonsâ†’ Fabric: hemp mixed with tencel, weight 135 gsm (Lightweight fabric)â†’ Length of garment: RegularRef: MSH00210Measurements in size M: 72 cm total length, 49 cm back width and 24 cm sleeve length.Hemp is an exceptional plant that provides one of the lightest and most breathable sustainable fibers. Main features:\n \n \n LESS WATER: It needs 95% less water than cotton and produces 2.5 times more fiber.\n \n \n LESS C02: Its cultivation in the field helps the CO2 absorption process.\n \n \n LESS PESTICIDES: It does not require the use of chemical pesticides or fertilizers for its cultivation.\n \n \n LESS TIME: It is a renewable fiber that grows quickly and vigorously in a wide variety of climates. \n \n \n LESS WASTE: The plant produces 250% more fiber than cotton and 600% more than flax using the same area of land. \n \n \n LESS CROP: The area required for cultivation is almost half that of cotton.\n \n \n LESS SOIL EROSION: Prevents soil erosion caused by logging.\n \n ",
-     "hasVariant": [
-      {
-       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668835654#variant",
-       "@type": "Product",
-       "gtin": "8435512906724",
-       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
-       "name": "White hemp Jules shirt - XS",
-       "offers": {
-        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668835654#offer",
-        "@type": "Offer",
-        "availability": "http://schema.org/OutOfStock",
-        "price": "99.90",
-        "priceCurrency": "EUR",
-        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668835654"
-       },
-       "sku": "8435512906724"
-      },
-      {
-       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668868422#variant",
-       "@type": "Product",
-       "gtin": "8435512901828",
-       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
-       "name": "White hemp Jules shirt - S",
-       "offers": {
-        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668868422#offer",
-        "@type": "Offer",
-        "availability": "http://schema.org/OutOfStock",
-        "price": "99.90",
-        "priceCurrency": "EUR",
-        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668868422"
-       },
-       "sku": "8435512901828"
-      },
-      {
-       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668901190#variant",
-       "@type": "Product",
-       "gtin": "8435512901835",
-       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
-       "name": "White hemp Jules shirt - M",
-       "offers": {
-        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668901190#offer",
-        "@type": "Offer",
-        "availability": "http://schema.org/OutOfStock",
-        "price": "99.90",
-        "priceCurrency": "EUR",
-        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668901190"
-       },
-       "sku": "8435512901835"
-      },
-      {
-       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668933958#variant",
-       "@type": "Product",
-       "gtin": "8435512901842",
-       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
-       "name": "White hemp Jules shirt - L",
-       "offers": {
-        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668933958#offer",
-        "@type": "Offer",
-        "availability": "http://schema.org/OutOfStock",
-        "price": "99.90",
-        "priceCurrency": "EUR",
-        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668933958"
-       },
-       "sku": "8435512901842"
-      },
-      {
-       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668966726#variant",
-       "@type": "Product",
-       "gtin": "8435512901859",
-       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
-       "name": "White hemp Jules shirt - XL",
-       "offers": {
-        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668966726#offer",
-        "@type": "Offer",
-        "availability": "http://schema.org/OutOfStock",
-        "price": "99.90",
-        "priceCurrency": "EUR",
-        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668966726"
-       },
-       "sku": "8435512901859"
-      },
-      {
-       "@id": "/en/products/white-hemp-jules-shirt?variant=53853668999494#variant",
-       "@type": "Product",
-       "gtin": "8435512901866",
-       "image": "https://thinkingmu.com/cdn/shop/files/MSH00210_0.jpg?v=1741708633&width=1920",
-       "name": "White hemp Jules shirt - XXL",
-       "offers": {
-        "@id": "/en/products/white-hemp-jules-shirt?variant=53853668999494#offer",
-        "@type": "Offer",
-        "availability": "http://schema.org/OutOfStock",
-        "price": "99.90",
-        "priceCurrency": "EUR",
-        "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt?variant=53853668999494"
-       },
-       "sku": "8435512901866"
-      }
-     ],
-     "name": "White hemp Jules shirt",
-     "productGroupID": "14828248170822",
-     "url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt"
-    }
-   ]
-  },
-  "evidence": [
-   {
-    "field": "identity.brand",
-    "value": "Thinking MU",
-    "source_text": "Thinking MU",
-    "source_location": "raw_product_group_schema.brand.name",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "identity.product_name",
-    "value": "White hemp Jules shirt",
-    "source_text": "White hemp Jules shirt",
-    "source_location": "raw_product_name",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "identity.product_type",
-    "value": "short_sleeve_shirt",
-    "source_text": "Shirts",
-    "source_location": "raw_category_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 0.8,
-    "note": "Merchant category is Shirts; see the next item for the sleeve length."
-   },
-   {
-    "field": "identity.product_type",
-    "value": "short_sleeve_shirt",
-    "source_text": "â†’ Short sleeves",
-    "source_location": "raw_bullet_points[1]",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 0.8,
-    "note": "Collared, button-front, short sleeves. The product_type list mixes style and sleeve axes; 'button_down' is not used because a buttoned-down collar is not stated."
-   },
-   {
-    "field": "identity.audience",
-    "value": "men",
-    "source_text": "Jules Man",
-    "source_location": "raw_meta_title",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 0.9,
-    "note": "Meta title and meta description label the product 'Man'."
-   },
-   {
-    "field": "materials.primary_material",
-    "value": "hemp",
-    "source_text": "55% Hemp + 45% Tencel",
-    "source_location": "raw_material_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 1.0,
-    "note": "Largest stated percentage."
-   },
-   {
-    "field": "materials.material_percentages",
-    "value": {
-     "hemp": 55,
-     "other": 45
-    },
-    "source_text": "55% Hemp + 45% Tencel",
-    "source_location": "raw_material_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 0.95,
-    "note": "TENCEL is a trademark used for both lyocell and modal fibres; the fibre is not named, so it is mapped to other."
-   },
-   {
-    "field": "materials.fabric_weight_raw",
-    "value": "135 gsm",
-    "source_text": "weight 135 gsm",
-    "source_location": "raw_material_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "materials.fabric_weight_gsm",
-    "value": 135,
-    "source_text": "weight 135 gsm",
-    "source_location": "raw_material_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": "Stated in GSM; no conversion."
-   },
-   {
-    "field": "fit_and_style.fit",
-    "value": "regular",
-    "source_text": "Regular fit",
-    "source_location": "raw_fit_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "fit_and_style.neckline",
-    "value": "v_neck",
-    "source_text": "V-neckline with shirt collar",
-    "source_location": "raw_bullet_points[0]",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 0.9,
-    "note": "Stated as V-neckline; it is a collared shirt with a V opening."
-   },
-   {
-    "field": "fit_and_style.collar_type",
-    "value": "shirt collar",
-    "source_text": "shirt collar",
-    "source_location": "raw_bullet_points[0]",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "fit_and_style.sleeve_length",
-    "value": "short",
-    "source_text": "Short sleeves",
-    "source_location": "raw_bullet_points[1]",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "fit_and_style.shirt_length",
-    "value": "regular",
-    "source_text": "Length of garment: Regular",
-    "source_location": "raw_bullet_points[5]",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "variants.colors",
-    "value": [
-     {
-      "original_color_name": "Snow White",
-      "normalized": "white"
-     }
-    ],
-    "source_text": "Snow White",
-    "source_location": "raw_color_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 0.95,
-    "note": "Selected colour swatch name; the product name also says white."
-   },
-   {
-    "field": "variants.sizes",
-    "value": [
-     "XS",
-     "S",
-     "M",
-     "L",
-     "XL",
-     "XXL"
-    ],
-    "source_text": "XS\nS\nM\nL\nXL\nXXL",
-    "source_location": "raw_size_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": "Letter sizes kept as shown."
-   },
-   {
-    "field": "variants.product_group_id",
-    "value": "14828248170822",
-    "source_text": "14828248170822",
-    "source_location": "raw_product_group_schema.productGroupID",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "variants.items",
-    "value": 6,
-    "source_text": "http://schema.org/OutOfStock",
-    "source_location": "raw_variants",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": "Each item is copied from the raw_variants entry with the same merchant_variant_id; all six offers are OutOfStock."
-   },
-   {
-    "field": "variants.variant_count",
-    "value": 6,
-    "source_text": "XS\nS\nM\nL\nXL\nXXL",
-    "source_location": "raw_size_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 1.0,
-    "note": "Six size options, one variant each; raw_variants also has six entries."
-   },
-   {
-    "field": "features",
-    "value": [
-     "Front closure with buttons"
-    ],
-    "source_text": "â†’ Front closure with buttons",
-    "source_location": "raw_bullet_points[3]",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "care",
-    "value": [
-     "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION",
-     "DO NOT BLEACH",
-     "DO NOT TUMBLE DRY",
-     "IRON AT LOW TEMPERATURE",
-     "DOES NOT ALLOW DRY CLEANING"
-    ],
-    "source_text": "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION\nDO NOT BLEACH\nDO NOT TUMBLE DRY\nIRON AT LOW TEMPERATURE\nDOES NOT ALLOW DRY CLEANING",
-    "source_location": "raw_care_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "commerce.price",
-    "value": 99.9,
-    "source_text": "99,90 â‚¬",
-    "source_location": "raw_price_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 1.0,
-    "note": "Decimal comma."
-   },
-   {
-    "field": "commerce.currency",
-    "value": "EUR",
-    "source_text": "EUR",
-    "source_location": "raw_offer_schema[0].priceCurrency",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "direct",
-    "confidence": 1.0,
-    "note": null
-   },
-   {
-    "field": "commerce.availability",
-    "value": "out_of_stock",
-    "source_text": "Sold out",
-    "source_location": "raw_availability_text",
-    "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-    "method": "rule",
-    "confidence": 1.0,
-    "note": null
-   }
-  ],
-  "conflicts": [],
-  "quality_status": "high",
-  "quality_flags": [
-   "all_variants_out_of_stock",
-   "no_rating_on_page",
-   "meta_description_certifications_not_backed_by_composition"
-  ],
-  "human_reviewed": false
- },
- "evidence": [
+ "facts": [
   {
    "field": "identity.brand",
-   "value": "Thinking MU",
-   "source_text": "Thinking MU",
-   "source_location": "raw_product_group_schema.brand.name",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": null
-  },
-  {
-   "field": "identity.product_name",
-   "value": "White hemp Jules shirt",
-   "source_text": "White hemp Jules shirt",
-   "source_location": "raw_product_name",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": null
-  },
-  {
-   "field": "identity.product_type",
-   "value": "short_sleeve_shirt",
-   "source_text": "Shirts",
-   "source_location": "raw_category_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 0.8,
-   "note": "Merchant category is Shirts; see the next item for the sleeve length."
-  },
-  {
-   "field": "identity.product_type",
-   "value": "short_sleeve_shirt",
-   "source_text": "â†’ Short sleeves",
-   "source_location": "raw_bullet_points[1]",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 0.8,
-   "note": "Collared, button-front, short sleeves. The product_type list mixes style and sleeve axes; 'button_down' is not used because a buttoned-down collar is not stated."
-  },
-  {
-   "field": "identity.audience",
-   "value": "men",
-   "source_text": "Jules Man",
-   "source_location": "raw_meta_title",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 0.9,
-   "note": "Meta title and meta description label the product 'Man'."
+   "label": "Brand",
+   "value": "Example",
+   "source_text": "Example",
+   "source_location": "brand"
   },
   {
    "field": "materials.primary_material",
-   "value": "hemp",
-   "source_text": "55% Hemp + 45% Tencel",
-   "source_location": "raw_material_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 1.0,
-   "note": "Largest stated percentage."
+   "label": "Main material",
+   "value": "organic_cotton",
+   "source_text": "100% organic cotton",
+   "source_location": "raw_description.sections[0].text"
   },
   {
    "field": "materials.material_percentages",
+   "label": "Material composition (%)",
    "value": {
-    "hemp": 55,
-    "other": 45
+    "organic_cotton": 100
    },
-   "source_text": "55% Hemp + 45% Tencel",
-   "source_location": "raw_material_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 0.95,
-   "note": "TENCEL is a trademark used for both lyocell and modal fibres; the fibre is not named, so it is mapped to other."
-  },
-  {
-   "field": "materials.fabric_weight_raw",
-   "value": "135 gsm",
-   "source_text": "weight 135 gsm",
-   "source_location": "raw_material_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": null
+   "source_text": "100% organic cotton",
+   "source_location": "raw_description.sections[0].text"
   },
   {
    "field": "materials.fabric_weight_gsm",
-   "value": 135,
-   "source_text": "weight 135 gsm",
-   "source_location": "raw_material_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": "Stated in GSM; no conversion."
+   "label": "Fabric weight (GSM)",
+   "value": 240,
+   "source_text": "240 gsm",
+   "source_location": "raw_description.sections[0].text"
   },
   {
    "field": "fit_and_style.fit",
-   "value": "regular",
-   "source_text": "Regular fit",
-   "source_location": "raw_fit_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 1.0,
-   "note": null
+   "label": "Fit",
+   "value": "oversized",
+   "source_text": "Oversized",
+   "source_location": "raw_product_name"
   },
   {
    "field": "fit_and_style.neckline",
-   "value": "v_neck",
-   "source_text": "V-neckline with shirt collar",
-   "source_location": "raw_bullet_points[0]",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 0.9,
-   "note": "Stated as V-neckline; it is a collared shirt with a V opening."
-  },
-  {
-   "field": "fit_and_style.collar_type",
-   "value": "shirt collar",
-   "source_text": "shirt collar",
-   "source_location": "raw_bullet_points[0]",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": null
+   "label": "Neckline",
+   "value": "crew",
+   "source_text": "crew neck",
+   "source_location": "raw_description.sections[0].text"
   },
   {
    "field": "fit_and_style.sleeve_length",
+   "label": "Sleeve length",
    "value": "short",
    "source_text": "Short sleeves",
-   "source_location": "raw_bullet_points[1]",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 1.0,
-   "note": null
-  },
-  {
-   "field": "fit_and_style.shirt_length",
-   "value": "regular",
-   "source_text": "Length of garment: Regular",
-   "source_location": "raw_bullet_points[5]",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 1.0,
-   "note": null
+   "source_location": "raw_description.sections[0].text"
   },
   {
    "field": "variants.colors",
+   "label": "Colours",
    "value": [
-    {
-     "original_color_name": "Snow White",
-     "normalized": "white"
-    }
+    "Black"
    ],
-   "source_text": "Snow White",
-   "source_location": "raw_color_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 0.95,
-   "note": "Selected colour swatch name; the product name also says white."
-  },
-  {
-   "field": "variants.sizes",
-   "value": [
-    "XS",
-    "S",
-    "M",
-    "L",
-    "XL",
-    "XXL"
-   ],
-   "source_text": "XS\nS\nM\nL\nXL\nXXL",
-   "source_location": "raw_size_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": "Letter sizes kept as shown."
-  },
-  {
-   "field": "variants.product_group_id",
-   "value": "14828248170822",
-   "source_text": "14828248170822",
-   "source_location": "raw_product_group_schema.productGroupID",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": null
-  },
-  {
-   "field": "variants.items",
-   "value": 6,
-   "source_text": "http://schema.org/OutOfStock",
-   "source_location": "raw_variants",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": "Each item is copied from the raw_variants entry with the same merchant_variant_id; all six offers are OutOfStock."
-  },
-  {
-   "field": "variants.variant_count",
-   "value": 6,
-   "source_text": "XS\nS\nM\nL\nXL\nXXL",
-   "source_location": "raw_size_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 1.0,
-   "note": "Six size options, one variant each; raw_variants also has six entries."
-  },
-  {
-   "field": "features",
-   "value": [
-    "Front closure with buttons"
-   ],
-   "source_text": "â†’ Front closure with buttons",
-   "source_location": "raw_bullet_points[3]",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": null
-  },
-  {
-   "field": "care",
-   "value": [
-    "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION",
-    "DO NOT BLEACH",
-    "DO NOT TUMBLE DRY",
-    "IRON AT LOW TEMPERATURE",
-    "DOES NOT ALLOW DRY CLEANING"
-   ],
-   "source_text": "MACHINE WASH AT 30Âº WITH REDUCED MECHANICAL ACTION\nDO NOT BLEACH\nDO NOT TUMBLE DRY\nIRON AT LOW TEMPERATURE\nDOES NOT ALLOW DRY CLEANING",
-   "source_location": "raw_care_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": null
+   "source_text": "Black",
+   "source_location": "raw_product_name"
   },
   {
    "field": "commerce.price",
-   "value": 99.9,
-   "source_text": "99,90 â‚¬",
-   "source_location": "raw_price_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 1.0,
-   "note": "Decimal comma."
+   "label": "Price",
+   "value": 35.0,
+   "source_text": "35.00",
+   "source_location": "raw_price_text"
   },
   {
    "field": "commerce.currency",
+   "label": "Currency",
    "value": "EUR",
    "source_text": "EUR",
-   "source_location": "raw_offer_schema[0].priceCurrency",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "direct",
-   "confidence": 1.0,
-   "note": null
+   "source_location": "raw_offer_schema[0].priceCurrency"
   },
   {
    "field": "commerce.availability",
-   "value": "out_of_stock",
-   "source_text": "Sold out",
-   "source_location": "raw_availability_text",
-   "source_url": "https://thinkingmu.com/en/products/white-hemp-jules-shirt",
-   "method": "rule",
-   "confidence": 1.0,
-   "note": null
+   "label": "Stock availability",
+   "value": "in_stock",
+   "source_text": "true",
+   "source_location": "raw_availability_text"
   }
  ],
+ "not_found": [
+  {
+   "field": "identity.audience",
+   "label": "Who it's for (men, women, unisex)",
+   "peers_with": 4,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "fit_and_style.pattern",
+   "label": "Pattern",
+   "peers_with": 4,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "variants.sizes",
+   "label": "Sizes",
+   "peers_with": 4,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "identity.subcategory",
+   "label": "Category",
+   "peers_with": 0,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "materials.fabric_type",
+   "label": "Fabric type (e.g. jersey, piqué)",
+   "peers_with": 0,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "materials.stretch",
+   "label": "Stretch",
+   "peers_with": 0,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "materials.texture",
+   "label": "Texture",
+   "peers_with": 0,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "fit_and_style.collar_type",
+   "label": "Collar type",
+   "peers_with": 0,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "fit_and_style.shirt_length",
+   "label": "Length",
+   "peers_with": 0,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "fit_and_style.style",
+   "label": "Style",
+   "peers_with": 0,
+   "of": 4,
+   "predicted": null
+  },
+  {
+   "field": "commerce.gtin",
+   "label": "Barcode (GTIN/EAN)",
+   "peers_with": 0,
+   "of": 4,
+   "predicted": null
+  }
+ ],
+ "summary": {
+  "facts_found": 12,
+  "attributes_checked": 23,
+  "top_median_facts": 13.0,
+  "top_count": 4,
+  "top_missing": [
+   "identity.audience",
+   "fit_and_style.pattern",
+   "variants.sizes"
+  ],
+  "price_position": "above"
+ },
+ "rank": {
+  "position": 4,
+  "total": 5,
+  "score": 60.3,
+  "components": {
+   "score": 60.3,
+   "points": {
+    "facts": 31.3,
+    "description": 9.0,
+    "structured_data": 20.0
+   },
+   "facts_stated": 12,
+   "facts_checked": 23,
+   "description_chars": 90,
+   "description_ref": 200,
+   "structured_data_flags": 2
+  },
+  "formula": "Listing quality = 60 x (key facts stated / 23) + 20 x min(1, description characters / group median) + 20 x (schema.org Product and Offer markup present / 2). It ranks page completeness among comparable shirts only; it is not an AI-visibility or search rank.",
+  "kind": "listing_quality",
+  "weights": {
+   "facts": 60,
+   "description": 20,
+   "structured_data": 20
+  },
+  "note": "Listing quality rank; an AI-visibility rank comes after the benchmark."
+ },
+ "leaderboard": [
+  {
+   "product_id": "p_linen",
+   "title": "Linen Tee",
+   "brand": "Northwind",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "tees.example.org",
+   "price": 30.0,
+   "currency": "EUR",
+   "quality_status": "medium",
+   "url": "https://tees.example.org/p/p_linen",
+   "is_you": false,
+   "score": 73.9,
+   "points": {
+    "facts": 33.9,
+    "description": 20.0,
+    "structured_data": 20.0
+   },
+   "facts_stated": 13,
+   "facts_checked": 23,
+   "description_chars": 200,
+   "description_ref": 200,
+   "structured_data_flags": 2
+  },
+  {
+   "product_id": "p_heavy",
+   "title": "Heavyweight Tee",
+   "brand": "Northwind",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "shop.example.com",
+   "price": 28.0,
+   "currency": "EUR",
+   "quality_status": "high",
+   "url": "https://shop.example.com/p/p_heavy",
+   "is_you": false,
+   "score": 73.9,
+   "points": {
+    "facts": 33.9,
+    "description": 20.0,
+    "structured_data": 20.0
+   },
+   "facts_stated": 13,
+   "facts_checked": 23,
+   "description_chars": 300,
+   "description_ref": 200,
+   "structured_data_flags": 2
+  },
+  {
+   "product_id": "p_slim",
+   "title": "Slim Tee",
+   "brand": "Northwind",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "tees.example.org",
+   "price": 27.0,
+   "currency": "EUR",
+   "quality_status": "medium",
+   "url": "https://tees.example.org/p/p_slim",
+   "is_you": false,
+   "score": 73.9,
+   "points": {
+    "facts": 33.9,
+    "description": 20.0,
+    "structured_data": 20.0
+   },
+   "facts_stated": 13,
+   "facts_checked": 23,
+   "description_chars": 220,
+   "description_ref": 200,
+   "structured_data_flags": 2
+  },
+  {
+   "product_id": "p_9f7a7d05cb649a13",
+   "title": "Heavyweight Oversized Tee - Black | Example Shop",
+   "brand": "Example",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "shop.example.com",
+   "price": 35.0,
+   "currency": "EUR",
+   "quality_status": "medium",
+   "url": "https://shop.example.com/products/heavy-tee",
+   "is_you": true,
+   "score": 60.3,
+   "points": {
+    "facts": 31.3,
+    "description": 9.0,
+    "structured_data": 20.0
+   },
+   "facts_stated": 12,
+   "facts_checked": 23,
+   "description_chars": 90,
+   "description_ref": 200,
+   "structured_data_flags": 2
+  },
+  {
+   "product_id": "p_target",
+   "title": "Everyday Tee",
+   "brand": "Northwind",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "shop.example.com",
+   "price": 25.0,
+   "currency": "EUR",
+   "quality_status": "low",
+   "url": "https://shop.example.com/p/p_target",
+   "is_you": false,
+   "score": 26.5,
+   "points": {
+    "facts": 26.1,
+    "description": 0.4,
+    "structured_data": 0.0
+   },
+   "facts_stated": 10,
+   "facts_checked": 23,
+   "description_chars": 4,
+   "description_ref": 200,
+   "structured_data_flags": 0
+  }
+ ],
+ "table": {
+  "fields": [
+   "identity.brand",
+   "identity.audience",
+   "content.full_description",
+   "materials.primary_material",
+   "materials.material_percentages",
+   "materials.fabric_weight_gsm",
+   "fit_and_style.fit",
+   "fit_and_style.neckline",
+   "fit_and_style.sleeve_length",
+   "fit_and_style.pattern",
+   "variants.colors",
+   "variants.sizes",
+   "commerce.price",
+   "commerce.currency",
+   "commerce.availability"
+  ],
+  "labels": {
+   "identity.brand": "Brand",
+   "identity.audience": "Who it's for (men, women, unisex)",
+   "content.full_description": "Product description",
+   "materials.primary_material": "Main material",
+   "materials.material_percentages": "Material composition (%)",
+   "materials.fabric_weight_gsm": "Fabric weight (GSM)",
+   "fit_and_style.fit": "Fit",
+   "fit_and_style.neckline": "Neckline",
+   "fit_and_style.sleeve_length": "Sleeve length",
+   "fit_and_style.pattern": "Pattern",
+   "variants.colors": "Colours",
+   "variants.sizes": "Sizes",
+   "commerce.price": "Price",
+   "commerce.currency": "Currency",
+   "commerce.availability": "Stock availability"
+  },
+  "rows": [
+   {
+    "product_id": "p_9f7a7d05cb649a13",
+    "title": "Heavyweight Oversized Tee - Black | Example Shop",
+    "brand": "Example",
+    "product_type": "t_shirt",
+    "language": "en",
+    "merchant": "shop.example.com",
+    "price": 35.0,
+    "currency": "EUR",
+    "quality_status": "medium",
+    "url": "https://shop.example.com/products/heavy-tee",
+    "is_you": true,
+    "values": {
+     "identity.brand": "Example",
+     "content.full_description": 90,
+     "materials.primary_material": "organic_cotton",
+     "materials.material_percentages": {
+      "organic_cotton": 100
+     },
+     "materials.fabric_weight_gsm": 240,
+     "fit_and_style.fit": "oversized",
+     "fit_and_style.neckline": "crew",
+     "fit_and_style.sleeve_length": "short",
+     "variants.colors": [
+      "Black"
+     ],
+     "commerce.price": 35.0,
+     "commerce.currency": "EUR",
+     "commerce.availability": "in_stock"
+    }
+   },
+   {
+    "product_id": "p_linen",
+    "title": "Linen Tee",
+    "brand": "Northwind",
+    "product_type": "t_shirt",
+    "language": "en",
+    "merchant": "tees.example.org",
+    "price": 30.0,
+    "currency": "EUR",
+    "quality_status": "medium",
+    "url": "https://tees.example.org/p/p_linen",
+    "is_you": false,
+    "values": {
+     "identity.brand": "Northwind",
+     "identity.audience": "men",
+     "content.full_description": 200,
+     "materials.primary_material": "linen",
+     "materials.fabric_weight_gsm": 160,
+     "fit_and_style.fit": "regular",
+     "fit_and_style.neckline": "crew",
+     "fit_and_style.pattern": "solid",
+     "variants.colors": [
+      "black",
+      "white"
+     ],
+     "variants.sizes": [
+      "S",
+      "M",
+      "L"
+     ],
+     "commerce.price": 30.0,
+     "commerce.currency": "EUR",
+     "commerce.availability": "in_stock"
+    }
+   },
+   {
+    "product_id": "p_heavy",
+    "title": "Heavyweight Tee",
+    "brand": "Northwind",
+    "product_type": "t_shirt",
+    "language": "en",
+    "merchant": "shop.example.com",
+    "price": 28.0,
+    "currency": "EUR",
+    "quality_status": "high",
+    "url": "https://shop.example.com/p/p_heavy",
+    "is_you": false,
+    "values": {
+     "identity.brand": "Northwind",
+     "identity.audience": "men",
+     "content.full_description": 300,
+     "materials.primary_material": "cotton",
+     "materials.fabric_weight_gsm": 240,
+     "fit_and_style.fit": "regular",
+     "fit_and_style.neckline": "crew",
+     "fit_and_style.pattern": "solid",
+     "variants.colors": [
+      "black",
+      "white"
+     ],
+     "variants.sizes": [
+      "S",
+      "M",
+      "L"
+     ],
+     "commerce.price": 28.0,
+     "commerce.currency": "EUR",
+     "commerce.availability": "in_stock"
+    }
+   },
+   {
+    "product_id": "p_slim",
+    "title": "Slim Tee",
+    "brand": "Northwind",
+    "product_type": "t_shirt",
+    "language": "en",
+    "merchant": "tees.example.org",
+    "price": 27.0,
+    "currency": "EUR",
+    "quality_status": "medium",
+    "url": "https://tees.example.org/p/p_slim",
+    "is_you": false,
+    "values": {
+     "identity.brand": "Northwind",
+     "identity.audience": "men",
+     "content.full_description": 220,
+     "materials.primary_material": "cotton",
+     "materials.fabric_weight_gsm": 180,
+     "fit_and_style.fit": "slim",
+     "fit_and_style.neckline": "crew",
+     "fit_and_style.pattern": "solid",
+     "variants.colors": [
+      "black",
+      "white"
+     ],
+     "variants.sizes": [
+      "S",
+      "M",
+      "L"
+     ],
+     "commerce.price": 27.0,
+     "commerce.currency": "EUR",
+     "commerce.availability": "in_stock"
+    }
+   },
+   {
+    "product_id": "p_target",
+    "title": "Everyday Tee",
+    "brand": "Northwind",
+    "product_type": "t_shirt",
+    "language": "en",
+    "merchant": "shop.example.com",
+    "price": 25.0,
+    "currency": "EUR",
+    "quality_status": "low",
+    "url": "https://shop.example.com/p/p_target",
+    "is_you": false,
+    "values": {
+     "identity.brand": "Northwind",
+     "identity.audience": "men",
+     "content.full_description": 4,
+     "materials.primary_material": "cotton",
+     "fit_and_style.pattern": "solid",
+     "variants.colors": [
+      "black",
+      "white"
+     ],
+     "variants.sizes": [
+      "S",
+      "M",
+      "L"
+     ],
+     "commerce.price": 25.0,
+     "commerce.currency": "EUR",
+     "commerce.availability": "in_stock"
+    }
+   }
+  ]
+ },
+ "context": {
+  "language": "en",
+  "currency": "EUR",
+  "merchant": "shop.example.com",
+  "dataset_size": 7,
+  "quality_status": "medium"
+ },
+ "peers": [
+  {
+   "product_id": "p_linen",
+   "title": "Linen Tee",
+   "brand": "Northwind",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "tees.example.org",
+   "price": 30.0,
+   "currency": "EUR",
+   "quality_status": "medium",
+   "url": "https://tees.example.org/p/p_linen",
+   "match_score": 1,
+   "facts_found": 13
+  },
+  {
+   "product_id": "p_heavy",
+   "title": "Heavyweight Tee",
+   "brand": "Northwind",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "shop.example.com",
+   "price": 28.0,
+   "currency": "EUR",
+   "quality_status": "high",
+   "url": "https://shop.example.com/p/p_heavy",
+   "match_score": 1,
+   "facts_found": 13
+  },
+  {
+   "product_id": "p_slim",
+   "title": "Slim Tee",
+   "brand": "Northwind",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "tees.example.org",
+   "price": 27.0,
+   "currency": "EUR",
+   "quality_status": "medium",
+   "url": "https://tees.example.org/p/p_slim",
+   "match_score": 1,
+   "facts_found": 13
+  },
+  {
+   "product_id": "p_target",
+   "title": "Everyday Tee",
+   "brand": "Northwind",
+   "product_type": "t_shirt",
+   "language": "en",
+   "merchant": "shop.example.com",
+   "price": 25.0,
+   "currency": "EUR",
+   "quality_status": "low",
+   "url": "https://shop.example.com/p/p_target",
+   "match_score": 1,
+   "facts_found": 10
+  }
+ ],
+ "comparison": {
+  "basis": "top_ranked",
+  "of": 4,
+  "facts": {
+   "target": 12,
+   "top_median": 13.0,
+   "of": 23
+  },
+  "description_chars": {
+   "target": 90,
+   "top_median": 210.0
+  },
+  "structured_data": {
+   "product_schema_present": {
+    "target": true,
+    "peers_present": 3,
+    "of": 4
+   },
+   "offer_schema_present": {
+    "target": true,
+    "peers_present": 3,
+    "of": 4
+   },
+   "product_group_present": {
+    "target": false,
+    "peers_present": 0,
+    "of": 4
+   }
+  },
+  "reviews": {
+   "target_has_rating": false,
+   "top_with_rating": 0
+  }
+ },
+ "price_position": {
+  "available": true,
+  "price": 35.0,
+  "currency": "EUR",
+  "source": "signals",
+  "peer_count": 12,
+  "p25": 24.0,
+  "median": 27.5,
+  "p75": 29.0,
+  "position": "above"
+ },
+ "actions": [
+  {
+   "id": "missing_attribute:identity.audience",
+   "kind": "missing_attribute",
+   "priority": 1,
+   "title": "Add who it's for (men, women, unisex), if you can verify it",
+   "why": "We couldn't find who it's for (men, women, unisex) on your page. 4 of the 4 top-ranked similar shirts state it.",
+   "evidence": {
+    "peers_with_attribute": 4,
+    "of": 4,
+    "peer_ids": [
+     "p_linen",
+     "p_heavy",
+     "p_slim",
+     "p_target"
+    ]
+   },
+   "label": "OBSERVED_FACT",
+   "effort": "low",
+   "field": "identity.audience",
+   "seo_note": "Adds information only; does not change your URL or title."
+  },
+  {
+   "id": "missing_attribute:fit_and_style.pattern",
+   "kind": "missing_attribute",
+   "priority": 1,
+   "title": "Add pattern, if you can verify it",
+   "why": "We couldn't find pattern on your page. 4 of the 4 top-ranked similar shirts state it.",
+   "evidence": {
+    "peers_with_attribute": 4,
+    "of": 4,
+    "peer_ids": [
+     "p_linen",
+     "p_heavy",
+     "p_slim",
+     "p_target"
+    ]
+   },
+   "label": "OBSERVED_FACT",
+   "effort": "low",
+   "field": "fit_and_style.pattern",
+   "seo_note": "Adds information only; does not change your URL or title."
+  },
+  {
+   "id": "missing_attribute:variants.sizes",
+   "kind": "missing_attribute",
+   "priority": 1,
+   "title": "Add sizes, if you can verify it",
+   "why": "We couldn't find sizes on your page. 4 of the 4 top-ranked similar shirts state it.",
+   "evidence": {
+    "peers_with_attribute": 4,
+    "of": 4,
+    "peer_ids": [
+     "p_linen",
+     "p_heavy",
+     "p_slim",
+     "p_target"
+    ]
+   },
+   "label": "OBSERVED_FACT",
+   "effort": "med",
+   "field": "variants.sizes",
+   "seo_note": "Adds information only; does not change your URL or title."
+  },
+  {
+   "id": "description:content.full_description",
+   "kind": "description",
+   "priority": 2,
+   "title": "Describe the product in more detail, using facts you can verify",
+   "why": "Your description is 90 characters; the median for the 4 top-ranked similar shirts is 210. Length alone is not the goal: add concrete facts shoppers ask about.",
+   "evidence": {
+    "target_chars": 90,
+    "peer_median_chars": 210.0,
+    "of": 4
+   },
+   "label": "OBSERVED_FACT",
+   "effort": "med",
+   "field": "content.full_description",
+   "seo_note": "Adds information only; does not change your URL or title."
+  },
+  {
+   "id": "price:commerce.price",
+   "kind": "price",
+   "priority": 4,
+   "title": "Check your price is correct and the page explains it",
+   "why": "Your price 35 EUR is above the middle half of 12 comparable listings (24 to 29 EUR). This is positioning evidence, not a recommended price.",
+   "evidence": {
+    "peer_count": 12,
+    "p25": 24.0,
+    "median": 27.5,
+    "p75": 29.0,
+    "source": "signals"
+   },
+   "label": "OBSERVED_FACT",
+   "effort": "low",
+   "field": "commerce.price",
+   "seo_note": "No page change needed unless you decide to change it."
+  }
+ ],
+ "unknowns": [
+  "Adding the verified attributes most peers expose is a reasonable intervention to test",
+  "Effect of these gaps on AI/search ranking is unmeasured until the AI-visibility benchmark runs"
+ ],
+ "visibility": {
+  "available": false
+ },
  "conflicts": [],
- "quality_status": "high"
+ "notes": []
 }

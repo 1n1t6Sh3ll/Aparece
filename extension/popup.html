@@ -1,12 +1,17 @@
 <!doctype html>
 <html>
 <head><meta charset="utf-8"><title>PowerLens</title><link rel="stylesheet" href="style.css"></head>
-<body>
-  <h1>PowerLens</h1>
-  <button id="audit">Audit product</button>
-  <a href="options.html" target="_blank" class="muted" style="float:right">Settings</a>
-  <p id="status" class="muted"></p>
-  <div id="out"></div>
+<body class="popup">
+  <header>
+    <strong class="brand">PowerLens</strong>
+    <a id="settings" href="options.html" target="_blank" rel="noopener"></a>
+  </header>
+  <div class="actions">
+    <button id="audit" class="primary"></button>
+    <button id="draft" class="secondary" hidden></button>
+  </div>
+  <p id="status" class="muted" role="status" aria-live="polite"></p>
+  <main id="out"></main>
   <script src="common.js"></script>
   <script src="popup.js"></script>
 </body>
