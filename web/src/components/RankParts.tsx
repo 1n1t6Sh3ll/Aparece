@@ -206,7 +206,8 @@ export function Leaderboard({ audit }: { audit: Audit }) {
                 {r.is_you ? <span className="text-sm font-semibold text-brand-700 dark:text-brand-300">{t("rank.you")}</span>
                   : r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer" className="block truncate text-sm hover:underline">{r.title || r.product_id}</a>
                     : <span className="block truncate text-sm">{r.title || r.product_id}</span>}
-                {!r.is_you && r.merchant && <span className="block truncate text-xs muted">{r.merchant}</span>}
+                {!r.is_you && (r.merchant || r.link_unverified) && <span className="block truncate text-xs muted">
+                  {[r.merchant, r.link_unverified && t("rank.linkUnverified")].filter(Boolean).join(" · ")}</span>}
               </span>
               <span className="shrink-0 text-sm font-medium tabular-nums">{r.score}</span>
             </div>

@@ -9,7 +9,6 @@ Part files are streamed from WDC_BASE when not found in --local-dir; nothing is 
 """
 import argparse
 import gzip
-import html
 import io
 import json
 import re
@@ -26,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from extract import SCHEMA_VERSION, canonical_key, hash_id, text_or_none  # noqa: E402
-from normalize import build_normalized  # noqa: E402
+from normalize import build_normalized, unescape as unescape_html  # noqa: E402
 from run import NORM_FILE, NOT_SHIRT, OUT, RAW_FILE, SHIRT, clean, read_jsonl, report  # noqa: E402
 
 WDC_BASE = "https://data.dws.informatik.uni-mannheim.de/structureddata/2024-12/quads/classspecific/Product/"
@@ -255,15 +254,12 @@ def build_raw_wdc(tree, page_url):
     }
 
 
-ENTITY = re.compile(r"&(?:#\d+|#x[0-9a-f]+|[a-z]+\d*);", re.I)
-
-
 def decode(text):
-    """HTML entities (also double-encoded) and literal \\uXXXX escapes -> characters. Normalized text only."""
+    """HTML entities (normalize.unescape as unescape_html, the single decoder) and literal \\uXXXX escapes -> characters, spaces
+    collapsed. Normalized text only."""
     if not isinstance(text, str):
         return text
-    for _ in range(2):
-        text = html.unescape(text)
+    text = unescape_html(text)
     text = re.sub(r"\\u([0-9A-Fa-f]{4})", lambda m: chr(int(m.group(1), 16)), text)
     return re.sub(r"[ \t]+", " ", text).strip() or None
 

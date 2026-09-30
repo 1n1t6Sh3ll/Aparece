@@ -9,6 +9,8 @@ import re
 import unicodedata
 from urllib.parse import urlparse
 
+from tools.linkcheck import status as link
+
 URL_RE = re.compile(r"https?://[^\s)\]>\"'<]+")
 HOST_RE = re.compile(r"(?<![\w.-])((?:[a-z0-9-]+\.)+[a-z]{2,})(?![\w-])", re.I)
 LIST_ITEM_RE = re.compile(r"^\s*(?:\d+[.)]|[-*•])\s+(.+)")
@@ -30,8 +32,9 @@ def url_key(url):
     return host(url) + p.path.rstrip("/").lower()
 
 
-def load_catalog(path):
-    """Load normalized records (JSONL or JSON list) into flat product dicts."""
+def load_catalog(path, drop_dead=True):
+    """Load normalized records (JSONL or JSON list) into flat product dicts. With drop_dead, products whose link
+    was checked and is gone or redirected away (tools/linkcheck) are left out; no link-check results, no change."""
     with open(path, encoding="utf-8") as f:
         text = f.read().strip()
     rows = json.loads(text) if text.startswith("[") else [json.loads(l) for l in text.splitlines() if l.strip()]
@@ -47,7 +50,7 @@ def load_catalog(path):
             "site": host(src.get("merchant_domain") or url),
             "aliases": r.get("aliases") or [],
         })
-    return products
+    return [p for p in products if not (drop_dead and link.status(p["url"]) in link.EXCLUDE)]
 
 
 def match_response(text, products):
