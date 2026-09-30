@@ -1,3 +1,4 @@
-# Only needed for paid runs; the mock adapter and tests use the standard library.
+# Only needed for real runs; the mock adapter and tests use the standard library.
 anthropic>=0.40
-openai>=1.40
+openai>=1.40        # also used by the local qwen adapter (OpenAI-compatible server)
+google-genai>=1.0

@@ -21,16 +21,34 @@ FastAPI service in `api/` (reuses `dataset/collect` extract + normalize). OpenAP
 URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s total deadline, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default); `qwen` returns 501 until implemented.
 Run: `docker compose up --build` (port 8000 on localhost) or `pip install -r api/requirements.txt && uvicorn main:app --app-dir api`. Tests: `python -m unittest discover -s api/tests`.
 
+## Merchant dashboard
+`dashboard/` is plain HTML/CSS/JS served by the API at `/dashboard/`: product search with facts + evidence, completeness and price vs peers, gap issues by label (reuses `analysis/`); dataset counts; model eval tables. No composite score.
+Read-only routes: `GET /v1/products?q=`, `/v1/products/{id}`, `/v1/products/{id}/gaps`, `/v1/stats`, `/v1/eval`. Data from `PRODUCTLENS_DATA` (normalized JSONL, default `dataset/output/final/train.jsonl`) and `PRODUCTLENS_EVAL` (`train/eval.py` JSON, default `train/runs/eval.json`); missing files give empty results.
+Try with fixtures: `cd api && PRODUCTLENS_DATA=tests/fixtures/dashboard_records.jsonl PRODUCTLENS_EVAL=tests/fixtures/dashboard_eval.json uvicorn main:app`, then open `http://127.0.0.1:8000/dashboard/`.
+
 ## Chrome extension
 `extension/` is a no-build MV3 popup that audits the current product page via `POST /v1/extract`. See `extension/README.md` to load it unpacked or preview it with mock data.
 
 ## AI-visibility benchmark
-`benchmark/` sends the same prompts + system instructions to `mock`, `anthropic`, `openai` (official SDKs; keys only from `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`), stores raw responses in resumable JSONL, then matches mentions to catalog products (URL, alias, brand+name; country-TLD sites distinct) and reports mention rate, top-k, MRR, citation rate, stability per model/language/site. Hidden split is excluded unless `--splits` names it. Always `--dry-run` first; paid runs need `--max-usd` and a price in `benchmark/prices.json` (reviewer-verified; re-check sources).
+`benchmark/` sends the same prompts + system instructions to `mock`, `anthropic`, `openai`, `gemini` (official SDKs; keys only from `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`/`GEMINI_API_KEY`) and `qwen` (a local OpenAI-compatible server such as Ollama/vLLM at `QWEN_BASE_URL`, default `http://localhost:11434/v1`; free, no key), stores raw responses in resumable JSONL, then matches mentions to catalog products (URL, alias, brand+name; country-TLD sites distinct) and reports mention rate, top-k, MRR, citation rate, stability per model/language/site. Hidden split is excluded unless `--splits` names it. Always `--dry-run` first; paid runs need `--max-usd` and a price in `benchmark/prices.json` (reviewer-verified; re-check sources).
 ```
 python -m benchmark.harness run --prompts benchmark/examples/prompts.example.jsonl --models mock:mock-1 --catalog benchmark/examples/catalog.example.jsonl --out runs.jsonl [--repeats 3 --shuffle --dry-run --max-usd 5]
 python -m benchmark.harness report --results runs.jsonl --catalog benchmark/examples/catalog.example.jsonl --out-dir reports/
 python -m unittest discover -s benchmark/tests -t .
 ```
+
+## Review and price signals (`signals/`)
+Deterministic per-product signals keyed by `product_id`, written to `dataset/output/signals/` (git-ignored).
+```sh
+python signals/reviews.py --products <amazon>/shirts_raw.jsonl   # streams ~28 GB Amazon Reviews 2023 (research-only)
+python signals/build.py --amazon-dir <amazon output dir> --wdc-dir <wdc output dir>
+python -m unittest discover -s signals/tests -t .
+```
+- Reviews: Amazon rating mean/count/histogram + up to 3 verbatim excerpts (<=280 chars, most helpful) per `parent_asin`; WDC `aggregateRating`/`review` from schema.org.
+- Prices: discount % from explicit list price; `suspicious_discount` if >=50% off or list > peer p90 while price <= peer p75. Peer percentile/p25-p75 guidance within `product_type|language|currency|observed-or-assumed currency` (n>=5); guidance is evidence, not a promise.
+- USD 2026: ECB reference rates (2024-10-01) then US CPI-U (BLS CUUR0000SA0) to 2026-08; null when currency, date, or rate is unknown. Amazon (amazon.com) prices are assumed USD, period 2023. Tables and sources: `signals/reference.py`.
+- Flags: `missing_currency`, `nonpositive_price`, `price_outlier` (log price beyond 3 IQR of peers, n>=10), `rating_out_of_range`, `rating_conflict`, `sale_above_list`, `conflicting_prices`, `suspicious_discount`.
+- TODO: price over time from Common Crawl snapshots.
 
 ## Checks
 CI (`ci / check`) runs `python -m unittest discover -s dataset/tests`, compiles `train/`, and runs `api/tests`.

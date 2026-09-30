@@ -128,6 +128,25 @@ class HarnessTests(unittest.TestCase):
         finally:
             harness.make_adapter = orig
 
+    def test_gemini_priced_and_qwen_free(self):
+        with tempfile.TemporaryDirectory() as d:
+            res = harness.main(["run", "--prompts", PROMPTS, "--out", str(Path(d) / "r.jsonl"), "--dry-run",
+                                "--models", "gemini:gemini-2.5-flash,qwen:qwen2.5:7b", "--repeats", "1"])
+            self.assertEqual(res["calls"], 16)
+            self.assertGreater(res["est_usd"], 0)
+            with self.assertRaises(SystemExit):  # gemini is paid: needs --max-usd
+                harness.main(["run", "--prompts", PROMPTS, "--out", str(Path(d) / "r.jsonl"),
+                              "--models", "gemini:gemini-2.5-flash"])
+        orig = harness.make_adapter  # qwen (local server) runs without a cap; mocked, no network
+        harness.make_adapter = lambda prov, model, products=(): harness.MockAdapter(model, products)
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                res = harness.main(["run", "--prompts", PROMPTS, "--out", str(Path(d) / "r.jsonl"),
+                                    "--models", "qwen:qwen2.5:7b", "--repeats", "1", "--min-interval", "0"])
+                self.assertEqual(res["calls"], 8)
+        finally:
+            harness.make_adapter = orig
+
     def test_paid_requires_cap_and_price(self):
         with tempfile.TemporaryDirectory() as d:
             base = ["run", "--prompts", PROMPTS, "--out", str(Path(d) / "r.jsonl")]
