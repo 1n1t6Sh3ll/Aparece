@@ -21,6 +21,11 @@ FastAPI service in `api/` (reuses `dataset/collect` extract + normalize). OpenAP
 URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s total deadline, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default); `qwen` returns 501 until implemented.
 Run: `docker compose up --build` (port 8000 on localhost) or `pip install -r api/requirements.txt && uvicorn main:app --app-dir api`. Tests: `python -m unittest discover -s api/tests`.
 
+## Merchant dashboard
+`dashboard/` is plain HTML/CSS/JS served by the API at `/dashboard/`: product search with facts + evidence, completeness and price vs peers, gap issues by label (reuses `analysis/`); dataset counts; model eval tables. No composite score.
+Read-only routes: `GET /v1/products?q=`, `/v1/products/{id}`, `/v1/products/{id}/gaps`, `/v1/stats`, `/v1/eval`. Data from `PRODUCTLENS_DATA` (normalized JSONL, default `dataset/output/final/train.jsonl`) and `PRODUCTLENS_EVAL` (`train/eval.py` JSON, default `train/runs/eval.json`); missing files give empty results.
+Try with fixtures: `cd api && PRODUCTLENS_DATA=tests/fixtures/dashboard_records.jsonl PRODUCTLENS_EVAL=tests/fixtures/dashboard_eval.json uvicorn main:app`, then open `http://127.0.0.1:8000/dashboard/`.
+
 ## Chrome extension
 `extension/` is a no-build MV3 popup that audits the current product page via `POST /v1/extract`. See `extension/README.md` to load it unpacked or preview it with mock data.
 
