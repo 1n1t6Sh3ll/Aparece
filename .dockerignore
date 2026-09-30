@@ -12,6 +12,7 @@
 !profile/
 !chat/
 !webhooks/
+!tools/linkcheck/
 !train/common.py
 !train/reward.py
 !dataset/schema/
