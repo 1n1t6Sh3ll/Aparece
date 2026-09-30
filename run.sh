@@ -12,7 +12,7 @@ if [ -x .venv/bin/python ]; then VPY=.venv/bin/python; else VPY=.venv/Scripts/py
 "$VPY" -m pip install -q --upgrade pip
 "$VPY" -m pip install -q -r api/requirements.txt
 
-# SKIP_DOTENV=1 is set by scripts/demo_data.sh so .env cannot override fixture paths.
+# SKIP_DOTENV=1 is set by tools/demo_data.sh so .env cannot override fixture paths.
 if [ -f .env ] && [ "${SKIP_DOTENV:-0}" != "1" ]; then set -a; . ./.env; set +a; fi
 
 if [ "${1:-}" != "--skip-tests" ]; then

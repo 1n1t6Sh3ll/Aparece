@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start the API + dashboard on bundled test fixtures (no downloads, no keys, no paid calls).
-# Usage: scripts/demo_data.sh   then open http://127.0.0.1:8000/dashboard/
+# Usage: tools/demo_data.sh   then open http://127.0.0.1:8000/dashboard/
 set -euo pipefail
 cd "$(dirname "$0")/.."
 FX="$PWD/api/tests/fixtures"

@@ -16,7 +16,7 @@ flowchart LR
   G --> A
 ```
 
-Stage-by-stage mapping to code, and what is not implemented yet (the hallucination check currently stops at catalog matching): [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 | Path | What |
 |---|---|
@@ -48,7 +48,7 @@ Without Docker (Python 3.12+; creates `.venv`, installs `api/requirements.txt`, 
 Demo with bundled fixtures (no downloads, no keys):
 
 ```sh
-scripts/demo_data.sh   # then open http://127.0.0.1:8000/dashboard/
+tools/demo_data.sh   # then open http://127.0.0.1:8000/dashboard/
 ```
 
 Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. Never commit `.env`.
@@ -85,6 +85,7 @@ python -m benchmark.harness run ... --models anthropic:<model> --max-usd 5
 - Local models: `qwen:<model>` against an OpenAI-compatible server at `QWEN_BASE_URL` (default Ollama).
 - Prompt set: `benchmark/prompts/tshirts.jsonl` (120 brand-free intents, EN US/GB and ES ES/MX, seeded 60/20/20 split). `benchmark/prompts/hidden.jsonl` is the held-out split; optimizers must never read it.
 - Scheduled weekly visibility (`MONITOR_ENABLED=1`) runs only when a key and `BENCHMARK_MAX_USD` are both set; otherwise it logs `skipped`.
+- Hallucination check: the report's `claims` section (`benchmark/claims.py`, PR #51) labels each attribute claim in an AI answer SUPPORTED / CONTRADICTED / UNVERIFIABLE against non-null ground truth (same `normalize.py` rules), per model and language, with examples.
 - Metrics (mention rate, top-k, MRR, citation rate, stability) describe observed outputs of black-box systems, not their internals.
 
 ## Results
