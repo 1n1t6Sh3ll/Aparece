@@ -26,7 +26,7 @@ from jsonschema import Draft202012Validator  # noqa: E402
 
 from extract import build_raw, canonical_key, hash_id  # noqa: E402
 from fetch import Blocked, Fetcher  # noqa: E402
-from normalize import build_normalized  # noqa: E402
+from normalize import build_normalized, decoded_text  # noqa: E402
 
 DATASET = HERE.parent
 OUT = DATASET / "output"
@@ -152,10 +152,11 @@ def resolve(record, path):
 
 
 def evidence_errors(raw, norm):
+    text = decoded_text(raw)  # evidence quotes entity-decoded text
     bad = []
     for e in norm["evidence"]:
         try:
-            target = resolve(raw, e["source_location"])
+            target = resolve(text, e["source_location"])
         except (KeyError, IndexError, TypeError):
             bad.append(f"{e['field']}: bad location {e['source_location']}")
             continue

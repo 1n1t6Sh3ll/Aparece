@@ -17,7 +17,8 @@ FIX = Path(__file__).parent / "fixtures"
 HTML = (FIX / "heavy_tee.html").read_text(encoding="utf-8")
 URL = "https://shop.example.com/products/heavy-tee"
 ENV = {"PRODUCTLENS_DATA": str(FIX / "dashboard_records.jsonl"), "PRODUCTLENS_SIGNALS": str(FIX / "dashboard_signals.jsonl"),
-       "PRODUCTLENS_VISIBILITY": str(FIX / "nope")}
+       "PRODUCTLENS_VISIBILITY": str(FIX / "nope"),
+       "PRODUCTLENS_LINK_STATUS": str(FIX / "nope")}  # never read a local dataset/output/link_status.jsonl
 client = TestClient(main.app)
 KINDS = ["missing_attribute", "description", "structured_data", "price", "language"]
 

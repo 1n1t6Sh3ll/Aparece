@@ -8,7 +8,7 @@ import { actionText } from "./Results";
 type Row = { url: string; status: "queued" | "running" | "done" | "error"; audit?: Audit; error?: string };
 const MAX = 20;
 
-function csvCell(v: unknown) {
+export function csvCell(v: unknown) {
   let s = v == null ? "" : String(v);
   if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // spreadsheet formula injection guard
   return `"${s.replace(/"/g, '""')}"`;
@@ -62,7 +62,7 @@ export default function BulkPage() {
 
   const doneN = rows.filter((r) => r.status === "done" || r.status === "error").length;
   const Status = ({ r }: { r: Row }) => {
-    const m = { queued: [Clock, "text-slate-400"], running: [Loader2, "text-indigo-500 animate-spin"], done: [CheckCircle2, "text-emerald-600"], error: [XCircle, "text-rose-600"] } as const;
+    const m = { queued: [Clock, "text-stone-400"], running: [Loader2, "text-brand-500 animate-spin"], done: [CheckCircle2, "text-emerald-600"], error: [XCircle, "text-rose-600"] } as const;
     const [Icon, cls] = m[r.status];
     return <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Icon className={`size-4 ${cls}`} aria-hidden />{t(`bulk.st.${r.status}`)}</span>;
   };
@@ -77,7 +77,7 @@ export default function BulkPage() {
           <textarea id="bulk" rows={6} className="input font-mono text-sm" value={text} onChange={(e) => setText(e.target.value)} placeholder={t("bulk.placeholder")} disabled={running} />
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {running ? (
-              <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={() => { stop.current = true; }}><Square className="size-4" aria-hidden /> {t("bulk.stop")}</button>
+              <button className="btn-ghost border border-stone-300 dark:border-stone-700" onClick={() => { stop.current = true; }}><Square className="size-4" aria-hidden /> {t("bulk.stop")}</button>
             ) : (
               <button className="btn-primary" onClick={run} disabled={!urls.length}><Play className="size-4" aria-hidden /> {t("bulk.run", { n: Math.min(new Set(urls).size, MAX) })}</button>
             )}
@@ -99,7 +99,7 @@ export default function BulkPage() {
           </div>
           <div className="card mt-4 overflow-x-auto" role="region" aria-label={t("bulk.title")} tabIndex={0}>
             <table className="w-full min-w-[760px] text-sm">
-              <thead className="border-b border-slate-200 text-left muted dark:border-slate-800">
+              <thead className="border-b border-stone-200 text-left muted dark:border-stone-800">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">{t("bulk.col.product")}</th>
                   <th scope="col" className="px-4 py-3 font-medium">{t("bulk.col.status")}</th>
@@ -109,7 +109,7 @@ export default function BulkPage() {
                   <th scope="col" className="px-4 py-3 font-medium">{t("bulk.col.price")}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                 {rows.map((r) => {
                   const a = r.audit;
                   return (

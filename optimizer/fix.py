@@ -8,7 +8,7 @@ import threading
 from pathlib import Path
 
 from optimizer import guard, llm
-from optimizer.truth import LANGS, fact_sentences, fallback_title, json_ld, missing_attributes, product_truth
+from optimizer.truth import LANGS, TITLE_MAX, fact_sentences, fallback_title, json_ld, missing_attributes, product_truth
 
 try:
     from train.reward import copy_reward
@@ -46,13 +46,18 @@ def _prompt(truth, lang, rejected, variant=None):
             f"from these verified facts only.\n{note}" + json.dumps(data, ensure_ascii=False))
 
 
+def _reports(cand, truth):
+    """Guard rows for a {title, description}: the title as one unit (identity words allowed), then each sentence."""
+    return guard.check_title(cand["title"], truth) + guard.check_text(cand["description"], truth)
+
+
 def _flagged(report):
     return [{"sentence": r["sentence"], "problems": r["problems"]} for r in report if r["problems"]]
 
 
 def _coverage_fields(truth, texts):
-    """Verified attribute fields stated by grounded sentences of `texts` (claims + brand/product name verbatim)."""
-    reports = [r for t in texts for r in guard.check_text(t, truth)]
+    """Verified attribute fields stated by grounded sentences of texts[0] (a title) and texts[1:] (description)."""
+    reports = guard.check_title(texts[0], truth) + [r for t in texts[1:] for r in guard.check_text(t, truth)]
     return _covered(truth, {"title": "\n".join(texts), "description": ""}, reports)
 
 
@@ -118,7 +123,7 @@ def generate(record, language="en", gaps=None, backend=None, candidates=None):
                 attempts.append({"attempt": len(attempts) + 1, "error": str(e)})
                 continue
             cand = {"title": cand["title"], "description": cand["description"]}
-            reports = guard.check_text(cand["title"], truth) + guard.check_text(cand["description"], truth)
+            reports = _reports(cand, truth)
             bad = _flagged(reports)
             attempts.append({"attempt": len(attempts) + 1, "rejected": bad})
             rejected += bad
@@ -139,18 +144,28 @@ def generate(record, language="en", gaps=None, backend=None, candidates=None):
     fallback = out is None
     if fallback:  # no usable output: the localized fact lines themselves
         out = {"title": fallback_title(truth, language), "description": " ".join(facts)}
-    title_rep, desc_rep = guard.check_text(out["title"], truth), guard.check_text(out["description"], truth)
-    title = out["title"].strip() if out["title"].strip() and not _flagged(title_rep) else fallback_title(truth, language)
+    title_rep, desc_rep = guard.check_title(out["title"], truth), guard.check_text(out["description"], truth)
+    title = out["title"].strip()
+    if not title or len(title) > TITLE_MAX or _flagged(title_rep):
+        title = fallback_title(truth, language)
     description = " ".join(r["sentence"] for r in desc_rep if not r["problems"])
     if not description:  # everything was stripped: deterministic template from the facts
         description, fallback = " ".join(facts), True
     removed = _flagged(title_rep) + _flagged(desc_rep)
+    final = {"title": title, "description": description}
+    if _flagged(_reports(final, truth)):  # never return copy that fails our own guard: template instead
+        final, fallback = {"title": fallback_title(truth, language), "description": " ".join(facts)}, True
+        if _flagged(_reports(final, truth)):
+            raise RuntimeError("template copy failed the guardrail; refusing to return it")
+    title, description = final["title"], final["description"]
+    final_reports = _reports(final, truth)
+    reward = copy_reward(final, final_reports, _covered(truth, final, final_reports), targets)
     after = guard.accuracy(guard.check_text(title + "\n" + description, truth))
     if after["accuracy"] < before["accuracy"]:  # cannot happen with only grounded sentences left; keep it a hard stop
         raise RuntimeError("accuracy_after < accuracy_before")
     return {"product_id": truth["product_id"], "language": language, "backend": name,
             "title": title, "description": description,
-            "candidates": candidates, "reward": best["reward"] if best else None,
+            "candidates": candidates, "reward": reward,
             "removed_sentences": removed, "attempts": attempts, "used_fallback": fallback,
             "accuracy_before": before, "accuracy_after": after,
             "missing_attributes": missing_attributes(truth, gaps),
@@ -163,7 +178,7 @@ def generate(record, language="en", gaps=None, backend=None, candidates=None):
 def verify_suggestion(record, suggestion):
     """Re-run the guardrail on a suggestion before publish. Returns the list of problems (empty = grounded)."""
     truth = product_truth(record)
-    problems = _flagged(guard.check_text(suggestion.get("title", ""), truth))
+    problems = _flagged(guard.check_title(suggestion.get("title", ""), truth))
     problems += _flagged(guard.check_text(suggestion.get("description", ""), truth))
     if suggestion.get("json_ld") != json_ld(truth):
         problems.append({"sentence": "json_ld", "problems": ["JSON-LD differs from the one built from Product Truth"]})

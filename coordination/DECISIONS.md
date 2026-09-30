@@ -17,4 +17,20 @@ Human decisions, newest last. Link here instead of copying.
 | 2026-09-29 | Hackathon mode: move fast, minimal tokens, short reports | — |
 | 2026-09-29 | Keep main clean: AI/agent tooling (.claude, .agents, .codex, CLAUDE.md, AGENTS.md, scripts/) is local-only and gitignored; CI `check` runs dataset tests | this PR |
 
-Open: 200-record human reviewer; repo rename; §43 content; external API spend cap; bare "oz" GSM rule; conflict authority rule.
+Open: 200-record human reviewer; repo rename; §43 content; bare "oz" GSM rule; conflict authority rule.
+
+## Since 2026-09-29 (recorded 2026-09-30)
+
+| Date | Decision | Where |
+|---|---|---|
+| 2026-09-30 | Product name ProductLens (supersedes PowerLens in docs; repo name unchanged) | README |
+| 2026-09-30 | Vertical: shirts, T-shirts first; EN/ES | README, DATASET_SPEC |
+| 2026-09-30 | Data: WDC schema.org Product 2024-12 + Amazon Reviews 2023 (offline dump, research-only); Amazon pages never fetched | dataset/README |
+| 2026-09-30 | No Gemini; API comparison uses OpenAI + Anthropic only, $5 spend cap (supersedes Gemini in #21) | README Model results |
+| 2026-09-30 | Models: Qwen2.5-0.5B and 1.5B QLoRA | train/README |
+| 2026-09-30 | Standing merge rule: PR + `check` + independent review + explicit human approval of the exact revision | BOARD.md |
+| 2026-09-30 | Agent tooling stays local (gitignored), reaffirmed | this file |
+| 2026-09-30 | No robots.txt or bot-wall bypass; blocked pages use draft audit | README |
+| 2026-09-30 | AI visibility first; Google Search Console and SERP APIs deferred | README Known limitations |
+| 2026-09-30 | No billing in the pilot | README Known limitations |
+| 2026-09-30 | New visual theme for web app and extension | TEAM-48 |

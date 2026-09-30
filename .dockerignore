@@ -9,6 +9,7 @@
 !governance/
 !optimizer/
 !experiments/
+!profile/
 !chat/
 !webhooks/
 !train/common.py
@@ -22,6 +23,8 @@ monitor/data/*
 governance/data/*
 !governance/data/.gitignore
 experiments/data/*
+profile/data/*
+!profile/data/.gitignore
 optimizer/data/*
 webhooks/data/*
 api/tests/

@@ -20,6 +20,7 @@ import dashboard_api as dash
 from analysis.gaps import ATTRIBUTES, INTENTS, analyze, attributes_present, description_chars, description_coverage
 from analysis.peers import SLEEVE_FILL, find_peers, get, price, unknown_sleeve
 from normalize import PRODUCT_TYPE, SHIRT_TYPES, lang_code, match_lookup, shirt_type  # dataset/collect (on path via dashboard_api)
+from tools.linkcheck import status as link
 
 router = APIRouter()
 WEB = Path(__file__).resolve().parents[1] / "web" / "dist"  # Vite build output (npm run build in web/)
@@ -162,7 +163,7 @@ def rank(target, recs, match=None):
     pos = 1 + next(i for i, r in enumerate(rows) if r[2])
     first = 1 + sum(q["score"] > tq["score"] for q, _, _ in rows)
     last = sum(q["score"] >= tq["score"] for q, _, _ in rows)
-    board = [{**dash.summary(x), "url": get(x, "source", "url"), "is_you": you, **q} for q, x, you in rows]
+    board = [{**dash.summary(x), "url": get(x, "source", "url"), **(link.flag(x) if not you else {}), "is_you": you, **q} for q, x, you in rows]
     return {"position": pos, "position_from": first, "position_to": last, "tied": last - first,
             "total": len(group) + 1, "score": tq["score"], "components": tq, "formula": formula(w),
             "kind": "listing_quality", "weights": w,
@@ -491,7 +492,7 @@ def audit(payload: dict = Body(...)):
         "context": {"language": get(target, "source", "language"), "currency": get(target, "commerce", "currency"),
                     "merchant": get(target, "source", "merchant_domain"), "dataset_size": len(recs),
                     "quality_status": norm.get("quality_status")},
-        "peers": [{**dash.summary(p), "url": get(p, "source", "url"), "match_score": s,
+        "peers": [{**dash.summary(p), "url": get(p, "source", "url"), **link.flag(p), "match_score": s,
                    "facts_found": sum(attributes_present(p).values())} for s, p in matched],
         "comparison": {"basis": "top_ranked", "of": len(top),
                        "facts": {"target": facts_found, "top_median": statistics.median(counts) if counts else None,

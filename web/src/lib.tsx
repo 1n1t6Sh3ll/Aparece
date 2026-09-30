@@ -43,6 +43,12 @@ export function fieldLabel(lang: Lang, field: string): string {
   return f ?? field.split(".").pop()!.replace(/_/g, " ");
 }
 
+/** Plural-aware t(): uses "<key>.one" when n is 1 and that key exists. */
+export const tn = (t: T, key: string, n: number, params: Record<string, string | number> = {}) => {
+  const one = `${key}.one`;
+  return n === 1 && t(one) !== one ? t(one, { n, ...params }) : t(key, { n, ...params });
+};
+
 export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function money(v: number | null | undefined, cur: string | null | undefined, lang: Lang) {
@@ -103,22 +109,32 @@ export async function api<R>(path: string, init?: RequestInit): Promise<R> {
 }
 
 /** Map an API error to user-facing copy; the raw detail is only interpolated as plain text. */
+/** Map an API error to translated copy. Coded details ("code: text") map by code; raw codes never reach the user. */
 export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean; openDraft?: boolean } {
-  if (!(e instanceof ApiError)) return { msg: t("err.generic", { detail: String(e) }), suggestText: false };
-  const d = e.detail;
+  if (!(e instanceof ApiError)) return { msg: t("err.unknown"), suggestText: false };
+  const d = e.detail || "";
+  const code = /^([a-z_]+):/.exec(d)?.[1];
+  const coded: Record<string, [string, boolean]> = {
+    amazon_not_supported: ["err.amazon", true], blocked_by_store: ["err.blocked", true], host_not_found: ["err.dns", false],
+    not_a_web_page: ["err.notPage", false], page_not_found: ["err.pageNotFound", false], product_gone: ["err.gone", true],
+    not_a_product_page: ["err.notProduct", false], not_a_shirt: ["err.notShirt", false], draft_needs_title: ["hero.emptyTitle", false],
+    invalid_price: ["err.invalidPrice", false], invalid_currency: ["err.invalidCurrency", false], invalid_field: ["err.invalidField", false],
+  };
   if (e.status === 0) return { msg: t("err.network"), suggestText: false };
-  if (d.includes("robots")) return { msg: t("err.robots"), suggestText: true };
-  if (d.startsWith("not_a_product_page")) return { msg: t("err.notProduct"), suggestText: false };
-  if (d.startsWith("not_a_shirt")) return { msg: t("err.notShirt"), suggestText: false };
+  if (code && coded[code]) return { msg: t(coded[code][0]), suggestText: coded[code][1], openDraft: coded[code][1] };
+  if (e.status === 429 || /upstream HTTP (429|503)/.test(d)) return { msg: t("err.rateLimited"), suggestText: true, openDraft: true };
+  if (/robots\.txt disallows/.test(d)) return { msg: t("err.robots"), suggestText: true, openDraft: true };
   if (d.includes("does not resolve")) return { msg: t("err.dns"), suggestText: false };
   if (d.includes("http(s)")) return { msg: t("err.scheme"), suggestText: false };
   if (d.includes("non-public")) return { msg: t("err.private"), suggestText: false };
   if (e.status === 504 || d.includes("deadline") || d.includes("Timeout")) return { msg: t("err.timeout"), suggestText: true };
   if (e.status === 413) return { msg: t("err.tooBig"), suggestText: true };
-  if (e.status === 429 || /upstream HTTP (429|503)/.test(d)) return { msg: t("err.rateLimited"), suggestText: true, openDraft: true };
-  if (d.startsWith("draft_needs_title")) return { msg: t("hero.emptyTitle"), suggestText: false };
-  if (d.startsWith("upstream") || d.startsWith("fetch failed")) return { msg: t("err.upstream", { detail: d }), suggestText: true };
-  return { msg: t("err.generic", { detail: d }), suggestText: false };
+  if (e.status === 415) return { msg: t("err.notPage"), suggestText: false };
+  if (d.startsWith("upstream") || d.startsWith("fetch failed") || e.status === 502) return { msg: t("err.upstreamPlain"), suggestText: true };
+  if (e.status === 401 || e.status === 403) return { msg: t("err.denied"), suggestText: false };
+  if (e.status === 404) return { msg: t("err.notFound"), suggestText: false };
+  if (e.status === 422) return { msg: t("err.invalid"), suggestText: false };
+  return { msg: t("err.unknown"), suggestText: false };
 }
 
 export function useHashRoute(): [string, (r: string) => void] {

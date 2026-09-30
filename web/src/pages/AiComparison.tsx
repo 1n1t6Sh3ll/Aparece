@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, Bot, Check, FlaskConical, Info, Trophy, X } from "lucide-react";
-import { api, useI18n } from "../lib";
+import { AlertTriangle, Scale, Check, FlaskConical, Info, Trophy, X } from "lucide-react";
+import { api, errorText, useI18n } from "../lib";
 
 // Page-local strings (EN/ES) so the page stays self-contained while shared i18n/layout are restyled.
 const STR: Record<string, Record<string, string>> = { en: {
@@ -9,7 +9,9 @@ const STR: Record<string, Record<string, string>> = { en: {
   "sub": "ProductLens and AI models each write a title, tags and description from the same verified facts. Every part is checked for unsupported claims, audited, and tested in a simulated AI shopping context.",
   "controlled": "Controlled evaluation: a simulated shopping context with 4 real competitor pages, judged by AI models. It is not proof of how any real assistant or search engine will rank a product.",
   "sample": "Sample data: visibility numbers come from mock judges and mean nothing yet. The audits (claims, coverage, tags) are real. A paid run replaces this.",
-  "notInSet": "This product is not in the comparison set yet; showing the demo products.",
+  "notInSet": "This product is not in the comparison set yet, so there are no AI comparison results for it. Other products' numbers are never shown in its place.",
+  "notInSetTitle": "No AI comparison for this product yet",
+  "seeSet": "See the products that were compared",
   "empty": "No comparison report yet. Run benchmark/shootout/run.py to create one.",
   "best.title": "Best title",
   "best.tags": "Best tags",
@@ -48,7 +50,9 @@ const STR: Record<string, Record<string, string>> = { en: {
   "sub": "ProductLens y varios modelos de IA escriben un título, etiquetas y una descripción a partir de los mismos datos verificados. Cada parte se revisa para detectar afirmaciones sin respaldo, se audita y se prueba en un contexto de compra simulado.",
   "controlled": "Evaluación controlada: un contexto de compra simulado con 4 fichas reales de la competencia, juzgado por modelos de IA. No demuestra cómo clasificará un producto ningún asistente o buscador real.",
   "sample": "Datos de ejemplo: la visibilidad viene de jueces simulados y todavía no significa nada. Las auditorías (afirmaciones, cobertura, etiquetas) son reales. Una ejecución de pago lo sustituirá.",
-  "notInSet": "Este producto aún no está en el conjunto de comparación; se muestran los productos de demostración.",
+  "notInSet": "Este producto aún no está en el conjunto de comparación, así que no hay resultados de comparación con IA. Nunca mostramos cifras de otros productos en su lugar.",
+  "notInSetTitle": "Aún no hay comparación con IA para este producto",
+  "seeSet": "Ver los productos comparados",
   "empty": "Aún no hay informe de comparación. Ejecuta benchmark/shootout/run.py para crearlo.",
   "best.title": "Mejor título",
   "best.tags": "Mejores etiquetas",
@@ -92,7 +96,7 @@ function useStr() {
 /** Link from an audit result to this page. */
 export function CompareLink({ productId }: { productId: string }) {
   const s = useStr();
-  return <a href={`#/compare/${encodeURIComponent(productId)}`} className="btn-ghost no-print self-start sm:self-center"><Bot className="size-4" aria-hidden /> {s("cta")}</a>;
+  return <a href={`#/compare/${encodeURIComponent(productId)}`} className="btn-ghost no-print self-start sm:self-center"><Scale className="size-4" aria-hidden /> {s("cta")}</a>;
 }
 
 
@@ -141,27 +145,30 @@ export default function AiComparison({ productId }: { productId?: string }) {
   const [err, setErr] = useState("");
   const [sel, setSel] = useState<string>("");
   useEffect(() => {
-    api<Report>("/v1/shootout").then(setData).catch((e) => setErr(tShared("err.generic", { detail: e.message })));
+    api<Report>("/v1/shootout").then(setData).catch((e) => setErr(errorText(e, tShared).msg));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const head = (
     <>
-      <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{t("title")}</h1>
-      <p className="mt-2 max-w-2xl muted">{t("sub")}</p>
+      <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+      <p className="mt-1 max-w-2xl text-sm muted">{t("sub")}</p>
     </>
   );
-  const wrap = (body: ReactNode) => <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}{body}</div>;
+  const wrap = (body: ReactNode) => <div className="mx-auto max-w-6xl">{head}{body}</div>;
   if (err) return wrap(<p role="alert" className="mt-6 text-rose-700 dark:text-rose-400">{err}</p>);
-  if (!data) return wrap(<div className="card mt-6 h-64 animate-pulse bg-slate-100/60 dark:bg-slate-800/40" aria-hidden />);
+  if (!data) return wrap(<div className="card mt-6 h-64 animate-pulse bg-stone-100/60 dark:bg-stone-800/40" aria-hidden />);
   if (!data.available || !data.overall || !data.generators || !data.products) return wrap(<p className="card mt-6 p-6 muted">{t("empty")}</p>);
 
   const o = data.overall, gens = data.generators, products = data.products;
   const inSet = products.some((p) => p.product_id === productId);
+  if (productId && !inSet) return wrap(  // never show another (demo) product's numbers for a real product
+    <div className="card mt-6 p-6"><p className="font-semibold">{t("notInSetTitle")}</p><p className="mt-1 text-sm muted">{t("notInSet")}</p>
+      <a className="btn-outline mt-4" href="#/compare">{t("seeSet")}</a></div>);
   const cur = products.find((p) => p.product_id === (sel || (inSet ? productId : products[0].product_id)))!;
 
   return wrap(
     <>
-      <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-sky-300 bg-sky-50 p-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
+      <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-brand-300 bg-brand-50 p-3 text-sm text-brand-900 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-200">
         <FlaskConical className="mt-0.5 size-4 shrink-0" aria-hidden />{t("controlled")}
       </p>
       {data.sample && (
@@ -169,7 +176,6 @@ export default function AiComparison({ productId }: { productId?: string }) {
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{t("sample")}
         </p>
       )}
-      {productId && !inSet && <p className="mt-3 text-sm muted">{t("notInSet")}</p>}
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {PARTS.map((part) => (
@@ -193,13 +199,13 @@ export default function AiComparison({ productId }: { productId?: string }) {
         <h2 className="text-lg font-semibold">{t("generators")}</h2>
         <div className="mt-4 -mx-5 overflow-x-auto sm:-mx-6" role="region" tabIndex={0} aria-label={t("generators")}>
           <table className="w-full min-w-[760px] text-sm">
-            <thead className="text-left muted"><tr className="border-b border-slate-200 dark:border-slate-800">
+            <thead className="text-left muted"><tr className="border-b border-stone-200 dark:border-stone-800">
               {["gen", "qualified", "flagged", "titleScore", "tagsScore", "coverage", "intent", "mrr", "mention"].map((k) =>
                 <th key={k} scope="col" className="px-3 py-2 font-medium first:pl-5 sm:first:pl-6">{t(`col.${k}`)}</th>)}
             </tr></thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
               {Object.entries(gens).map(([g, v]) => (
-                <tr key={g} className={v.qualified ? "" : "text-slate-400"}>
+                <tr key={g} className={v.qualified ? "" : "text-stone-400"}>
                   <th scope="row" className="px-5 py-2 text-left font-medium sm:px-6">{g}</th>
                   <td className="px-3 py-2"><span className="flex items-center gap-1"><Pass ok={v.qualified} />{v.qualified_products}/{v.candidates}</span></td>
                   <td className="px-3 py-2 tabular-nums">{v.flagged}</td>
@@ -222,24 +228,24 @@ export default function AiComparison({ productId }: { productId?: string }) {
           <h2 className="text-lg font-semibold">{t("recommended")}</h2>
           <label className="text-sm">
             <span className="sr-only">{t("product")}</span>
-            <select className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-900"
+            <select className="rounded-lg border border-stone-300 bg-white px-2 py-1.5 dark:border-stone-700 dark:bg-stone-900"
               value={cur.product_id} onChange={(e) => setSel(e.target.value)}>
               {products.map((p) => <option key={p.product_id} value={p.product_id}>{p.brand} · {p.name} ({p.language})</option>)}
             </select>
           </label>
         </div>
         <dl className="mt-4 space-y-3 text-sm">
-          <div><dt className="font-medium">{t("part.title")} <span className="chip bg-slate-100 dark:bg-slate-800">{cur.recommended.title?.from || "–"}</span></dt>
+          <div><dt className="font-medium">{t("part.title")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.title?.from || "–"}</span></dt>
             <dd className="mt-1">{cur.recommended.title?.text || t("none")}</dd></div>
-          <div><dt className="font-medium">{t("part.tags")} <span className="chip bg-slate-100 dark:bg-slate-800">{cur.recommended.tags?.from.join(", ") || "–"}</span></dt>
-            <dd className="mt-1 flex flex-wrap gap-1.5">{cur.recommended.tags?.list.map((x) => <span key={x} className="chip bg-indigo-50 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200">{x}</span>) || t("none")}</dd></div>
-          <div><dt className="font-medium">{t("part.description")} <span className="chip bg-slate-100 dark:bg-slate-800">{cur.recommended.description?.from || "–"}</span></dt>
+          <div><dt className="font-medium">{t("part.tags")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.tags?.from.join(", ") || "–"}</span></dt>
+            <dd className="mt-1 flex flex-wrap gap-1.5">{cur.recommended.tags?.list.map((x) => <span key={x} className="chip bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200">{x}</span>) || t("none")}</dd></div>
+          <div><dt className="font-medium">{t("part.description")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.description?.from || "–"}</span></dt>
             <dd className="mt-1">{cur.recommended.description?.text || t("none")}</dd></div>
         </dl>
         <p className="mt-3 text-xs muted">{t("recommendedNote")}</p>
 
         <h3 className="mt-6 font-semibold">{t("candidates")}</h3>
-        <ul className="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
+        <ul className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
           {Object.entries(cur.candidates).map(([g, c]) => (
             <li key={g} className="py-3 text-sm">
               <p className="flex flex-wrap items-center gap-2 font-medium">{g}
@@ -250,7 +256,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
               {c.raw.error && <p className="text-rose-700 dark:text-rose-400">{c.raw.error}</p>}
               <p className="mt-1 flex items-start gap-1.5">{c.title && <Pass ok={c.title.passes} />}<span>{c.raw.title || "–"}</span></p>
               <p className="mt-1 flex flex-wrap items-center gap-1.5"><Pass ok={c.tags.passes} />
-                {c.raw.tags.length ? c.raw.tags.map((x, i) => <span key={i} className={`chip ${c.tags.false.includes(x) ? "bg-rose-50 text-rose-700 line-through dark:bg-rose-950/50 dark:text-rose-300" : "bg-slate-100 dark:bg-slate-800"}`}>{x}</span>)
+                {c.raw.tags.length ? c.raw.tags.map((x, i) => <span key={i} className={`chip ${c.tags.false.includes(x) ? "bg-rose-50 text-rose-700 line-through dark:bg-rose-950/50 dark:text-rose-300" : "bg-stone-100 dark:bg-stone-800"}`}>{x}</span>)
                   : <span className="muted">{t("noTags")}</span>}</p>
               <p className="mt-1 flex items-start gap-1.5">{c.description && <Pass ok={c.description.passes} />}<span className="muted">{c.raw.text || "–"}</span></p>
             </li>
@@ -259,7 +265,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
       </section>
 
       <section className="card mt-6 p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-slate-400" aria-hidden />{t("caveats")}</h2>
+        <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-stone-400" aria-hidden />{t("caveats")}</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
           {(data.caveats || []).map((c) => <li key={c}>{c}</li>)}
           {data.setup && <li>{t("setup", { p: data.setup.products, j: data.setup.judges.join(", "), h: data.setup.holdout_judge || "–", q: data.setup.prompts_per_product, r: data.setup.repeats })}</li>}
