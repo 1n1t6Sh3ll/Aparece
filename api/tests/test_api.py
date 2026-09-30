@@ -129,6 +129,21 @@ class FetchErrorTest(FetchCase):
             get.assert_not_called()
             dns.assert_not_called()
 
+    def test_redirect_to_amazon_not_followed(self):
+        hop = mock.MagicMock(is_redirect=True, headers={"location": "https://www.amazon.com/dp/B085WMXFP3"})
+        hop.__enter__.return_value = hop
+        short = "https://bit.ly/abc"
+        calls = []
+        def fake(url, **kw):
+            calls.append(url)
+            return {"https://bit.ly/robots.txt": resp(404), short: hop}[url]
+        with mock.patch.object(safe_fetch.socket, "getaddrinfo", PUBLIC_DNS), \
+                mock.patch.object(safe_fetch.requests, "get", side_effect=fake):
+            r = client.post("/v1/audit", json={"url": short})
+        self.assertEqual(r.status_code, 422)
+        self.assertTrue(r.json()["detail"].startswith("amazon_not_supported"), r.text)
+        self.assertFalse(any("amazon" in u for u in calls), calls)
+
     def test_dns_failure(self):
         with mock.patch.object(safe_fetch.socket, "getaddrinfo", side_effect=safe_fetch.socket.gaierror):
             r = client.post("/v1/extract", json={"url": self.URL})

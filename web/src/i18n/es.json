@@ -29,6 +29,7 @@
   "err.title": "No pudimos auditar esta página",
   "err.robots": "El robots.txt de esta tienda pide a los rastreadores que no lean esta página, así que no lo hicimos. Puedes revisarla como borrador.",
   "err.notProduct": "No parece una página de producto. No encontramos nombre, precio ni tipo de producto. Prueba con el enlace de un solo producto.",
+  "err.notShirt": "No parece una camisa o camiseta, así que no la clasificamos. PowerLens solo compara camisas, camisetas y polos. Si lo es, indica el tipo en el título.",
   "err.dns": "No pudimos llegar a esa web. Revisa que el enlace esté bien escrito.",
   "err.scheme": "Solo se pueden auditar enlaces http:// y https://.",
   "err.private": "Ese enlace apunta a una dirección de red privada, así que no podemos abrirlo.",

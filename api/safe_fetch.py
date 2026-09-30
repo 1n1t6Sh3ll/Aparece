@@ -91,10 +91,13 @@ class FetchError(Exception):
 
 
 def check_url(url):
-    """Reject non-http(s) URLs and hosts that resolve to private, loopback, link-local or reserved IPs."""
+    """Reject non-http(s) URLs, Amazon hosts, and hosts that resolve to private, loopback, link-local or reserved IPs.
+    Runs before the first request and on every redirect hop."""
     p = urlsplit(url)
     if p.scheme not in ("http", "https") or not p.hostname:
         raise FetchError(400, "only http(s) URLs are allowed")
+    if AMAZON.search(p.hostname):
+        raise FetchError(422, NO_AMAZON)
     try:
         infos = socket.getaddrinfo(p.hostname, p.port or (443 if p.scheme == "https" else 80), proto=socket.IPPROTO_TCP)
     except (socket.gaierror, UnicodeError):
@@ -247,9 +250,7 @@ def fetch_page(url):
     hit = cached(("page", url))
     if hit:
         return hit
-    if AMAZON.search(urlsplit(url).hostname or ""):
-        raise FetchError(422, NO_AMAZON)
-    p = check_url(url)
+    p = check_url(url)  # also refuses Amazon, here and on every redirect hop
     deadline = time.monotonic() + TIMEOUT
     robots_txt = robots(p, deadline)
     allowed(p, robots_txt, p.path + (f"?{p.query}" if p.query else ""))

@@ -1,11 +1,20 @@
 <!doctype html>
 <html>
 <head><meta charset="utf-8"><title>PowerLens settings</title><link rel="stylesheet" href="style.css"></head>
-<body>
-  <h1>PowerLens settings</h1>
-  <label for="apiBase">API base URL</label>
-  <input id="apiBase" type="url" placeholder="http://localhost:8000">
-  <p><button id="save">Save</button> <span id="msg" class="muted"></span></p>
+<body class="options">
+  <header><strong class="brand">PowerLens</strong> <span id="title" class="muted"></span></header>
+  <label for="apiBase" id="lApi"></label>
+  <input id="apiBase" type="url" placeholder="http://localhost:8000" autocomplete="off">
+  <label for="token" id="lToken"></label>
+  <input id="token" type="password" autocomplete="off">
+  <p id="tokenHelp" class="muted small"></p>
+  <label for="lang" id="lLang"></label>
+  <select id="lang">
+    <option value="auto" id="oAuto"></option>
+    <option value="en">English</option>
+    <option value="es">Español</option>
+  </select>
+  <p><button id="save" class="primary"></button> <span id="msg" class="muted" role="status"></span></p>
   <script src="common.js"></script>
   <script src="options.js"></script>
 </body>

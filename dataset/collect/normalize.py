@@ -69,6 +69,7 @@ PRODUCT_TYPE = [  # style types first; generic shirts fall back to the sleeve ty
     ("_dress_shirt", r"\b(?:dress|formal|business) shirts?\b|\bnon-?iron\b.*\bshirts?\b|\bcamisas? de vestir\b"),
     ("_shirt", r"\bshirts?\b|\bcamisas?\b|\bguayaberas?\b"),
 ]
+SHIRT_TYPES = {v for v, _ in PRODUCT_TYPE if not v.startswith("_")} | {"short_sleeve_shirt", "long_sleeve_shirt"}
 AUDIENCE = [
     ("women", r"\b(?:women'?s?|woman|mujer|damen|femme)\b"),
     ("men", r"\b(?:men'?s?|man|hombre|herren|homme)\b"),
@@ -90,6 +91,15 @@ ATTRIBUTE_SECTIONS = {"overview", "details", "fabric", "fit", "features", "care"
 
 
 # ---- pure rule functions (unit tested) -------------------------------------------------
+
+def lang_code(tag):
+    """BCP 47 tag -> lowercase primary subtag ('en-US', 'EN', 'es_MX' -> 'en'/'es'); other text is lowercased
+    as-is (e.g. the dataset's 'other'); None if missing or blank."""
+    if not isinstance(tag, str) or not tag.strip():
+        return None
+    m = re.fullmatch(r"([A-Za-z]{2,3})(?:[-_][A-Za-z0-9]{1,8})*", tag.strip())
+    return (m.group(1) if m else tag.strip()).lower()
+
 
 def match_lookup(text, table):
     """All (value, matched_text) pairs from a lookup table, in table order, one per value."""
@@ -437,7 +447,7 @@ def build_normalized(raw):
         "record_type": "normalized",
         "product_id": raw["product_id"],
         "source": {"url": raw["source_url"], "canonical_url": raw["canonical_url"], "merchant": raw["merchant_name"],
-                   "merchant_domain": raw["merchant_domain"], "scraped_at": raw["scraped_at"], "language": raw["page_language"]},
+                   "merchant_domain": raw["merchant_domain"], "scraped_at": raw["scraped_at"], "language": lang_code(raw["page_language"])},
         "identity": {"brand": raw["brand"], "product_name": raw["raw_product_name"], "product_type": product_type,
                      "subcategory": None, "audience": audience},
         "content": {"title": raw["raw_title"], "full_description": raw["raw_full_description"],
