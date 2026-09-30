@@ -100,7 +100,7 @@ class ProfileTest(unittest.TestCase):
         self.assertEqual(r.status_code, 200, r.text)
         self.assertEqual(f.call_count, 1)
         p = r.json()
-        self.assertEqual((p["audit"]["rank"]["position"], p["audit"]["rank"]["total"]), (4, 5))  # same as test_audit
+        self.assertEqual(p["audit"]["rank"], client.post("/v1/audit", json={"html": HTML, "url": URL}).json()["rank"])  # same as /v1/audit
         self.assertEqual(p["record"]["source"]["url"], URL)
         # the stored record is valid Product Truth for POST /v1/optimize (stub backend, no spend)
         o = client.post("/v1/optimize", json={"product": p["record"], "language": "en"})
@@ -142,7 +142,7 @@ class ProfileTest(unittest.TestCase):
         self.assertEqual(f.call_count, 1)
         b = r.json()
         self.assertGreaterEqual(len(b["id"]), 16)
-        self.assertEqual((b["audit"]["rank"]["position"], b["audit"]["rank"]["total"]), (4, 5))  # same as /v1/audit
+        self.assertEqual(b["audit"]["rank"], client.post("/v1/audit", json={"html": HTML, "url": URL}).json()["rank"])  # same as /v1/audit
         g = client.get(f"/v1/audits/{b['id']}")
         self.assertEqual(g.status_code, 200)
         self.assertIn("noindex", g.headers["x-robots-tag"])
