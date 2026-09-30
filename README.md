@@ -59,6 +59,18 @@ Example: 5 sentences, all passing, mentioning 6 of 8 facts: 1 + 1 + 0 + 1.5 = **
 
 The fact-check rejects any word or number that your page's facts don't back (`optimizer/guard.py`). In the AI comparison, only parts that pass can win: the best title score, the best tag score, and the best description (most AI mentions, or the most facts covered).
 
+## Where AI models are used
+
+| Place | Role of the AI model |
+|---|---|
+| Listing rank ("#4 of 25") | **None.** It's a fixed, visible formula |
+| AI visibility | gpt-4o-mini and Claude Haiku act as shopping assistants; we measure which shops they name and in what position |
+| AI comparison | Models write competing text (fact-checked); in the saved run they also judge a simulated shopping test |
+| Generate Fix | Optional writer (template, gpt-4o-mini, Claude or Qwen) inside the fact-check and reward |
+| Fact extraction | The fine-tuned Qwen only fills fields the rules left empty, labelled "predicted" |
+
+Full system diagram and every stage with its code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Results
 
 | Test (same input for every model) | Result |
@@ -71,4 +83,4 @@ Caveats: the extraction test uses our own label format, and the copy-test judges
 
 ## Learn more
 
-[How it works](docs/HOW_IT_WORKS.md) covers every formula, where it is in the code, tags, the human loop and the vision. The [Reference](docs/REFERENCE.md) lists all settings and API routes, and there's a [Vision](docs/VISION.md) document. Tests: `python -m unittest discover -s api/tests` and `cd web && npm test` (offline, no paid calls). The code is MIT-licensed; the data and weights are for research use.
+[Architecture](docs/ARCHITECTURE.md) · [How it works](docs/HOW_IT_WORKS.md) covers every formula, where it is in the code, tags, the human loop and the vision. The [Reference](docs/REFERENCE.md) lists all settings and API routes, and there's a [Vision](docs/VISION.md) document. Tests: `python -m unittest discover -s api/tests` and `cd web && npm test` (offline, no paid calls). The code is MIT-licensed; the data and weights are for research use.
