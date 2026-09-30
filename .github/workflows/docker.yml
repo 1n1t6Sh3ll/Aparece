@@ -1,5 +1,5 @@
 # Builds the Docker image and publishes it to GitHub Packages:
-#   ghcr.io/1n1t6sh3ll/powerlens:latest (main) and :<tag> (v* tags)
+#   ghcr.io/1n1t6sh3ll/aparece:latest (main) and :<tag> (v* tags)
 name: docker
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/powerlens
+          images: ghcr.io/${{ github.repository_owner }}/aparece
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag

@@ -23,7 +23,7 @@ import monitor_api  # noqa: E402
 import audit_api  # noqa: E402
 
 VERSION = "0.1.0"
-app = FastAPI(title="ProductLens API", version=VERSION)
+app = FastAPI(title="Aparece API", version=VERSION)
 app.add_middleware(CORSMiddleware, allow_origin_regex=r"^chrome-extension://[a-p]{32}$",
                    allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 app.include_router(dashboard_api.router)

@@ -1,4 +1,4 @@
-# ProductLens web design system
+# Aparece web design system
 
 A working tool for people who run apparel stores: paper-and-ink neutrals, one forest-green accent, dense tables, square-ish components. No gradients, glass effects, sparkle/"AI" icons or emoji.
 

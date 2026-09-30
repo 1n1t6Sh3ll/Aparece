@@ -98,6 +98,9 @@ def tags_audit(tags, truth, lang, prompts):
         return {"n": 0, "passes": False, "score": 0.0, "passing": [], "false": [], "duplicates": 0,
                 "fact_relevance": None, "intent_relevance": None, "language_match": None}
     rec, vocab = guard.check_record(truth), guard.vocabulary(truth)
+    # a tag may name the product itself: its brand and product-name words count as supported (tags only)
+    name_words = set(guard._tokens(" ".join(str(truth["facts"].get(k) or "") for k in ("identity.brand", "identity.product_name"))))
+    vocab = (vocab[0] | {w for t in name_words for w in (t, *t.split("-"))}, vocab[1])
     fact_words = {w for s in fact_sentences(truth, lang) for w in _words(s)} - guard.NEUTRAL - GENERIC
     fact_words |= _words(truth["facts"].get("identity.brand") or "")
     other = "es" if lang == "en" else "en"

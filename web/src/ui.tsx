@@ -7,7 +7,7 @@ export type Theme = "light" | "dark";
 export function initialTheme(): Theme {
   const s = store.get("pl.theme");
   if (s === "light" || s === "dark") return s;
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "light";  // light by default; dark only when the visitor picks it
 }
 export function applyTheme(t: Theme) {
   document.documentElement.dataset.theme = t;

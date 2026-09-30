@@ -37,7 +37,7 @@ export function Landing() {
       <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]">
         <nav className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4" aria-label={t("nav.menu")}>
           <a href="#/" className="mr-auto flex items-center gap-2 font-bold tracking-tight">
-            <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-[var(--accent-fg)]"><Aperture className="size-5" aria-hidden /></span><span className="max-sm:sr-only">ProductLens</span>
+            <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-[var(--accent-fg)]"><Aperture className="size-5" aria-hidden /></span><span className="max-sm:sr-only">Aparece</span>
           </a>
           <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById("features")?.scrollIntoView({ behavior: "smooth" }); }} className="btn-ghost hidden sm:inline-flex">{t("land.nav.features")}</a>
           <a href="#/models" className="btn-ghost hidden sm:inline-flex">{t("nav.models")}</a>

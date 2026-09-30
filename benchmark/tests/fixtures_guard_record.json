@@ -1,0 +1,342 @@
+{
+ "product_id": "p_ee5df5d158085299",
+ "source": {
+  "url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+  "language": "en"
+ },
+ "identity": {
+  "brand": "EDUARDO RIVERA",
+  "product_name": "Laredo black short sleeve t-shirt",
+  "product_type": "t_shirt",
+  "subcategory": null,
+  "audience": "men"
+ },
+ "materials": {
+  "primary_material": "viscose",
+  "material_percentages": {
+   "viscose": 95,
+   "elastane": 5
+  },
+  "fabric_type": null,
+  "fabric_weight_gsm": null,
+  "fabric_weight_raw": null,
+  "stretch": null,
+  "texture": null
+ },
+ "fit_and_style": {
+  "fit": null,
+  "neckline": "crew",
+  "collar_type": null,
+  "sleeve_length": "short",
+  "shirt_length": null,
+  "pattern": null,
+  "style": null
+ },
+ "variants": {
+  "product_group_id": null,
+  "colors": [
+   {
+    "original_color_name": "black",
+    "normalized": "black"
+   }
+  ],
+  "sizes": [],
+  "variant_count": 1,
+  "items": [
+   {
+    "variant_id": "v_fff971c7dde0bf2b",
+    "merchant_variant_id": "1",
+    "color": null,
+    "size": null,
+    "sku": null,
+    "gtin": null,
+    "mpn": null,
+    "price": 78.0,
+    "currency": "EUR",
+    "availability": "in_stock"
+   }
+  ]
+ },
+ "commerce": {
+  "price": 78.0,
+  "sale_price": null,
+  "currency": "EUR",
+  "availability": "in_stock",
+  "rating": null,
+  "review_count": null,
+  "sku": "148990-XL",
+  "gtin": null,
+  "mpn": null
+ },
+ "care": [
+  "Wash 30Âº max",
+  "Iron 110Âº max",
+  "do not bleach",
+  "dry cleaning",
+  "Do not use dryer",
+  "Wash 30Âº max",
+  "Iron 110Âº max",
+  "do not bleach",
+  "dry cleaning",
+  "Do not use dryer"
+ ],
+ "content": {
+  "title": "Laredo black short sleeve t-shirt â€“ Rivera",
+  "full_description": ""
+ },
+ "evidence": [
+  {
+   "field": "materials.material_percentages",
+   "value": {
+    "viscose": 95,
+    "elastane": 5
+   },
+   "source_text": "95% VISCOSE\n5% ELASTANE",
+   "source_location": "raw_description.sections[2].text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 0.95,
+   "note": null
+  },
+  {
+   "field": "materials.primary_material",
+   "value": "viscose",
+   "source_text": "95% VISCOSE\n5% ELASTANE",
+   "source_location": "raw_description.sections[2].text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 0.95,
+   "note": null
+  },
+  {
+   "field": "fit_and_style.sleeve_length",
+   "value": "short",
+   "source_text": "short sleeve",
+   "source_location": "raw_product_name",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 0.9,
+   "note": null
+  },
+  {
+   "field": "fit_and_style.neckline",
+   "value": "crew",
+   "source_text": "Round neck",
+   "source_location": "raw_bullet_points[0]",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 0.9,
+   "note": null
+  },
+  {
+   "field": "identity.product_type",
+   "value": "t_shirt",
+   "source_text": "t-shirt",
+   "source_location": "raw_product_name",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 0.9,
+   "note": null
+  },
+  {
+   "field": "identity.audience",
+   "value": "men",
+   "source_text": "hombre",
+   "source_location": "source_url",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 0.8,
+   "note": null
+  },
+  {
+   "field": "variants.colors",
+   "value": "black",
+   "source_text": "black",
+   "source_location": "raw_product_name",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 0.7,
+   "note": "Colour taken from the product name; no colour option."
+  },
+  {
+   "field": "variants.items[0]",
+   "value": "1",
+   "source_text": "1",
+   "source_location": "raw_variants[0].merchant_variant_id",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "variants.variant_count",
+   "value": 1,
+   "source_text": "1",
+   "source_location": "raw_variants[0].merchant_variant_id",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": "Count of raw_variants."
+  },
+  {
+   "field": "commerce.price",
+   "value": 78.0,
+   "source_text": "78.0",
+   "source_location": "raw_price_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "commerce.currency",
+   "value": "EUR",
+   "source_text": "EUR",
+   "source_location": "raw_offer_schema[0].priceCurrency",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "commerce.availability",
+   "value": "in_stock",
+   "source_text": "true",
+   "source_location": "raw_availability_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "rule",
+   "confidence": 1.0,
+   "note": "Any variant available."
+  },
+  {
+   "field": "commerce.sku",
+   "value": "148990-XL",
+   "source_text": "148990-XL",
+   "source_location": "sku",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "identity.brand",
+   "value": "EDUARDO RIVERA",
+   "source_text": "EDUARDO RIVERA",
+   "source_location": "brand",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "identity.product_name",
+   "value": "Laredo black short sleeve t-shirt",
+   "source_text": "Laredo black short sleeve t-shirt",
+   "source_location": "raw_product_name",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "Wash 30Âº max",
+   "source_text": "Wash 30Âº max",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "Iron 110Âº max",
+   "source_text": "Iron 110Âº max",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "do not bleach",
+   "source_text": "do not bleach",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "dry cleaning",
+   "source_text": "dry cleaning",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "Do not use dryer",
+   "source_text": "Do not use dryer",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "Wash 30Âº max",
+   "source_text": "Wash 30Âº max",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "Iron 110Âº max",
+   "source_text": "Iron 110Âº max",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "do not bleach",
+   "source_text": "do not bleach",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "dry cleaning",
+   "source_text": "dry cleaning",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  },
+  {
+   "field": "care",
+   "value": "Do not use dryer",
+   "source_text": "Do not use dryer",
+   "source_location": "raw_care_text",
+   "source_url": "https://riveraspain.com/en/collections/moda-hombre/products/camiseta-edu-manga-corta-negro",
+   "method": "direct",
+   "confidence": 1.0,
+   "note": null
+  }
+ ]
+}

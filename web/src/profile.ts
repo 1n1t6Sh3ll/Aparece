@@ -2,7 +2,7 @@ import { api, store } from "./lib";
 import { productPrefix } from "./prefill";
 import type { Audit } from "./types";
 
-/** Merchant profile (TEAM-45). Everything here is merchant-stated; ProductLens verifies none of it. */
+/** Merchant profile (TEAM-45). Everything here is merchant-stated; Aparece verifies none of it. */
 export interface Company {
   name: string; website: string; sells: string; brand: string; markets: string[]; languages: string[];
   price_positioning: "" | "budget" | "mid" | "premium" | "luxury"; audience: string; claims: string[];

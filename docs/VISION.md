@@ -1,10 +1,10 @@
-# PRODUCTLENS AI — MASTER VISION BOARD PLAN
+# APARECE — MASTER VISION BOARD PLAN
 
 ## 1. NORTH STAR
 
 Build an evidence-driven platform that helps small businesses understand, improve, and track how their products are represented and discovered across search engines, AI search systems, recommendation systems, and LLM-generated shopping answers.
 
-ProductLens should answer five questions:
+Aparece should answer five questions:
 
 1. HOW DOES AI/SEARCH CURRENTLY SEE MY PRODUCT?
 2. WHERE DOES MY PRODUCT APPEAR?
@@ -20,7 +20,7 @@ The product must evolve from an audit tool into a continuous experimentation and
 
 Small businesses should not have to guess how AI systems understand their products.
 
-ProductLens:
+Aparece:
 
 MEASURES
 → ANALYZES
@@ -89,13 +89,13 @@ Do not attempt to solve every ecommerce category during the hackathon.
 
 The merchant visits their product page.
 
-They open the ProductLens browser extension.
+They open the Aparece browser extension.
 
 They click:
 
 AUDIT PRODUCT
 
-ProductLens automatically:
+Aparece automatically:
 
 1. Identifies the product.
 2. Crawls the product page.
@@ -423,7 +423,7 @@ Do not replace real measurements with arbitrary SEO scores.
 
 # 11. KEYWORD STRATEGY
 
-ProductLens should NOT only generate traditional keywords.
+Aparece should NOT only generate traditional keywords.
 
 Maintain four concepts:
 
@@ -637,7 +637,7 @@ ENGLISH INTENT COVERAGE
 
 SPANISH INTENT COVERAGE
 
-This allows ProductLens to identify language-specific gaps.
+This allows Aparece to identify language-specific gaps.
 
 ---
 
@@ -645,7 +645,7 @@ This allows ProductLens to identify language-specific gaps.
 
 Treat external systems as BLACK BOXES.
 
-ProductLens can observe:
+Aparece can observe:
 
 INPUT
 
@@ -876,7 +876,7 @@ This makes results easier to interpret.
 
 # 24. PRODUCT TRACKING
 
-ProductLens must track products continuously.
+Aparece must track products continuously.
 
 Create immutable/versioned snapshots.
 
@@ -1474,7 +1474,7 @@ Open the real small-business product page.
 
 STEP 2
 
-Open ProductLens.
+Open Aparece.
 
 STEP 3
 
@@ -1626,7 +1626,7 @@ INTERVENTION
 )
 ```
 
-Eventually ProductLens should predict which intervention is most promising to test first.
+Eventually Aparece should predict which intervention is most promising to test first.
 
 Example:
 
@@ -1640,7 +1640,7 @@ NOT:
 
 # 42. FUTURE PLATFORM
 
-Long-term ProductLens can support:
+Long-term Aparece can support:
 
 BROWSER EXTENSION
 
