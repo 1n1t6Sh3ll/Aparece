@@ -97,13 +97,21 @@ Training so far is supervised fine-tuning on the verified labels (`train/train.p
 | Monitoring and chat | `monitor/`, `chat/` |
 | Web app and extension | `web/src/`, `extension/` |
 
-## Results
+## How we compare models (and results)
 
-| Test | Result |
-|---|---|
-| Fact extraction (200 products, 63 stores) | Aparece Qwen2.5-0.5B 85.8% · GPT-4.1 27.2% · untuned 4.7% |
-| AI comparison (5 products, EN/ES) | Aparece best on title, tags and description with no unsupported claims; visibility a statistical tie |
-| AI visibility (384 answers, 2 models) | 0% mention rate for the 103 small shops; big brands named instead |
+We compare models in three ways. Each test gives every model the same input and scores it the same way.
+
+| What's compared | Models | Same test for all | Result | Report |
+|---|---|---|---|---|
+| **Reading product pages** (fact extraction) | Aparece Qwen2.5-0.5B / 1.5B (fine-tuned), untuned Qwen, GPT-4.1, Claude Sonnet | The same 200 test products from 63 stores, scored against the answer key | Aparece 0.5B 85.8% · GPT-4.1 27.2% · untuned 4.7% | Models page `#/models`; `train/eval.py`, `train/api_eval.py` |
+| **Writing product copy** (AI comparison) | Aparece (no AI model), Aparece + gpt-4o-mini, gpt-4o-mini alone, Claude Haiku alone, the shop's original | The same verified facts; every part goes through the same fact-check and scores | Aparece best on title, tags and description with no unsupported claims; visibility a statistical tie | Compare page `#/compare`; `benchmark/shootout/` |
+| **Which shops AI assistants recommend** (AI visibility) | gpt-4o-mini, Claude Haiku | The same 384 shopping questions (192 EN, 192 ES) | 0% mention rate for the 103 small shops with both models; big brands named instead | Audit page panel; `benchmark/harness.py`, `benchmark/results/visibility-2026-09-30/` |
+
+Caveats:
+- The extraction scores are exact matches on our own label format, which favours the model trained on it. Claude Sonnet ran on only 87 of the 200 products.
+- In the saved copy comparison, gpt-4o-mini and Claude Haiku also act as the judges in the simulated shopping test, with one held out as a check. That held-out judge disagreed on the visibility winner.
+- The live comparison on the Compare page doesn't run the shopping test, so it has no visibility numbers.
+- In the visibility test, both models gave 0% for small shops. It shows small shops versus big brands, not one model beating the other.
 
 Every setting, API route and caveat: [docs/REFERENCE.md](docs/REFERENCE.md). Tests: `python -m unittest discover -s api/tests` and `cd web && npm test`. They are offline, with no paid calls.
 
