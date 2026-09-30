@@ -44,6 +44,19 @@ flowchart LR
 
 A FastAPI service (`api/main.py`) exposes the `/v1` routes and serves the React build in `web/` at `/`. Every stage, with its code, is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## How it works
+
+1. **Fetch and read.** `api/safe_fetch.py` downloads the public page (private addresses are refused). Facts are read from the page markup and text with rules; every fact keeps the exact text it came from. A fine-tuned Qwen model can fill gaps, marked as *predicted*. Missing stays missing.
+2. **Rank.** The page is matched with comparable shirts (`analysis/peers.py`) and scored by a fixed, visible formula (facts stated, description quality, structured data). No AI in the score. It lists the 3 fixes that matter most, each with evidence. Without the dataset there are no peers, so the position reads "1 of 1".
+3. **Generate Fix.** `optimizer/` writes a title and description from the verified facts only. `optimizer/guard.py` checks every sentence: a word or number the facts do not support is flagged, and only a fully passing candidate can win.
+4. **AI comparison.** Five writers get the same facts: the shop's original text, Aparece (no model), Aparece + GPT-4o-mini, GPT-4o-mini alone, and Claude Haiku alone. Each part is fact-checked, then scored (title, tags, description). `POST /v1/shootout/live` (the *Compare with AI* button) does this for any audited page, live, with a spend cap. The committed benchmark run adds a simulated shopping test.
+5. **AI visibility.** `benchmark/` asks AI assistants real shopping questions and records which shops and brands they name, and whether their claims match the facts.
+6. **Model ranking against ground truth.** `train/api_eval.py` and `train/eval.py` score every model on the same 200 labelled products (exact match per field), so the Qwen fine-tunes, GPT-4.1, Claude and the rest are compared on one scale.
+7. **Keywords.** Shared keywords (product type, material, fit, neckline, sleeve, weight, colour) are the facts shoppers and assistants both use. Aparece only writes a keyword into a title or description when the page proves it.
+8. **Over time.** `monitor/` snapshots pages and reports changes, `chat/` answers only from stored records, `governance/` and `webhooks/` add approvals and signed events.
+
+Full detail with the code for each part: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Quickstart
 
 Docker (published image):
@@ -60,6 +73,19 @@ git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens
 ```
 
 `run.sh` creates `.venv`, installs `api/requirements.txt`, builds `web/`, and starts the API. Open http://127.0.0.1:8000 (API docs at `/docs`, health at `/v1/health`). Without the dataset, ranking against real shirts is unavailable; set `PRODUCTLENS_DATA` to a built dataset (see [docs/DATASET_SPEC.md](docs/DATASET_SPEC.md)).
+
+### Run the whole project, including live AI comparison
+
+1. **Start the app** with `./run.sh --skip-tests` (Windows: `.un.ps1 -SkipTests`), or Docker as above. Open http://127.0.0.1:8000. Check `http://127.0.0.1:8000/v1/health` returns `{"status":"ok"}`. Change the port with `PORT=8001`.
+2. **Audit a product:** paste a public product link on the home page. You get the facts with evidence, the rank, and the top 3 fixes. Click *Generate Fix* for a checked title and description.
+3. **Turn on live AI comparison** (optional, paid): copy `.env.example` to `.env`, uncomment `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY`, and restart. `run.sh` then installs the provider packages (`benchmark/requirements.txt`) itself. Without a key, only the free writers run; the paid ones are skipped and the page says so.
+   - Spending is capped: `SHOOTOUT_LIVE_MAX_USD` per request (default `0.05`) and `SHOOTOUT_LIVE_DAILY_USD` per server run (default `1`). One product costs about a tenth of a cent to a few tenths of a cent.
+   - In the site, audit a page, then click *Compare with AI*. Or call `POST /v1/shootout/live` with `{"product": <record from POST /v1/audits>, "language": "en"}`.
+4. **Compare many real pages:** with the server running, `python -m benchmark.shootout.live_batch run --out results.json --max-usd 0.5`, then `python -m benchmark.shootout.live_batch report results.json`. The run committed here is in [`benchmark/results/live-real-2026-09-30`](benchmark/results/live-real-2026-09-30/report.md).
+5. **Score models against ground truth:** `python train/api_eval.py --data dataset/output/final_v2_2k/test_gold.jsonl --models openai:gpt-4o-mini --max-usd 1 --dry-run` prints the cost first; drop `--dry-run` to run. Paid runs refuse to start without `--max-usd`.
+6. **Run the checks:** the commands under *Tests and build* below.
+
+If something looks wrong: *"not in the comparison set"* means the page could not find the audited record; open *Compare with AI* from the audit result. *Position "1 of 1"* means no peer dataset is loaded (`PRODUCTLENS_DATA`). A paid writer showing an error usually means a missing or empty-credit key.
 
 ## Configuration
 
