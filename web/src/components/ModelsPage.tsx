@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Award, BarChart3, FlaskConical, Hourglass, Info } from "lucide-react";
 import { api, cap, errorText, fieldLabel, useI18n } from "../lib";
 import { Tip } from "./RankParts";
+import { nm } from "../modelLabel";
 
 type Rates = { json_valid?: number; non_null_acc?: number; null_acc?: number; n?: number };
 type Model = Rates & {
@@ -64,6 +65,7 @@ export default function ModelsPage() {
     return a != null && tot != null && (m.partial || a < tot) ? [a, tot] : null;
   };
 
+
   const cell = (v: string | null, isBest = false) => v == null
     ? <span className="text-xs text-stone-400">{t("mod.notMeasured")}</span>
     : <span className={`tabular-nums ${isBest ? "font-bold text-emerald-700 dark:text-emerald-400" : ""}`}>{v}</span>;
@@ -82,7 +84,7 @@ export default function ModelsPage() {
           <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent)] text-white"><Award className="size-6" aria-hidden /></span>
           <div>
             <p className="text-lg font-semibold sm:text-xl">
-              {n ? t("mod.headline", { m: winner.m.label, p: pct(winner.m.non_null_acc)!, n }) : t("mod.headlineNoN", { m: winner.m.label, p: pct(winner.m.non_null_acc)! })}
+              {n ? t("mod.headline", { m: nm(winner.m), p: pct(winner.m.non_null_acc)!, n }) : t("mod.headlineNoN", { m: nm(winner.m), p: pct(winner.m.non_null_acc)! })}
             </p>
             <p className="mt-1 text-sm muted">
               {[data.test.products && data.test.stores ? t("mod.productsStores", { p: data.test.products, s: data.test.stores }) : data.test.products ? t("mod.products", { p: data.test.products }) : null,
@@ -112,7 +114,7 @@ export default function ModelsPage() {
                   <th scope="row" className="px-5 py-3 text-left font-medium sm:px-6">
                     <span className="flex items-center gap-2">
                       <span className="size-2.5 shrink-0 rounded-full" style={{ background: color(k) }} aria-hidden />
-                      {m.label}
+                      {nm(m)}
                       {k === BASELINE && <span className="chip bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300">{t("mod.baseline")}</span>}
                       {k === winner?.k && <span className="chip bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">{t("mod.best")}</span>}
                       {partial(m) && <span className="chip bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">{t("mod.partial", { a: partial(m)![0], n: partial(m)![1] })}</span>}
@@ -166,8 +168,8 @@ function LangBars({ ms, color }: { ms: { k: string; m: Model }[]; color: (k: str
                 const v = r?.non_null_acc;
                 return (
                   <li key={k} className="flex items-center gap-2 text-xs">
-                    <span className="w-28 shrink-0 truncate muted" title={m.label}>{m.label}</span>
-                    <span className="h-3 flex-1 rounded-full bg-stone-100 dark:bg-stone-800" role="img" aria-label={`${m.label}: ${v != null ? pct(v) : t("mod.notMeasured")}`}>
+                    <span className="w-28 shrink-0 truncate muted" title={nm(m)}>{nm(m)}</span>
+                    <span className="h-3 flex-1 rounded-full bg-stone-100 dark:bg-stone-800" role="img" aria-label={`${nm(m)}: ${v != null ? pct(v) : t("mod.notMeasured")}`}>
                       {v != null && <span className="block h-full rounded-full" style={{ width: `${Math.max(1, v * 100)}%`, background: color(k) }} />}
                     </span>
                     <span className="w-14 shrink-0 text-right tabular-nums">{v != null ? pct(v) : <span className="text-stone-400">{t("mod.notMeasured")}</span>}</span>
@@ -195,7 +197,7 @@ function FieldTable({ title, sub, ms, fields }: { title: string; sub?: string; m
           <thead className="text-left muted">
             <tr className="border-b border-stone-200 dark:border-stone-800">
               <th scope="col" className="px-5 py-2 font-medium sm:px-6">{t("mod.field")}</th>
-              {ms.map(({ k, m }) => <th key={k} scope="col" className="px-3 py-2 font-medium">{m.label}</th>)}
+              {ms.map(({ k, m }) => <th key={k} scope="col" className="px-3 py-2 font-medium">{nm(m)}</th>)}
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
@@ -229,7 +231,7 @@ function Method({ data }: { data: Comparison }) {
   const s = data.test.products ? (data.test.stores ? t("mod.productsStores", { p: data.test.products, s: data.test.stores }) : t("mod.products", { p: data.test.products })) : "";
   const fmt = (v: unknown) => typeof v === "string" ? v
     : v && typeof v === "object" ? Object.entries(v as Record<string, unknown>).map(([k, x]) => `${k.replace(/_/g, " ")} ${typeof x === "object" ? JSON.stringify(x) : String(x)}`).join(", ") : "";
-  const settings = Object.values(data.models).filter((m) => m.settings && fmt(m.settings)).map((m) => [m.label, fmt(m.settings)] as const);
+  const settings = Object.values(data.models).filter((m) => m.settings && fmt(m.settings)).map((m) => [nm(m), fmt(m.settings)] as const);
   const hasBaseline = BASELINE in data.models;
   const hasCost = Object.values(data.models).some((m) => m.cost_per_1k_usd != null);
   return (
