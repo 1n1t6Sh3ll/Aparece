@@ -34,7 +34,32 @@ async function getJSON(path) {
 const fmt = (v) => (v === null || v === undefined || v === "" ? "—" : Array.isArray(v) ? v.join(", ") : String(v));
 const pct = (v) => (typeof v === "number" ? `${(v * 100).toFixed(1)}%` : "—");
 const money = (v, cur) => (typeof v === "number" ? `${v.toFixed(2)}${cur ? " " + cur : ""}` : "—");
-const human = (s) => String(s).replace(/_/g, " ");
+// Merchant-readable names for schema keys and enum values; raw names stay in tooltips.
+const NAMES = {
+  brand: "Brand", product_name: "Product name", product_type: "Product type", subcategory: "Subcategory",
+  audience: "Audience", full_description: "Description", primary_material: "Main material",
+  material_percentages: "Material composition", fabric_type: "Fabric type", fabric_weight_gsm: "Fabric weight (GSM)",
+  stretch: "Stretch", texture: "Texture", fit: "Fit", neckline: "Neckline", collar_type: "Collar",
+  sleeve_length: "Sleeve length", shirt_length: "Length", pattern: "Pattern", style: "Style", colors: "Colours",
+  sizes: "Sizes", variant_count: "Variant count", price: "Price", sale_price: "Sale price", currency: "Currency",
+  availability: "Availability", rating: "Rating", review_count: "Reviews", sku: "SKU", gtin: "GTIN (barcode)",
+  mpn: "MPN", product_schema_present: "Product structured data", offer_schema_present: "Offer structured data",
+  product_group_present: "Variant group structured data", attribute_completeness: "Attribute completeness",
+  description_chars: "Description length", attributes: "Attributes", price_band: "Price comparison",
+  peers: "Comparable products", ranking_effect: "AI/search ranking effect", json_valid: "JSON valid",
+  raw_full_description: "product description", raw_bullet_points: "bullet points", raw_title: "title",
+  t_shirt: "T-shirt", polo_shirt: "Polo shirt", in_stock: "In stock", out_of_stock: "Out of stock",
+  all_null_baseline: "All-null baseline", base_zero_shot: "Base model (zero-shot)", finetuned: "Fine-tuned",
+};
+const human = (s) => {
+  const k = String(s);
+  if (NAMES[k]) return NAMES[k];
+  const t = k.replace(/_/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+const humanValue = (v) => (typeof v === "string" && NAMES[v]) || v;
+// Replace raw snake_case keys inside analyzer sentences with readable names.
+const humanText = (s) => String(s).replace(/\b[a-z]+(?:_[a-z]+)+\b/g, (w) => NAMES[w] || w);
 
 function tile(label, value, sub) {
   return el("div", { class: "card tile" }, el("div", { class: "label" }, label),
@@ -64,7 +89,7 @@ async function search(q) {
     results.replaceChildren(...(rows.length ? rows.map((r) => el("li", {},
       el("button", { type: "button", "data-id": r.product_id, "aria-pressed": "false" },
         el("span", {}, el("strong", {}, r.title || r.product_id), " ", el("span", { class: "muted" }, r.brand || "")),
-        el("span", { class: "muted" }, [r.product_type, r.language, r.merchant].filter(Boolean).map(human).join(" · "))))) :
+        el("span", { class: "muted" }, [r.product_type && human(r.product_type), r.language, r.merchant].filter(Boolean).join(" · "))))) :
       [el("li", { class: "card empty" }, "No products found. The dataset may be empty.")]));
   } catch (e) { showError(results, e); }
 }
@@ -149,12 +174,12 @@ function factList(p) {
       let dd;
       if (items) {
         const tip = items.map((e) => `“${e.source_text}” — ${human(e.source_location)}, ${e.method}, confidence ${e.confidence}`).join("\n");
-        dd = el("dd", {}, el("span", { class: "ev", tabindex: "0", "aria-label": `${fmt(v)}. Evidence: ${tip}` },
-          fmt(v), el("span", { class: "tip", role: "tooltip" }, tip)));
+        dd = el("dd", {}, el("span", { class: "ev", tabindex: "0", "aria-label": `${fmt(humanValue(v))}. Evidence: ${tip}` },
+          fmt(humanValue(v)), el("span", { class: "tip", role: "tooltip" }, tip)));
       } else {
-        dd = el("dd", { class: v === null || v === undefined || v === "" ? "muted" : null }, fmt(v));
+        dd = el("dd", { class: v === null || v === undefined || v === "" ? "muted" : null }, fmt(humanValue(v)));
       }
-      dl.append(el("dt", {}, human(k)), dd);
+      dl.append(el("dt", { title: key }, human(k)), dd);
     }
   }
   return dl;
@@ -167,8 +192,9 @@ function issueGroups(issues) {
     wrap.append(el("section", { class: "issue-group" },
       el("h3", {}, el("span", { class: `badge tag-${type}` }, LABELS[type]), el("span", { class: "muted" }, `${list.length}`)),
       list.length ? list.map((i) => el("div", { class: `issue ${type}` },
-        el("div", {}, i.statement),
-        el("div", { class: "action" }, i.suggested_action),
+        el("div", { class: "field", title: i.field }, human(i.field.split(".").pop())),
+        el("div", { title: i.statement }, humanText(i.statement)),
+        el("div", { class: "action" }, humanText(i.suggested_action)),
         Object.keys(i.evidence || {}).length ?
           el("details", {}, el("summary", {}, "Evidence"), el("pre", {}, JSON.stringify(i.evidence, null, 1))) : null)) :
         el("p", { class: "muted" }, "None.")));
@@ -201,7 +227,7 @@ function countChart(title, counts, total) {
   const max = Math.max(...entries.map(([, v]) => v), 1);
   return el("figure", { class: "card", style: "margin:0" }, el("figcaption", {}, el("h3", {}, title)),
     el("div", { class: "bars" }, entries.map(([k, v]) =>
-      barRow(human(k), v, max, `${v} (${Math.round((100 * v) / total)}%)`))));
+      barRow(String(humanValue(k)).replace(/_/g, " "), v, max, `${v} (${Math.round((100 * v) / total)}%)`))));
 }
 
 /* ---------- Models view ---------- */

@@ -6,6 +6,8 @@ COPY api/requirements.txt api/requirements.txt
 RUN pip install --no-cache-dir -r api/requirements.txt
 COPY dataset/collect dataset/collect
 COPY api api
+COPY analysis analysis
+COPY dashboard dashboard
 RUN useradd --create-home --uid 10001 app
 USER app
 EXPOSE 8000

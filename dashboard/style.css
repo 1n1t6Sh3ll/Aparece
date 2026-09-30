@@ -94,6 +94,7 @@ button { padding: 10px 16px; border: 1px solid var(--accent); border-radius: 6px
 .issue { border-left: 3px solid var(--border); padding: 6px 0 6px 12px; margin: 8px 0; }
 .issue.OBSERVED_FACT { border-color: var(--accent); }
 .issue.SUPPORTED_HYPOTHESIS { border-color: #b98a2e; }
+.issue .field { font-size: .75rem; font-weight: 600; color: var(--muted); }
 .issue .action { color: var(--muted); font-size: .85rem; }
 .issue details { font-size: .8rem; color: var(--muted); }
 .issue pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 0; }
