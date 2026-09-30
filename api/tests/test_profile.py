@@ -135,6 +135,30 @@ class ProfileTest(unittest.TestCase):
         bad = client.put(f"/v1/profile/products/{pid}/suggestion", headers=self.h(tok), json={"field": "title", "status": "published"})
         self.assertEqual(bad.status_code, 422)
 
+    def test_stored_audit_stable_link(self):
+        with mock.patch.object(safe_fetch, "fetch_page", return_value=(URL, HTML)) as f:
+            r = client.post("/v1/audits", json={"url": URL})
+        self.assertEqual(r.status_code, 201, r.text)
+        self.assertEqual(f.call_count, 1)
+        b = r.json()
+        self.assertGreaterEqual(len(b["id"]), 16)
+        self.assertEqual((b["audit"]["rank"]["position"], b["audit"]["rank"]["total"]), (4, 5))  # same as /v1/audit
+        g = client.get(f"/v1/audits/{b['id']}")
+        self.assertEqual(g.status_code, 200)
+        self.assertIn("noindex", g.headers["x-robots-tag"])
+        self.assertEqual(g.json()["audit"], b["audit"])
+        self.assertEqual(g.json()["record"]["source"]["url"], URL)
+        self.assertEqual(client.get("/v1/audits/" + "x" * 22).status_code, 404)
+        self.assertEqual(client.get("/v1/audits/short").status_code, 404)
+
+    def test_stored_audit_draft_and_errors(self):
+        r = client.post("/v1/audits", json={"title": "Camiseta Heavy", "description": "100% algodón. Corte oversize.", "language": "es"})
+        self.assertEqual(r.status_code, 201, r.text)
+        self.assertTrue(r.json()["audit"]["product"]["draft"])
+        with mock.patch.object(safe_fetch, "fetch_page", side_effect=safe_fetch.FetchError(403, "robots.txt disallows this URL")):
+            e = client.post("/v1/audits", json={"url": URL})
+        self.assertEqual(e.status_code, 403)
+
     def test_share_link_opt_in_revocable_no_personal_data(self):
         tok = self.create()["token"]
         self.assertFalse(client.get("/v1/profile", headers=self.h(tok)).json()["shared"])

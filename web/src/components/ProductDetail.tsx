@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, CornerDownLeft, ExternalLink, GitCompare, History, KeyRound, Loader2, MessageSquare, RefreshCw, Shirt } from "lucide-react";
-import { ApiError, cap, errorText, fieldLabel, fmtValue, manageToken, money, useI18n } from "../lib";
+import { ApiError, cap, errorText, fieldLabel, fmtValue, manageToken, money, tn, useI18n } from "../lib";
 import { history, num, type ChangeEvent, type ChatAnswer, type Diff, type Monitored, type Snapshot, type TrendPoint } from "../history";
 import { useSession } from "../session";
 import { Empty, ErrorBox, useToast } from "../ui";
@@ -184,19 +184,20 @@ export default function ProductDetail({ id }: { id: string }) {
   const [snaps, setSnaps] = useState<Snapshot[] | null>(null);
   const [points, setPoints] = useState<TrendPoint[] | null>(null);
   const [info, setInfo] = useState<{ product: Monitored; events: ChangeEvent[] } | null>(null);
-  const [err, setErr] = useState<{ msg: string; auth: boolean } | null>(null);
+  const [err, setErr] = useState<{ msg: string; auth: boolean; missing: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [img, setImg] = useState(true);
 
   const load = () => Promise.all([history.snapshots(id), history.trends(id), history.history(id)])
     .then(([s, tr, hi]) => { setSnaps(s); setPoints(tr); setInfo(hi); setErr(null); })
-    .catch((e) => setErr({ msg: errorText(e, t).msg, auth: e instanceof ApiError && (e.status === 401 || e.status === 403) }));
+    .catch((e) => setErr({ msg: errorText(e, t).msg, auth: e instanceof ApiError && (e.status === 401 || e.status === 403), missing: e instanceof ApiError && e.status === 404 }));
   useEffect(() => { load(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (err) return (
     <div className="mx-auto max-w-3xl">
       <a href="#/products" className="btn-ghost -ml-2 mb-3"><ArrowLeft className="size-4" aria-hidden /> {t("nav.products")}</a>
-      {err.auth || !manageToken(id)
+      {err.missing ? <Empty icon={<History className="size-6" aria-hidden />} title={t("pd.notFound")} body={t("pd.notFoundBody")}><a className="btn-outline" href="#/products">{t("nav.products")}</a></Empty>
+        : err.auth || !manageToken(id)
         ? <Empty icon={<KeyRound className="size-6" aria-hidden />} title={t("pd.noToken")} body={t("pd.noTokenBody")} />
         : <ErrorBox title={t("err.title")} msg={err.msg}><button className="btn-outline" onClick={load}>{t("pd.retry")}</button></ErrorBox>}
     </div>
@@ -222,7 +223,7 @@ export default function ProductDetail({ id }: { id: string }) {
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl">{a?.product.title || url || id}</h1>
           {url && <p className="truncate text-xs muted">{url}</p>}
-          {info && snaps && <p className="mt-1.5 text-xs muted">{t("pd.meta", { n: snaps.length, e: info.events.length, d: snaps.length ? when(snaps[snaps.length - 1].crawled_at, lang) : "–" })}</p>}
+          {info && snaps && <p className="mt-1.5 text-xs muted">{tn(t, "pd.snaps", snaps.length)} · {tn(t, "pd.events", info.events.length)} · {t("pd.lastCheck", { d: snaps.length ? when(snaps[snaps.length - 1].crawled_at, lang) : "–" })}</p>}
         </div>
         <div className="flex gap-2">
           {url && <a className="btn-ghost px-2.5" href={url} target="_blank" rel="noopener noreferrer" aria-label={t("ws.open")}><ExternalLink className="size-4" aria-hidden /></a>}

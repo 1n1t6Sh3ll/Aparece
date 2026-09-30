@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS profiles (id INTEGER PRIMARY KEY, token_hash TEXT NOT
 CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, profile_id INTEGER NOT NULL REFERENCES profiles(id)
   ON DELETE CASCADE, data TEXT NOT NULL, audit TEXT, record TEXT, audited_at TEXT, suggestions TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS results (id TEXT PRIMARY KEY, audit TEXT NOT NULL, record TEXT, created_at TEXT NOT NULL);
 """
 
 
@@ -179,3 +180,19 @@ def shared(share_token):
     with connect() as db:
         row = db.execute("SELECT * FROM profiles WHERE share_token = ?", (share_token,)).fetchone()
         return _profile(db, row, full=False) if row else None
+
+
+def save_result(audit, record):
+    """Keeps one audit under a random unlisted id (the stable report link). Returns the id."""
+    rid = secrets.token_urlsafe(16)
+    with connect() as db:
+        db.execute("INSERT INTO results (id, audit, record, created_at) VALUES (?, ?, ?, ?)",
+                   (rid, json.dumps(audit), json.dumps(record), utcnow()))
+    return rid
+
+
+def result(rid):
+    with connect() as db:
+        r = db.execute("SELECT * FROM results WHERE id = ?", (rid,)).fetchone()
+        return r and {"id": r["id"], "audit": json.loads(r["audit"]), "record": json.loads(r["record"]) if r["record"] else None,
+                      "created_at": r["created_at"]}

@@ -215,7 +215,7 @@ export function Overview() {
   const { profile, loading, error } = useSession();
   const { busy, run, running } = useAuditRunner();
   if (loading && !profile) return <div className="grid gap-3 sm:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="card space-y-2 p-4"><div className="skeleton h-3 w-1/2" /><div className="skeleton h-7 w-1/3" /></div>)}</div>;
-  if (!profile) return <ErrorBox title={t("err.title")} msg={error || t("home.badToken")}><a className="btn-outline" href="#/signin">{t("home.signin")}</a></ErrorBox>;
+  if (!profile) return <ErrorBox title={t("err.title")} msg={error ? t("err.loadProfile") : t("home.badToken")}><a className="btn-outline" href="#/signin">{t("home.signin")}</a></ErrorBox>;
   const ps = profile.products;
   const audited = ps.filter((p) => p.audit);
   const avg = audited.length ? Math.round(audited.reduce((s, p) => s + p.audit!.rank.score, 0) / audited.length) : null;

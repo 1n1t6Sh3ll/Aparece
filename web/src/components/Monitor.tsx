@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Camera, ExternalLink, History, Loader2, PauseCircle, RefreshCw, ScanSearch } from "lucide-react";
-import { allManageTokens, api, cap, fieldLabel, fmtValue, manageToken, useI18n } from "../lib";
+import { allManageTokens, api, cap, errorText, tn, fieldLabel, fmtValue, manageToken, useI18n } from "../lib";
 
 type Monitored = { id: string; url: string; enrolled_at: string; active: number; plan: string | null; last_snapshot_at: string | null;
   snapshot_count: number; event_count: number; demo?: boolean };
@@ -22,7 +22,7 @@ export function ProductsPage({ embedded = false }: { embedded?: boolean }) {
   const [rows, setRows] = useState<Monitored[] | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const load = useCallback(() => api<{ results: Monitored[] }>("/v1/monitored", { headers: { "X-Manage-Token": allManageTokens() } }).then((r) => setRows(r.results)).catch((e) => setErr(t("err.generic", { detail: e.message }))), [t]);
+  const load = useCallback(() => api<{ results: Monitored[] }>("/v1/monitored", { headers: { "X-Manage-Token": allManageTokens() } }).then((r) => setRows(r.results)).catch((e) => setErr(errorText(e, t).msg)), [t]);
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function act(id: string, kind: "crawl" | "stop") {
@@ -31,7 +31,7 @@ export function ProductsPage({ embedded = false }: { embedded?: boolean }) {
     try {
       await api(kind === "crawl" ? `/v1/monitored/${id}/crawl` : `/v1/enroll/${id}`, { method: kind === "crawl" ? "POST" : "DELETE", headers: { "X-Manage-Token": manageToken(id) } });
       await load();
-    } catch (e) { setErr(t("err.generic", { detail: (e as Error).message })); }
+    } catch (e) { setErr(errorText(e, t).msg); }
     setBusy(null);
   }
 
@@ -63,7 +63,7 @@ export function ProductsPage({ embedded = false }: { embedded?: boolean }) {
                   <span className="truncate">{r.url.replace(/^https?:\/\//, "")}</span><ExternalLink className="size-3.5 shrink-0" aria-hidden />
                 </a>
                 <p className="mt-1 text-xs muted">
-                  {t("prod.last")}: {r.last_snapshot_at ? when(r.last_snapshot_at, lang) : t("prod.never")} · {t("prod.snaps", { n: r.snapshot_count })} · {t("prod.events", { n: r.event_count })}
+                  {t("prod.last")}: {r.last_snapshot_at ? when(r.last_snapshot_at, lang) : t("prod.never")} · {tn(t, "prod.snaps", r.snapshot_count)} · {tn(t, "prod.events", r.event_count)}
                 </p>
               </div>
               <div className="flex flex-wrap gap-1">
@@ -97,7 +97,7 @@ export function HistoryPage({ id }: { id: string }) {
   const [err, setErr] = useState("");
   useEffect(() => {
     api<{ product: Monitored; snapshots: Snapshot[]; events: Event[] }>(`/v1/products/${id}/history`, { headers: { "X-Manage-Token": manageToken(id) } }).then(setData)
-      .catch((e) => setErr(e.status === 404 ? t("hist.empty") : t("err.generic", { detail: e.message })));
+      .catch((e) => setErr(e.status === 404 ? t("hist.empty") : errorText(e, t).msg));
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const items = data ? [

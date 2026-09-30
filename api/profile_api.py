@@ -7,6 +7,7 @@ DELETE /v1/profile/products/{id}
 POST   /v1/profile/products/{id}/audit            runs /v1/audit and keeps the result + normalized record
 PUT    /v1/profile/products/{id}/suggestion       records accept/dismiss of a /v1/optimize suggestion (never published)
 POST|DELETE /v1/profile/share                     opt-in, revocable unlisted report link
+POST   /v1/audits  /  GET /v1/audits/{id}      run /v1/audit and keep it under a random unlisted id (stable link)
 GET    /v1/share/{token}                          read-only report: company name/website + audits; no personal data
 
 Everything the merchant enters is merchant-stated and never verified here.
@@ -15,7 +16,7 @@ import importlib.util
 from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, Header, HTTPException, Response
+from fastapi import APIRouter, Body, Header, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 import audit_api
@@ -146,34 +147,68 @@ def remove_product(pid: int, x_profile_token: str | None = Header(None)):
     return {"deleted": True}
 
 
-def _requests(p):
-    """(audit payload, ExtractRequest) for a stored product. A URL is fetched once and reused for both."""
+def _payload(p):
+    """The /v1/audit payload for a stored product: its URL, or the manual (merchant-stated) details as a draft."""
+    if p["source"] != "manual":
+        return {"url": p["url"]}
+    payload = {k: p.get(k) for k in ("title", "price", "currency", "language") if p.get(k) not in (None, "")}
+    if p.get("text"):
+        payload["description"] = p["text"]
+    return payload
+
+
+def _prepare(payload):
+    """(audit payload, ExtractRequest) for a /v1/audit-style payload: a URL is fetched once (safe_fetch) and the page is
+    reused for the audit and for the normalized record; a draft is wrapped exactly as /v1/audit does."""
     import main  # lazy: main imports this module
-    if p["source"] == "manual":
-        payload = {k: p.get(k) for k in ("title", "price", "currency", "language") if p.get(k) not in (None, "")}
-        if p.get("text"):
-            payload["description"] = p["text"]
+    if audit_api.is_draft(payload):
         return payload, audit_api.draft_request(main, audit_api.draft_fields(payload))
+    if payload.get("html") or not payload.get("url"):
+        return payload, main.ExtractRequest(**{k: payload.get(k) for k in ("url", "html", "text", "language") if payload.get(k)})
     try:
-        _, page = safe_fetch.fetch_page(p["url"])
+        _, page = safe_fetch.fetch_page(str(payload["url"]))
     except safe_fetch.FetchError as e:
         raise HTTPException(e.status, e.detail)
-    return {"url": p["url"], "html": page}, main.ExtractRequest(url=p["url"], html=page)
+    return {**payload, "html": page}, main.ExtractRequest(url=payload["url"], html=page, language=payload.get("language"))
 
 
-@router.post("/profile/products/{pid}/audit")
-def audit_product(pid: int, x_profile_token: str | None = Header(None)):
+def _run(payload):
+    """Run /v1/audit once and return (audit, normalized record for /v1/optimize)."""
     import main
-    need(store.get(x_profile_token))
-    p = store.product(x_profile_token, pid)
-    if not p:
-        raise HTTPException(404, "product not found")
-    payload, req = _requests(p)
+    payload, req = _prepare(payload)
     try:
         result = audit_api.audit(payload)
     except ValidationError as e:
         raise HTTPException(422, e.errors()[0]["msg"])
-    record = main.extract(req)["normalized"]  # Product Truth for POST /v1/optimize suggestions
+    except TypeError as e:
+        raise HTTPException(422, str(e).splitlines()[0])
+    return result, main.extract(req)["normalized"]
+
+
+@router.post("/audits", status_code=201)
+def stored_audit(payload: dict = Body(...)):
+    """/v1/audit plus a stable, unlisted link: the result is kept under a random id (GET /v1/audits/{id}).
+    Only the public product page's audit is stored; no personal data."""
+    result, record = _run(payload)
+    return {"id": store.save_result(result, record), "audit": result, "record": record}
+
+
+@router.get("/audits/{audit_id}")
+def read_audit(audit_id: str, response: Response):
+    response.headers.update(NOINDEX)
+    r = store.result(audit_id) if 16 <= len(audit_id) <= 64 else None
+    if not r:
+        raise HTTPException(404, "audit not found", headers=NOINDEX)
+    return r
+
+
+@router.post("/profile/products/{pid}/audit")
+def audit_product(pid: int, x_profile_token: str | None = Header(None)):
+    need(store.get(x_profile_token))
+    p = store.product(x_profile_token, pid)
+    if not p:
+        raise HTTPException(404, "product not found")
+    result, record = _run(_payload(p))  # record = Product Truth for POST /v1/optimize suggestions
     return store.save_audit(x_profile_token, pid, result, record)
 
 

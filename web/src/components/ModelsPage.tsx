@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Award, BarChart3, FlaskConical, Hourglass, Info } from "lucide-react";
-import { api, cap, fieldLabel, useI18n } from "../lib";
+import { api, cap, errorText, fieldLabel, useI18n } from "../lib";
 import { Tip } from "./RankParts";
 
 type Rates = { json_valid?: number; non_null_acc?: number; null_acc?: number; n?: number };
@@ -22,7 +22,7 @@ export default function ModelsPage() {
   const [data, setData] = useState<Comparison | null>(null);
   const [err, setErr] = useState("");
   useEffect(() => {
-    api<Comparison>("/v1/model-comparison").then(setData).catch((e) => setErr(t("err.generic", { detail: e.message })));
+    api<Comparison>("/v1/model-comparison").then(setData).catch((e) => setErr(errorText(e, t).msg));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const head = (

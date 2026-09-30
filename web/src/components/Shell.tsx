@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Aperture, Building2, Check, ChevronsUpDown, Cpu, FileText, Globe, Keyboard, LayoutDashboard, LogIn, Menu, MessageSquare,
-  Moon, Package, Plus, ScanSearch, Settings, Sun, UserPlus, X,
+  Moon, Package, Plus, Scale, ScanSearch, Settings, Sun, UserPlus, X,
 } from "lucide-react";
 import { useI18n } from "../lib";
 import { accounts, token } from "../profile";
@@ -13,6 +13,7 @@ export const NAV = [
   { to: "audit", key: "a", label: "nav.audit", Icon: ScanSearch },
   { to: "products", key: "p", label: "nav.products", Icon: Package },
   { to: "reports", key: "r", label: "nav.reports", Icon: FileText },
+  { to: "compare", key: "i", label: "nav.compare", Icon: Scale },
   { to: "models", key: "m", label: "nav.models", Icon: Cpu },
   { to: "chat", key: "c", label: "nav.chat", Icon: MessageSquare },
   { to: "settings", key: "s", label: "nav.settings", Icon: Settings },
@@ -101,7 +102,7 @@ export default function Shell({ page, children }: { page: string; children: Reac
   }), [toggleTheme, lang, setLang]);
   useShortcuts(go, keys);
 
-  const active = (to: string) => page === to || (to === "products" && page === "bulk");
+  const active = (to: string) => page === to || (to === "audit" && (page === "bulk" || page === "report"));
   const nav = (
     <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5 px-3">
       {NAV.filter((n) => !("auth" in n) || signedIn).map(({ to, key, label, Icon }) => (
@@ -137,7 +138,7 @@ export default function Shell({ page, children }: { page: string; children: Reac
       )}
       <header className="no-print sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-[var(--border)] bg-[var(--surface)] px-4 sm:px-6">
         <button className="btn-ghost -ml-2 p-2 lg:hidden" onClick={() => setDrawer(true)} aria-label={t("nav.menu")}><Menu className="size-5" aria-hidden /></button>
-        <p className="mr-auto min-w-0 truncate text-sm font-semibold max-sm:sr-only">{t(NAV.find((n) => active(n.to))?.label || (page === "onboarding" ? "ob.title" : "nav.audit"))}</p>
+        <p className="mr-auto min-w-0 truncate text-sm font-semibold max-sm:sr-only">{t(NAV.find((n) => active(n.to))?.label || (page === "onboarding" ? "ob.title" : page === "signin" ? "home.signin" : "nf.title"))}</p>
         <span className="flex-1 sm:hidden" aria-hidden />
         <button className="btn-ghost p-2" onClick={() => setLang(lang === "en" ? "es" : "en")} aria-label={t("nav.lang")} title={t("nav.lang")}>
           <Globe className="size-4" aria-hidden /><span className="text-xs">{lang === "en" ? "ES" : "EN"}</span>

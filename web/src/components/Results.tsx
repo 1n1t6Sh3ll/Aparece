@@ -1,15 +1,16 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  BellRing, Bookmark, Radar, Check, ChevronDown, CircleHelp, ExternalLink, EyeOff, Gauge, ListChecks, Pencil, Printer,
+  BellRing, Bookmark, Link2, Radar, Check, ChevronDown, CircleHelp, ExternalLink, EyeOff, Gauge, ListChecks, Pencil, Printer,
   Quote, RotateCcw, ScanSearch, ShieldCheck, Shirt, Tag, Trophy, PenLine,
 } from "lucide-react";
-import { api, cap, fieldLabel, fmtField, fmtValue, money, saveManageToken, store, useI18n, type Lang, type T } from "../lib";
+import { api, cap, errorText, tn, fieldLabel, fmtField, fmtValue, money, saveManageToken, store, useI18n, type Lang, type T } from "../lib";
 import type { Action, Audit, Label } from "../types";
 import { papi } from "../profile";
 import { useSession } from "../session";
 import { useToast } from "../ui";
 import { PriceChart, RankChart, ScoreBreakdown } from "./Charts";
 import { CompareTable, Tip } from "./RankParts";
+import FixPanel, { type FixDecision } from "./FixPanel";
 import { CompareLink } from "../pages/AiComparison";
 
 const LABEL_STYLE: Record<Label, string> = {
@@ -152,11 +153,9 @@ function FactRow({ f, state, set }: { f: Audit["facts"][number]; state?: { s: "o
 function Enroll({ url }: { url: string }) {
   const { t } = useI18n();
   const [email, setEmail] = useState("");
-  const [plans, setPlans] = useState<string[]>(["free"]);
-  const [plan, setPlan] = useState("free");
+  const plan = "free";  // paid plans are labels only (no billing yet), so only Free is offered
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  useEffect(() => { api<{ plans: string[] }>("/v1/plans").then((p) => setPlans(p.plans)).catch(() => undefined); }, []);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string; href?: string } | null>(null);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setMsg({ ok: false, text: t("mon.badEmail") });
@@ -164,9 +163,9 @@ function Enroll({ url }: { url: string }) {
     try {
       const r = await api<{ created: boolean; product: { id: string }; manage_token: string | null }>("/v1/enroll", { method: "POST", body: JSON.stringify({ url, email: email || null, plan }) });
       if (r.manage_token) saveManageToken(r.product.id, r.manage_token);
-      setMsg({ ok: true, text: r.created ? t("mon.ok") : t("mon.exists") });
+      setMsg({ ok: true, text: r.created ? t("mon.ok") : t("mon.exists"), href: `#/products/${encodeURIComponent(r.product.id)}` });
     } catch (e) {
-      setMsg({ ok: false, text: t("err.generic", { detail: e instanceof Error ? e.message : String(e) }) });
+      setMsg({ ok: false, text: errorText(e, t).msg });
     } finally { setBusy(false); }
   }
   return (
@@ -176,15 +175,13 @@ function Enroll({ url }: { url: string }) {
         <input id="mon-email" type="email" autoComplete="email" className="input mt-1 py-2" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@store.com" />
       </div>
       <div>
-        <label htmlFor="mon-plan" className="text-sm font-medium">{t("mon.plan")}</label>
-        <select id="mon-plan" className="input mt-1 py-2" value={plan} onChange={(e) => setPlan(e.target.value)}>
-          {plans.map((p) => <option key={p} value={p}>{cap(p)}</option>)}
-        </select>
+        <p className="text-sm font-medium">{t("mon.plan")}: {cap(plan)}</p>
+        <p className="text-xs muted">{t("mon.freeOnly")}</p>
       </div>
       <button className="btn-primary w-full" disabled={busy}><BellRing className="size-4" aria-hidden /> {t("mon.cta")}</button>
       {msg && (
         <p role="status" className={`text-sm ${msg.ok ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}>
-          {msg.text} {msg.ok && <a className="font-semibold underline" href="#/products">→</a>}
+          {msg.text} {msg.ok && <a className="font-semibold underline" href={msg.href || "#/products"}>{t("mon.open")} →</a>}
         </p>
       )}
     </form>
@@ -230,7 +227,7 @@ function SaveToProducts({ url }: { url: string }) {
         await papi(`/v1/profile/products/${p.id}/audit`, { method: "POST" }).catch(() => undefined);
         await reload();
         toast("ok", t("ws.saved"), { label: t("nav.products"), href: "#/products" });
-      } catch (e) { toast("err", e instanceof Error ? e.message : String(e)); }
+      } catch (e) { toast("err", errorText(e, t).msg); }
       setBusy(false);
     }}>
       {saved ? <Check className="size-4" aria-hidden /> : <Bookmark className="size-4" aria-hidden />} {saved ? t("ws.inProducts") : t("ws.save")}
@@ -239,11 +236,14 @@ function SaveToProducts({ url }: { url: string }) {
 }
 
 /** Right-hand results of the audit workspace. */
-export default function Results({ audit, onReset }: { audit: Audit; onReset: () => void }) {
+export default function Results({ audit, onReset, record, reportId }: { audit: Audit; onReset: () => void; record?: Record<string, unknown> | null; reportId?: string | null }) {
   const { t, lang } = useI18n();
   const p = audit.product;
   const [facts, setFacts] = usePersisted<Record<string, { s: "ok" | "fix"; note?: string }>>(`pl.facts.${p.product_id}`, {});
   const [imgOk, setImgOk] = useState(true);
+  const [fixes, setFixes] = usePersisted<Record<string, FixDecision>>(`pl.fix.${p.product_id}`, {});
+  const toast = useToast();
+  const shareUrl = reportId ? `${location.origin}${location.pathname}#/report/${reportId}` : "";
   const top = audit.actions.slice(0, 3);
   const comparable = audit.rank.total - 1;
   const cmp = audit.comparison;
@@ -273,6 +273,7 @@ export default function Results({ audit, onReset }: { audit: Audit; onReset: () 
         </div>
         <div className="no-print flex flex-wrap items-center gap-2">
           <CompareLink productId={p.product_id} />
+          {shareUrl && <button className="btn-outline" onClick={() => { navigator.clipboard?.writeText(shareUrl).catch(() => undefined); toast("ok", t("ws.linkCopied")); }}><Link2 className="size-4" aria-hidden /> {t("ws.copyLink")}</button>}
           {live && <SaveToProducts url={p.url!} />}
           {live && <a href={p.url!} target="_blank" rel="noopener noreferrer" className="btn-ghost px-2.5" aria-label={t("ws.open")}><ExternalLink className="size-4" aria-hidden /></a>}
           <button className="btn-ghost px-2.5" onClick={() => window.print()} aria-label={t("rep.print")}><Printer className="size-4" aria-hidden /></button>
@@ -284,7 +285,7 @@ export default function Results({ audit, onReset }: { audit: Audit; onReset: () 
         <div className="card p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium muted"><Trophy className="size-3.5" aria-hidden /> {t("rank.eyebrow")}</p>
           <p className="mt-1 text-2xl font-bold tabular-nums">{comparable > 0 ? <>#{audit.rank.position}<span className="text-sm font-medium muted"> / {audit.rank.total}</span></> : "–"}</p>
-          <p className="text-xs muted">{comparable > 0 ? t("ws.amongN", { n: comparable }) : t("rank.alone")}</p>
+          <p className="text-xs muted">{comparable > 0 ? tn(t, "ws.amongN", comparable) : t("rank.alone")}</p>
         </div>
         <div className="card p-4">
           <p className="flex items-center gap-1.5 text-xs font-medium muted"><Gauge className="size-3.5" aria-hidden /> <Tip text={t("rank.formula", { wf: audit.rank.weights.facts, wd: audit.rank.weights.description, ref: Math.round(audit.rank.components.description_ref).toLocaleString(lang), sd: p.draft ? "" : t("rank.formulaSd", { ws: audit.rank.weights.structured_data }) })}>{t("ws.quality")}</Tip></p>
@@ -329,6 +330,8 @@ export default function Results({ audit, onReset }: { audit: Audit; onReset: () 
           </ol>
         )}
       </section>
+
+      {record && <FixPanel record={record} decisions={fixes} onDecide={(f, d) => { setFixes({ ...fixes, [f]: d }); toast("ok", t(d.status === "accepted" ? "sug.acceptedToast" : "sug.dismissedToast")); }} />}
 
       <div className="grid gap-5 xl:grid-cols-2">
         <Panel icon={<Trophy className="size-4" aria-hidden />} title={t("rank.board")} sub={t("rank.boardSub")}><RankChart audit={audit} /></Panel>

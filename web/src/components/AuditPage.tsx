@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Clock, FilePen, Layers, Link2, ScanSearch, Trash2 } from "lucide-react";
-import { api, errorText, store, useI18n } from "../lib";
+import { api, ApiError, errorText, store, useI18n } from "../lib";
 import type { Audit } from "../types";
 import { ErrorBox, useToast } from "../ui";
 import Results, { Checklist } from "./Results";
 
+/** Examples verified 2026-09-29 against /v1/audit (robots.txt allows them, 200 in under 4 s, ranked among 25).
+ * Re-verify before changing; stores that rate-limited us (HTTP 429) were dropped. */
 export const SAMPLES = [
-  { label: "Organic Basics Flex Tee", url: "https://organicbasics.com/products/womens-organic-cotton-flex-tee-grey-melange" },
+  { label: "Tacos Domingo Tee", url: "https://mundodomingo.xyz/products/tacos-domingo-tee-white" },
   { label: "Brava Fabrics Out of Office Tee", url: "https://bravafabrics.com/products/out-of-office-t-shirt-mint" },
   { label: "Sepiia Camiseta Soft", url: "https://sepiia.com/products/camiseta-hombre-cuello-redondo-negra-soft" },
 ];
@@ -16,6 +18,16 @@ type Recent = { url: string; title: string; score: number; pos: number; total: n
 
 export function runAudit(body: AuditBody) {
   return api<Audit>("/v1/audit", { method: "POST", body: JSON.stringify(body) });
+}
+export type Stored = { id: string | null; audit: Audit; record: Record<string, unknown> | null };
+/** Audit and keep the result under a stable unlisted id (#/report/<id>); falls back to /v1/audit on older servers. */
+export async function runStoredAudit(body: AuditBody): Promise<Stored> {
+  try {
+    return await api<Stored>("/v1/audits", { method: "POST", body: JSON.stringify(body) });
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 405)) return { id: null, audit: await runAudit(body), record: null };
+    throw e;
+  }
 }
 const recents = (): Recent[] => { try { return JSON.parse(store.get("pl.recent") || "[]"); } catch { return []; } };
 
@@ -47,20 +59,30 @@ function Working() {
 const CURRENCIES = ["EUR", "USD", "GBP", "MXN"];
 
 /** Guided audit workspace: input and checklist on the left, live results on the right. */
-export default function AuditPage() {
+export default function AuditPage({ reportId }: { reportId?: string }) {
   const { t, lang } = useI18n();
   const toast = useToast();
   const [mode, setMode] = useState<"url" | "draft">("url");
   const [url, setUrl] = useState("");
-  const [draft, setDraft] = useState({ title: "", description: "", details: "", price: "", currency: "EUR", language: lang as string });
+  const [draft, setDraft] = useState({ title: "", description: "", details: "", price: "", currency: "EUR", language: "" });
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [result, setResult] = useState<Audit | null>(null);
+  const [stored, setStored] = useState<{ id: string | null; record: Record<string, unknown> | null }>({ id: reportId || null, record: null });
   const [err, setErr] = useState<{ msg: string; suggestText: boolean; openDraft?: boolean } | null>(null);
   const [formErr, setFormErr] = useState("");
   const [recent, setRecent] = useState<Recent[]>(recents);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!reportId) return;
+    setState("loading");
+    api<Stored>(`/v1/audits/${encodeURIComponent(reportId)}`)
+      .then((r) => { setResult(r.audit); setStored({ id: r.id, record: r.record }); setState("done"); })
+      .catch((e) => { setErr(e instanceof ApiError && e.status === 404 ? { msg: t("ws.reportGone"), suggestText: false } : errorText(e, t)); setState("error"); });
+  }, [reportId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (reportId) return;
     const pending = sessionStorage.getItem("pl.pendingUrl") || new URLSearchParams(window.location.search).get("url");
     if (pending) { sessionStorage.removeItem("pl.pendingUrl"); setUrl(pending); go({ url: pending }); }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,8 +90,10 @@ export default function AuditPage() {
   async function go(body: AuditBody) {
     setState("loading"); setErr(null);
     try {
-      const a = await runAudit(body);
-      setResult(a); setState("done");
+      const r = await runStoredAudit(body);
+      const a = r.audit;
+      setResult(a); setStored({ id: r.id, record: r.record }); setState("done");
+      if (r.id) window.history.replaceState(null, "", `#/report/${r.id}`);  // stable link without remounting the workspace
       if (body.url) {
         const r: Recent = { url: body.url, title: a.product.title || body.url, score: a.rank.score, pos: a.rank.position, total: a.rank.total, at: new Date().toISOString() };
         const next = [r, ...recents().filter((x) => x.url !== body.url)].slice(0, 8);
@@ -91,7 +115,7 @@ export default function AuditPage() {
     setFormErr("");
     if (mode === "draft") {
       if (!draft.title.trim()) return setFormErr(t("hero.emptyTitle"));
-      return go({ title: draft.title, description: draft.description, language: draft.language,
+      return go({ title: draft.title, description: draft.description, ...(draft.language ? { language: draft.language } : {}),
         ...(draft.details.trim() ? { details: draft.details } : {}), ...(draft.price ? { price: draft.price, currency: draft.currency } : {}) });
     }
     const u = url.trim();
@@ -136,7 +160,7 @@ export default function AuditPage() {
                 <select id="d-cur" className="input mt-1" value={draft.currency} onChange={(e) => setDraft({ ...draft, currency: e.target.value })}>{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select></div>
               <div className="col-span-2"><label htmlFor="d-lang" className="text-xs font-medium muted">{t("hero.draftLang")}</label>
                 <select id="d-lang" className="input mt-1" value={draft.language} onChange={(e) => setDraft({ ...draft, language: e.target.value })}>
-                  <option value="en">English</option><option value="es">Español</option><option value="de">Deutsch</option></select></div>
+                  <option value="">{t("ws.langAuto")}</option><option value="en">English</option><option value="es">Español</option><option value="de">Deutsch</option></select></div>
             </div>
           )}
           {formErr && <p id="form-err" role="alert" className="mt-2 text-sm text-rose-600 dark:text-rose-400">{formErr}</p>}
@@ -163,10 +187,11 @@ export default function AuditPage() {
 
       <div className="min-w-0">
         {state === "loading" && <Working />}
-        {state === "done" && result && <Results audit={result} onReset={() => { setState("idle"); setResult(null); setTimeout(() => inputRef.current?.focus()); }} />}
+        {state === "done" && result && <Results audit={result} record={stored.record} reportId={stored.id} onReset={() => { setState("idle"); setResult(null); setStored({ id: null, record: null }); window.history.replaceState(null, "", "#/audit"); setTimeout(() => inputRef.current?.focus()); }} />}
         {state === "error" && err && (
           <ErrorBox title={t("err.title")} msg={err.msg}>
-            {err.suggestText && mode === "url" && <button className="btn-outline" onClick={() => setMode("draft")}><FilePen className="size-4" aria-hidden /> {t("err.useText")}</button>}
+            {err.suggestText && <button className="btn-primary" onClick={() => { setMode("draft"); setTimeout(() => (document.getElementById("d-title") as HTMLInputElement | null)?.focus()); }}><FilePen className="size-4" aria-hidden /> {t("err.auditDraft")}</button>}
+            {err.suggestText && <p className="w-full text-xs">{t("err.useExtension")}</p>}
             <button className="btn-outline" onClick={() => go({ url: SAMPLES[0].url })}><ArrowRight className="size-4" aria-hidden /> {t("ws.trySample")}</button>
           </ErrorBox>
         )}

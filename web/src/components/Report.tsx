@@ -5,60 +5,14 @@ import { papi, productName, type Decision, type Product, type Profile, type Shar
 import { useSession } from "../session";
 import { Empty } from "../ui";
 import { csvCell } from "./BulkPage";
+import FixPanel, { type FixDecision } from "./FixPanel";
 import { actionText } from "./Results";
 
-type Sugg = { title: string; description: string };
-
+/** Owner-only: /v1/optimize suggestions with accept/dismiss recorded on the profile product (never published). */
 function Suggestions({ p, onDecided }: { p: Product; onDecided: (p: Product) => void }) {
-  const { t, lang } = useI18n();
-  const [s, setS] = useState<Sugg | null>(null);
-  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
-  const [err, setErr] = useState("");
-  const content = (p.record?.content || {}) as { title?: string; full_description?: string };
-  const original: Sugg = { title: content.title || "", description: content.full_description || "" };
-
-  async function suggest() {
-    setState("loading");
-    try {
-      const r = await api<Sugg>("/v1/optimize", { method: "POST", body: JSON.stringify({ product: p.record, language: lang }) });
-      setS({ title: r.title, description: r.description }); setState("idle");
-    } catch (e) { setErr(errorText(e, t).msg); setState("error"); }
-  }
-  async function decide(field: keyof Sugg, status: Decision["status"]) {
-    if (!s) return;
-    if (status === "accepted") navigator.clipboard?.writeText(s[field]).catch(() => undefined);
-    onDecided(await papi<Product>(`/v1/profile/products/${p.id}/suggestion`, { method: "PUT",
-      body: JSON.stringify({ field, status, original: original[field], suggested: s[field] }) }));
-  }
   if (!p.record) return null;
-  return (
-    <div className="no-print mt-4 rounded-xl border border-dashed border-brand-200 p-3 dark:border-brand-900">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="mr-auto text-sm font-semibold">{t("sug.title")}</p>
-        <button className="btn-ghost px-2 text-sm" onClick={suggest} disabled={state === "loading"}>
-          {state === "loading" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <PenLine className="size-4" aria-hidden />} {t("sug.run")}
-        </button>
-      </div>
-      <p className="text-xs muted">{t("sug.note")}</p>
-      {state === "error" && <p role="alert" className="mt-2 text-sm text-rose-600">{err}</p>}
-      {s && (["title", "description"] as const).map((f) => {
-        const d = p.suggestions?.[f];
-        return (
-          <div key={f} className="mt-3 grid gap-2 sm:grid-cols-2">
-            <div><p className="text-xs font-medium muted">{t(`sug.orig.${f}`)}</p><p className="mt-1 whitespace-pre-line rounded-lg bg-stone-50 p-2 text-sm dark:bg-stone-800/60">{original[f] || t("sug.empty")}</p></div>
-            <div><p className="text-xs font-medium muted">{t(`sug.new.${f}`)}</p><p className="mt-1 rounded-lg bg-emerald-50 p-2 text-sm dark:bg-emerald-950/40">{s[f]}</p>
-              <div className="mt-1 flex items-center gap-2 text-sm">
-                {d && d.suggested === s[f] ? <span className="chip bg-stone-100 dark:bg-stone-800">{t(`sug.${d.status}`)}</span> : <>
-                  <button className="btn-ghost px-2 py-1 text-emerald-700 dark:text-emerald-400" onClick={() => decide(f, "accepted")}><Check className="size-4" aria-hidden /> {t("sug.accept")}</button>
-                  <button className="btn-ghost px-2 py-1" onClick={() => decide(f, "dismissed")}><X className="size-4" aria-hidden /> {t("sug.dismiss")}</button>
-                </>}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+  return <FixPanel compact record={p.record} decisions={(p.suggestions || {}) as Record<string, FixDecision>}
+    onDecide={async (field, d) => onDecided(await papi<Product>(`/v1/profile/products/${p.id}/suggestion`, { method: "PUT", body: JSON.stringify({ field, ...d }) }))} />;
 }
 
 function ProductCard({ p, owner, onChange }: { p: Product; owner: boolean; onChange?: (p: Product) => void }) {
