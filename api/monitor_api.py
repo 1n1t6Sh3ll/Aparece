@@ -1,14 +1,18 @@
 """Enrollment + monitoring routes (TEAM-28). Logic lives in monitor/; this file is HTTP only.
 
-URLs use a random public id; internal ids and merchant emails are never returned. Enrollment returns a manage
-token once (stored hashed); DELETE /v1/enroll/{id} and POST /v1/monitored/{id}/crawl require it as X-Manage-Token.
-Enroll/delete are rate limited per client IP (MONITOR_RATE_LIMIT requests per minute, default 10).
+URLs use a random public id; internal ids and merchant emails are never returned. Every POST /v1/enroll creates a
+new enrollment and returns its manage token once (stored hashed); existing rows are never adopted or reactivated.
+Everything except enroll/plans needs X-Manage-Token: history, DELETE /v1/enroll/{id}, POST /v1/monitored/{id}/crawl;
+GET /v1/monitored lists only the products of the given token(s) (comma-separated). Legacy rows without a token
+cannot be managed via the API. Enroll/delete/re-crawl are rate limited per client IP (MONITOR_RATE_LIMIT per
+minute, default 10; at most MONITOR_RATE_LIMIT_IPS tracked IPs, LRU). X-Forwarded-For (its last entry, i.e. the
+address seen by the proxy) is used only when MONITOR_TRUST_PROXY=1.
 """
 import os
 import re
 import sys
 import time
-from collections import defaultdict, deque
+from collections import OrderedDict, deque
 from pathlib import Path
 
 from fastapi import APIRouter, Header, HTTPException, Request
@@ -32,12 +36,23 @@ class EnrollRequest(BaseModel):
 
 
 PUBLIC = ("url", "enrolled_at", "active", "plan", "last_snapshot_at", "last_hash", "snapshot_count", "event_count")
-_hits = defaultdict(deque)  # client ip -> recent request times
+_hits = OrderedDict()  # client ip -> recent request times (LRU-bounded)
+
+
+def client_ip(request: Request):
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd and os.environ.get("MONITOR_TRUST_PROXY") == "1":
+        return fwd.split(",")[-1].strip()
+    return request.client.host if request.client else "?"
 
 
 def rate_limit(request: Request):
     limit = int(os.environ.get("MONITOR_RATE_LIMIT") or 10)
-    now, q = time.monotonic(), _hits[request.client.host if request.client else "?"]
+    ip, now = client_ip(request), time.monotonic()
+    q = _hits.pop(ip, None) or deque()
+    _hits[ip] = q
+    while len(_hits) > int(os.environ.get("MONITOR_RATE_LIMIT_IPS") or 10000):
+        _hits.popitem(last=False)
     while q and now - q[0] > 60:
         q.popleft()
     if len(q) >= limit:
@@ -82,15 +97,15 @@ async def enroll(req: EnrollRequest, request: Request):
         await run_in_threadpool(safe_fetch.check_url, req.url)
     except safe_fetch.FetchError as e:
         raise HTTPException(e.status, e.detail)
-    p, created = store.enroll(req.url, req.email, req.plan)
-    token = store.issue_token(p["id"])  # None when the product already has an owner token
+    p, token = store.enroll(req.url, req.email, req.plan)
     result = await run_in_threadpool(crawl.crawl, p["id"]) if req.crawl_now else None
-    return {"product": public(p), "created": created, "manage_token": token, "crawl": result}
+    return {"product": public(p), "created": True, "manage_token": token, "crawl": result}
 
 
 @router.get("/monitored")
-def monitored():
-    return {"results": [public(p) for p in store.monitored()]}
+def monitored(x_manage_token: str | None = Header(None)):
+    tokens = [t.strip() for t in (x_manage_token or "").split(",")][:100]
+    return {"results": [public(p) for p in store.monitored(ids=store.pids_for_tokens(tokens))]}
 
 
 @router.delete("/enroll/{public_id}", status_code=204)
@@ -100,12 +115,13 @@ def unenroll(public_id: str, request: Request, x_manage_token: str | None = Head
 
 
 @router.post("/monitored/{public_id}/crawl")
-def recrawl(public_id: str, x_manage_token: str | None = Header(None)):
+def recrawl(public_id: str, request: Request, x_manage_token: str | None = Header(None)):
+    rate_limit(request)
     return crawl.crawl(authorize(public_id, x_manage_token))
 
 
 @router.get("/products/{public_id}/history")
-def history(public_id: str):
-    pid = get_pid(public_id)
+def history(public_id: str, x_manage_token: str | None = Header(None)):
+    pid = authorize(public_id, x_manage_token)
     h = {k: [{c: v for c, v in r.items() if c != "product_id"} for r in rows] for k, rows in store.history(pid).items()}
     return {"product": public(store.product(pid=pid)), **h}

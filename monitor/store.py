@@ -14,11 +14,13 @@ from pathlib import Path
 DEFAULT_DB = Path(__file__).resolve().parent / "data" / "monitor.db"
 PLANS = ["free", "pro", "team"]  # labels only; no billing
 
+# Each enrollment is its own row (same URL may be enrolled by several merchants); email/plan live on the row.
+# merchant_id/merchants are legacy (read only). Rows without token_hash (legacy) can never be managed via the API.
+PRODUCT_COLS = """id INTEGER PRIMARY KEY, merchant_id INTEGER REFERENCES merchants(id), url TEXT NOT NULL,
+  enrolled_at TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, public_id TEXT, token_hash TEXT, email TEXT, plan TEXT"""
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS merchants (id INTEGER PRIMARY KEY, email TEXT UNIQUE, plan TEXT NOT NULL, created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, merchant_id INTEGER REFERENCES merchants(id),
-  url TEXT NOT NULL UNIQUE, enrolled_at TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1,
-  public_id TEXT, token_hash TEXT);
+CREATE TABLE IF NOT EXISTS products (%s);
 CREATE TABLE IF NOT EXISTS snapshots (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id),
   taken_at TEXT NOT NULL, content_hash TEXT NOT NULL, data TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS change_events (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id),
@@ -30,7 +32,7 @@ CREATE TRIGGER IF NOT EXISTS snapshots_no_update BEFORE UPDATE ON snapshots BEGI
 CREATE TRIGGER IF NOT EXISTS snapshots_no_delete BEFORE DELETE ON snapshots BEGIN SELECT RAISE(ABORT, 'snapshots are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS events_no_update BEFORE UPDATE ON change_events BEGIN SELECT RAISE(ABORT, 'events are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS events_no_delete BEFORE DELETE ON change_events BEGIN SELECT RAISE(ABORT, 'events are immutable'); END;
-"""
+""" % PRODUCT_COLS
 
 
 def utcnow():
@@ -54,11 +56,19 @@ def connect():
 
 
 def migrate(db):
-    """Add public_id/token_hash to older databases and give every product a random public id."""
+    """Bring older databases to PRODUCT_COLS (drop UNIQUE(url)) and give every product a random public id.
+    Legacy rows get no token: they stay unmanageable until re-enrolled as a new entry."""
     cols = {r["name"] for r in db.execute("PRAGMA table_info(products)")}
-    for c in ("public_id", "token_hash"):
+    for c in ("public_id", "token_hash", "email", "plan"):
         if c not in cols:
             db.execute(f"ALTER TABLE products ADD COLUMN {c} TEXT")
+    sql = db.execute("SELECT sql FROM sqlite_master WHERE name = 'products'").fetchone()["sql"]
+    if "UNIQUE" in sql.upper():
+        names = "id, merchant_id, url, enrolled_at, active, public_id, token_hash, email, plan"
+        db.execute(f"CREATE TABLE products_new ({PRODUCT_COLS})")
+        db.execute(f"INSERT INTO products_new ({names}) SELECT {names} FROM products")
+        db.execute("DROP TABLE products")
+        db.execute("ALTER TABLE products_new RENAME TO products")
     db.execute("CREATE UNIQUE INDEX IF NOT EXISTS products_public_id ON products(public_id)")
     for r in db.execute("SELECT id FROM products WHERE public_id IS NULL").fetchall():
         db.execute("UPDATE products SET public_id = ? WHERE id = ?", (new_public_id(), r["id"]))
@@ -78,29 +88,30 @@ def content_hash(content):
 
 
 def enroll(url, email=None, plan="free"):
-    """Returns (product row, created). Re-enrolling a known URL reactivates it."""
+    """Always a new enrollment: returns (product row, manage token). Existing rows are never adopted or changed."""
+    token = secrets.token_urlsafe(32)
     with connect() as db:
-        m = db.execute("SELECT id FROM merchants WHERE email IS ? ORDER BY id LIMIT 1", (email,)).fetchone()
-        if m:
-            mid = m["id"]
-            db.execute("UPDATE merchants SET plan = ? WHERE id = ?", (plan, mid))
-        else:
-            mid = db.execute("INSERT INTO merchants (email, plan, created_at) VALUES (?, ?, ?)",
-                             (email, plan, utcnow())).lastrowid
-        old = db.execute("SELECT id FROM products WHERE url = ?", (url,)).fetchone()
-        if old:
-            db.execute("UPDATE products SET active = 1 WHERE id = ?", (old["id"],))
-        else:
-            db.execute("INSERT INTO products (merchant_id, url, enrolled_at, public_id) VALUES (?, ?, ?, ?)",
-                       (mid, url, utcnow(), new_public_id()))
-    return product(url=url), old is None
+        pid = db.execute("INSERT INTO products (url, enrolled_at, public_id, token_hash, email, plan) "
+                         "VALUES (?, ?, ?, ?, ?, ?)",
+                         (url, utcnow(), new_public_id(), hash_token(token), email, plan)).lastrowid
+    return product(pid=pid), token
 
 
-def product(pid=None, url=None):
+def product(pid=None):
     with connect() as db:
-        row = db.execute("SELECT p.*, m.email, m.plan FROM products p LEFT JOIN merchants m ON m.id = p.merchant_id "
-                         "WHERE p.id = ? OR p.url = ?", (pid, url)).fetchone()
+        row = db.execute("SELECT p.*, COALESCE(p.email, m.email) AS email, COALESCE(p.plan, m.plan) AS plan "
+                         "FROM products p LEFT JOIN merchants m ON m.id = p.merchant_id WHERE p.id = ?", (pid,)).fetchone()
     return dict(row) if row else None
+
+
+def pids_for_tokens(tokens):
+    """Internal ids of the products managed by any of these tokens."""
+    hashes = [hash_token(t) for t in tokens if t]
+    if not hashes:
+        return []
+    with connect() as db:
+        q = f"SELECT id FROM products WHERE token_hash IN ({','.join('?' * len(hashes))}) ORDER BY id"
+        return [r["id"] for r in db.execute(q, hashes)]
 
 
 def pid_for(public_id):
@@ -108,15 +119,6 @@ def pid_for(public_id):
     with connect() as db:
         row = db.execute("SELECT id FROM products WHERE public_id = ?", (public_id,)).fetchone()
     return row["id"] if row else None
-
-
-def issue_token(pid):
-    """Return a new manage token (stored hashed) if the product has none yet; otherwise None (shown only once)."""
-    token = secrets.token_urlsafe(32)
-    with connect() as db:
-        n = db.execute("UPDATE products SET token_hash = ? WHERE id = ? AND token_hash IS NULL",
-                       (hash_token(token), pid)).rowcount
-    return token if n else None
 
 
 def check_token(pid, token):
@@ -130,13 +132,17 @@ def unenroll(pid):
         return db.execute("UPDATE products SET active = 0 WHERE id = ?", (pid,)).rowcount > 0
 
 
-def monitored(active_only=False):
-    q = ("SELECT p.id, p.public_id, p.url, p.enrolled_at, p.active, m.plan, "
+def monitored(active_only=False, ids=None):
+    """All products (or only internal ids in `ids`)."""
+    where = ["p.active = 1"] if active_only else []
+    if ids is not None:
+        where.append(f"p.id IN ({','.join(str(int(i)) for i in ids) or 'NULL'})")
+    q = ("SELECT p.id, p.public_id, p.url, p.enrolled_at, p.active, COALESCE(p.plan, m.plan) AS plan, "
          "(SELECT taken_at FROM snapshots s WHERE s.product_id = p.id ORDER BY s.id DESC LIMIT 1) AS last_snapshot_at, "
          "(SELECT content_hash FROM snapshots s WHERE s.product_id = p.id ORDER BY s.id DESC LIMIT 1) AS last_hash, "
          "(SELECT COUNT(*) FROM snapshots s WHERE s.product_id = p.id) AS snapshot_count, "
          "(SELECT COUNT(*) FROM change_events e WHERE e.product_id = p.id) AS event_count "
-         "FROM products p LEFT JOIN merchants m ON m.id = p.merchant_id" + (" WHERE p.active = 1" if active_only else "")
+         "FROM products p LEFT JOIN merchants m ON m.id = p.merchant_id" + (" WHERE " + " AND ".join(where) if where else "")
          + " ORDER BY p.id")
     with connect() as db:
         return [dict(r) for r in db.execute(q)]

@@ -63,14 +63,14 @@ class MonitorTest(unittest.TestCase):
         self.assertEqual((price["before"], price["after"]), ([30.0, "EUR"], [25.0, "EUR"]))
         self.assertIn("identity.brand", {e["field"] for e in res["events"] if e["type"] == "ATTRIBUTE_ADDED"})
 
-        hist = client.get(f"/v1/products/{pid}/history").json()
+        hist = client.get(f"/v1/products/{pid}/history", headers=h).json()
         s1, s2 = hist["snapshots"]
-        self.assertEqual((s1["taken_at"], s2["taken_at"]), ("2026-09-04T03:00:00Z", "2026-09-07T03:00:00Z"))
+        self.assertEqual((s1["taken_at"], s2["taken_at"]), ("2026-09-03T03:00:00Z", "2026-09-06T03:00:00Z"))
         self.assertNotEqual(s1["content_hash"], s2["content_hash"])
         self.assertEqual(s1["content_hash"], store.content_hash(s1["data"]["content"]))
         self.assertIsNotNone(s2["data"]["gaps"])
         self.assertEqual(len(hist["events"]), len(res["events"]))
-        mon = client.get("/v1/monitored").json()["results"][0]
+        mon = client.get("/v1/monitored", headers=h).json()["results"][0]
         self.assertEqual((mon["plan"], mon["snapshot_count"], mon["active"]), ("pro", 2, 1))
 
         # unchanged page -> new snapshot, same hash, no events
@@ -92,25 +92,45 @@ class MonitorTest(unittest.TestCase):
         pid = body["product"]["id"]
         self.assertGreaterEqual(len(pid), 16)
         self.assertFalse(pid.isdigit())
-        for r in (body, client.get(f"/v1/products/{pid}/history").json(), client.get("/v1/monitored").json()):
+        h = self.auth(body)
+        for r in (body, client.get(f"/v1/products/{pid}/history", headers=h).json(),
+                  client.get("/v1/monitored", headers=h).json()):
             text = str(r)
             self.assertNotIn("shop@example.com", text)
             self.assertNotIn("token_hash", text)
             self.assertNotIn("merchant_id", text)
-        self.assertEqual(client.get("/v1/products/1/history").status_code, 404)  # internal ids are not addressable
+        self.assertEqual(client.get("/v1/products/1/history", headers=h).status_code, 404)  # internal ids are not addressable
 
     def test_manage_token_required(self):
         body = self.enroll(crawl_now=False)
         pid, token = body["product"]["id"], body["manage_token"]
         self.assertTrue(token)
         self.assertNotIn(token, str(store.product(pid=store.pid_for(pid))))  # stored hashed only
-        self.assertIsNone(self.enroll(crawl_now=False)["manage_token"])  # shown once
+        other = self.enroll(crawl_now=False)  # same URL again: a separate enrollment with its own token
+        self.assertNotEqual((other["product"]["id"], other["manage_token"]), (pid, token))
+        self.assertEqual(client.get(f"/v1/products/{pid}/history").status_code, 401)
+        self.assertEqual(client.get(f"/v1/products/{pid}/history", headers=self.auth(other)).status_code, 403)
+        self.assertEqual(client.delete(f"/v1/enroll/{pid}", headers=self.auth(other)).status_code, 403)
         self.assertEqual(client.delete(f"/v1/enroll/{pid}").status_code, 401)
         self.assertEqual(client.delete(f"/v1/enroll/{pid}", headers={"X-Manage-Token": "wrong"}).status_code, 403)
         self.assertEqual(client.post(f"/v1/monitored/{pid}/crawl").status_code, 401)
         self.assertEqual(client.post(f"/v1/monitored/{pid}/crawl", headers={"X-Manage-Token": "wrong"}).status_code, 403)
-        self.assertEqual(client.get(f"/v1/products/{pid}/history").json()["product"]["active"], 1)
-        self.assertEqual(client.delete(f"/v1/enroll/{pid}", headers={"X-Manage-Token": token}).status_code, 204)
+        h = {"X-Manage-Token": token}
+        self.assertEqual(client.get(f"/v1/products/{pid}/history", headers=h).json()["product"]["active"], 1)
+        self.assertEqual(client.delete(f"/v1/enroll/{pid}", headers=h).status_code, 204)
+
+    def test_monitored_token_scoped(self):
+        a, b = self.enroll(crawl_now=False), self.enroll(crawl_now=False, email="other@example.com", plan="team")
+
+        def ids(hdr):
+            return [r["id"] for r in client.get("/v1/monitored", headers=hdr).json()["results"]]
+        self.assertEqual(ids({}), [])
+        self.assertEqual(ids({"X-Manage-Token": "wrong"}), [])
+        self.assertEqual(ids(self.auth(a)), [a["product"]["id"]])
+        both = {"X-Manage-Token": f"{a['manage_token']}, {b['manage_token']}"}
+        self.assertEqual(sorted(ids(both)), sorted([a["product"]["id"], b["product"]["id"]]))
+        plans = {r["id"]: r["plan"] for r in client.get("/v1/monitored", headers=both).json()["results"]}
+        self.assertEqual(plans, {a["product"]["id"]: "free", b["product"]["id"]: "team"})  # no cross-email plan change
 
     def test_rate_limit(self):
         with mock.patch.dict(os.environ, {"MONITOR_RATE_LIMIT": "2"}):
@@ -118,26 +138,52 @@ class MonitorTest(unittest.TestCase):
             self.enroll(crawl_now=False)
             r = client.post("/v1/enroll", json={"url": URL, "crawl_now": False})
             self.assertEqual(r.status_code, 429)
+            monitor_api._hits.clear()
+            body = self.enroll(crawl_now=False)
+            url, h = f"/v1/monitored/{body['product']['id']}/crawl", self.auth(body)
+            self.assertEqual(client.post(url, headers=h).status_code, 200)
+            self.assertEqual(client.post(url, headers=h).status_code, 429)
+
+    def test_rate_limit_ip_source_and_bound(self):
+        def post(fwd):
+            return client.post("/v1/enroll", json={"url": URL, "crawl_now": False},
+                               headers={"X-Forwarded-For": fwd}).status_code
+        with mock.patch.dict(os.environ, {"MONITOR_RATE_LIMIT": "1", "MONITOR_RATE_LIMIT_IPS": "3"}):
+            self.assertEqual(post("1.2.3.4"), 201)
+            self.assertEqual(post("5.6.7.8"), 429)  # header ignored without MONITOR_TRUST_PROXY
+            with mock.patch.dict(os.environ, {"MONITOR_TRUST_PROXY": "1"}):
+                for i in range(5):
+                    self.assertEqual(post(f"9.9.9.9, 10.0.0.{i}"), 201)  # last entry = address the proxy saw
+                self.assertEqual(post("9.9.9.9, 10.0.0.4"), 429)
+            self.assertLessEqual(len(monitor_api._hits), 3)
 
     def test_legacy_db_migrated(self):
         with closing(sqlite3.connect(os.environ["MONITOR_DB"])) as db, db:
             db.execute("CREATE TABLE products (id INTEGER PRIMARY KEY, merchant_id INTEGER, url TEXT NOT NULL UNIQUE, "
                        "enrolled_at TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1)")
             db.execute("INSERT INTO products (url, enrolled_at) VALUES (?, 'x')", (URL,))
-        (row,) = client.get("/v1/monitored").json()["results"]
-        self.assertFalse(row["id"].isdigit())
-        self.assertIsNotNone(self.enroll(crawl_now=False)["manage_token"])  # legacy product gets a token once
+        legacy = store.monitored()[0]["public_id"]
+        self.assertFalse(legacy.isdigit())
+        body = self.enroll(crawl_now=False)  # same URL: a new entry; the legacy row is never adopted
+        self.assertNotEqual(body["product"]["id"], legacy)
+        self.assertEqual([r["id"] for r in client.get("/v1/monitored", headers=self.auth(body)).json()["results"]],
+                         [body["product"]["id"]])
+        self.assertEqual(client.delete(f"/v1/enroll/{legacy}", headers=self.auth(body)).status_code, 403)
+        self.assertEqual(client.get(f"/v1/products/{legacy}/history", headers=self.auth(body)).status_code, 403)
+        self.assertEqual(len(store.monitored()), 2)
 
     def test_unenroll_and_reenroll(self):
         body = self.enroll()
         pid = body["product"]["id"]
         self.assertEqual(client.delete(f"/v1/enroll/{pid}", headers=self.auth(body)).status_code, 204)
         self.assertEqual(crawl.crawl_all(), {})  # inactive products are not crawled
-        self.assertEqual(client.get(f"/v1/products/{pid}/history").json()["product"]["active"], 0)
-        again = self.enroll(crawl_now=False)
-        self.assertEqual((again["product"]["id"], again["created"], again["product"]["active"]), (pid, False, 1))
+        hist = f"/v1/products/{pid}/history"
+        self.assertEqual(client.get(hist, headers=self.auth(body)).json()["product"]["active"], 0)
+        again = self.enroll(crawl_now=False)  # anonymous re-enroll: a new entry; the deleted one stays inactive
+        self.assertNotEqual(again["product"]["id"], pid)
+        self.assertEqual(client.get(hist, headers=self.auth(body)).json()["product"]["active"], 0)
         self.assertEqual(client.delete("/v1/enroll/999", headers=self.auth(body)).status_code, 404)
-        self.assertEqual(client.get("/v1/products/999/history").status_code, 404)
+        self.assertEqual(client.get("/v1/products/999/history", headers=self.auth(body)).status_code, 404)
 
     def test_validation(self):
         self.assertEqual(client.post("/v1/enroll", json={"url": URL, "plan": "gold"}).status_code, 422)
