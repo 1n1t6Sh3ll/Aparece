@@ -20,6 +20,8 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "train"))
 from common import FIELDS, get, messages, target  # noqa: E402
+sys.path.insert(0, str(ROOT / "dataset" / "collect"))
+from normalize import decoded_text  # noqa: E402  evidence quotes entity-decoded raw text
 
 SPLITS = ("train", "val", "test")
 FRACS = {"train": 0.8, "val": 0.1, "test": 0.1}
@@ -143,6 +145,7 @@ def base_field(path):
 
 def verify(norm, raw, drops):
     """Keep only target fields whose every evidence item verifies against raw; return filtered copy."""
+    raw = decoded_text(raw)
     by_field = collections.defaultdict(list)
     for ev in norm.get("evidence", []):
         by_field[base_field(ev["field"])].append(ev)

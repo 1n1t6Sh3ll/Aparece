@@ -32,6 +32,25 @@ class Entities(unittest.TestCase):
         self.assertEqual(unescape(LOTR), "Lord of the Rings")
         self.assertEqual(unescape("A &amp;amp;#x20;B &#233; &eacute;"), "A  B é é")
 
+    def test_only_terminated_entities(self):
+        for s in ("cotton&notice", "Tom&Jerry", "a &amp b", "&#x20 x", "R&D 100%"):
+            self.assertEqual(unescape(s), s)
+        self.assertEqual(unescape("cotton &amp; notice&#59;"), "cotton & notice;")
+
+    def test_wdc_decode_uses_same_rule(self):
+        from wdc import decode
+        self.assertEqual(decode("cotton&notice &amp;amp; Lord&#x20;of"), "cotton&notice & Lord of")
+
+    def test_ground_truth_verifies_decoded_evidence(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "build"))
+        from make_ground_truth import verify
+        raw = raw_record()
+        n = build_normalized(raw)
+        drops = {}
+        kept = verify(n, raw, drops)
+        self.assertEqual(kept["identity"]["brand"], "Lord of the Rings")
+        self.assertEqual(len(kept["evidence"]), len(n["evidence"]))
+
     def test_normalized_fields_decoded_raw_unchanged(self):
         raw = raw_record()
         before = copy.deepcopy(raw)

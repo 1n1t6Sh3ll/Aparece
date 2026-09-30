@@ -384,10 +384,14 @@ RAW_KEEP = {"raw_json_ld", "raw_product_schema", "raw_offer_schema", "raw_produc
             "source_url", "final_url", "canonical_url", "image_urls", "url", "image_url"}
 
 
+ENTITY = re.compile(r"&(?:#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);")
+
+
 def unescape(s):
-    """HTML entities decoded until stable (double-encoded, named, decimal and hex: "Lord&#x20;of" -> "Lord of")."""
+    """The single entity decoder: ";"-terminated named, decimal and hex entities, repeated until stable
+    ("Lord&#x20;of" -> "Lord of", "&amp;amp;" -> "&"). Text like "cotton&notice" is left as is."""
     for _ in range(5):
-        decoded = html.unescape(s)
+        decoded = ENTITY.sub(lambda m: html.unescape(m.group(0)), s)
         if decoded == s:
             break
         s = decoded
