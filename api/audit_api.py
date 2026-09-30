@@ -299,6 +299,30 @@ def audit(payload: dict = Body(...)):
     }
 
 
+NEW_FIELDS = ["materials.fabric_type", "materials.texture", "fit_and_style.shirt_length", "fit_and_style.style",
+              "care", "variants.sizes", "fit_and_style.collar_type"]  # TEAM-37 (dataset/build/fill_null_fields.py)
+MODEL_LABELS = {"all_null_baseline": "All-null baseline", "base_zero_shot": "Base Qwen (zero-shot)",
+                "base_qwen_0_5b": "Base Qwen 0.5B", "finetuned": "Fine-tuned Qwen", "ft_qwen_0_5b": "Fine-tuned Qwen 0.5B",
+                "ft_qwen_1_5b": "Fine-tuned Qwen 1.5B", "gpt-4o-mini": "GPT-4o mini", "claude-haiku-4-5": "Claude Haiku 4.5"}
+
+
+@router.get("/v1/model-comparison")
+def model_comparison():
+    """Read-only: extraction-model comparison from PRODUCTLENS_COMPARISON (default train/runs/comparison.json).
+    Accepts {"models": {key: summary}} or train/eval.py's raw output (model keys at top level). Summaries are
+    eval.py summarize() dicts, optionally with by_language, cost_per_1k_usd, latency_ms. Nothing is computed here."""
+    rep = dash._cached("PRODUCTLENS_COMPARISON", "train/runs/comparison.json",
+                       lambda p: json.loads(p.read_text(encoding="utf-8")), {})
+    if not isinstance(rep, dict):
+        rep = {}
+    models = rep.get("models") if isinstance(rep.get("models"), dict) else \
+        {k: v for k, v in rep.items() if isinstance(v, dict) and "non_null_acc" in v}
+    models = {k: {**v, "label": v.get("label") or MODEL_LABELS.get(k, k)} for k, v in models.items() if isinstance(v, dict)}
+    return {"available": bool(models), "sample": bool(rep.get("sample")), "generated_at": rep.get("generated_at"),
+            "test": rep.get("test") if isinstance(rep.get("test"), dict) else {}, "models": models,
+            "new_fields": NEW_FIELDS}
+
+
 @router.get("/", include_in_schema=False)
 def index():
     if not (WEB / "index.html").is_file():
