@@ -214,6 +214,158 @@ def to_price(text):
         return None
 
 
+# ---- TEAM-37: rules for fields that were always null (fabric_type, texture, shirt_length, style,
+# care, sizes, collar_type). Pure functions over (source_location, text) pairs; every value comes
+# with the exact matched substring as evidence. Nothing is inferred beyond the matched text.
+
+_KNIT = r"(?:knit|fabric|cotton|material|cloth|weave)"
+FABRIC_TYPE = [  # fabric words need a fabric context ("jersey" alone is often a sports jersey)
+    ("french_terry", r"\bfrench[ -]terry\b|\bfelpa francesa\b"),
+    ("pique", r"\bpiqu[eé]\b"),
+    ("interlock", r"\binterlock[ -]" + _KNIT + r"\b|\b" + _KNIT + r" interlock\b"),
+    ("slub", r"\bslub[ -](?:jersey|knit|fabric|cotton|yarn)\b"),
+    ("oxford", r"\boxford (?:cloth|fabric|weave)\b|\btela oxford\b"),
+    ("flannel", r"\bflannel (?:fabric|cotton|cloth)\b|\bcotton flannel\b|\btela (?:de )?franela\b"),
+    ("twill", r"\btwill (?:fabric|weave|cloth)\b|\bcotton twill\b(?![ -]?tap)|\btela (?:de )?sarga\b"),
+    ("poplin", r"\bpoplin\b|\bpopelina\b|\bpopel[ií]n\b"),
+    ("mesh", r"\bmesh (?:fabric|knit|material|panels?)\b|\bbreathable mesh\b|\btejido de malla\b"),
+    ("rib", r"\brib(?:bed)?[ -]knit\b(?![ -](?:collar|cuffs?|neck\w*|trim\w*|hem|waist\w*|band|sleeves?|crew))|\b1x1 rib\b|\bpunto (?:de )?canal[eé]\b"),
+    ("jersey", r"\bjersey[ -](?:knit|fabric|cotton|material)\b|\b(?:cotton|single|slub|cotton-blend|combed cotton) jersey\b"
+               r"|\bpunto (?:de )?jersey\b|\bjersey de algod[oó]n\b|\bpunto liso\b"),
+]
+TEXTURE = [  # texture words only next to a fabric word
+    ("brushed", r"\bbrushed[ -](?:cotton|fabric|jersey|fleece|knit|finish)\b|\b(?:algod[oó]n|tejido) (?:perchad|cepillad)[oa]\b"),
+    ("waffle", r"\bwaffle[ -](?:knit|weave|texture|fabric)\b|\bpunto gofrado\b"),
+    ("ribbed", r"\bribbed (?:fabric|knit|texture|cotton|tee|t-shirt|tank|top)\b(?![ -](?:collar|cuffs?|neck\w*|trim\w*|hem|waist\w*|band|sleeves?|crew))|\btejido acanalado\b"),
+    ("textured", r"\btextured (?:fabric|knit|cotton|jersey|weave)\b|\btejido texturizado\b"),
+    ("soft", r"\b(?:super[ -]|ultra[ -]|extra[ -])?soft(?:[ -]touch)? (?:cotton|fabric|jersey|knit|material|feel|hand|blend|tri-?blend)\b"
+             r"|\bsoft[ -](?:washed|touch|hand)\b|\b(?:algod[oó]n|tejido) (?:muy |super |ultra )?suave\b|\btacto suave\b"),
+]
+SHIRT_LENGTH = [
+    ("cropped", r"\bcropped (?:tee|t-shirt|shirt|top|fit|length|hem)\b|\bcrop[ -]?top\b|\bcorte crop\b"),
+    ("longline", r"\blong[ -]?line (?:tee|t-shirt|shirt|top|fit|length|hem)\b"),
+    ("tunic", r"\btunic (?:tee|t-shirt|shirt|top|length)\b|\b(?:camiseta|camisa|blusa)(?: tipo)? t[uú]nica\b"),
+    ("regular", r"\bregular[ -]length\b|\blargo regular\b|\blongitud regular\b"),
+]
+_NOUN = r"(?:tee|t-shirt|t shirt|shirt|polo|top|style)"
+STYLE = [  # fixed vocabulary, only directly before a product noun (ES: after camiseta/camisa/polo/estilo)
+    ("vintage", r"\b(?:vintage|retro)[ -]" + _NOUN + r"s?\b|\b(?:camiseta|camisa|polo|estilo) (?:vintage|retro)\b"),
+    ("streetwear", r"\bstreetwear(?:[ -]" + _NOUN + r"s?)?\b|\bstreet[ -]style\b"),
+    ("athletic", r"\bathletic[ -](?:tee|t-shirt|shirt|top|style)s?\b|\b(?:camiseta|camisa|polo) deportiv[oa]\b"),
+    ("graphic", r"\bgraphic[ -](?:tee|t-shirt|t shirt|shirt|top)s?\b|\b(?:camiseta|camisa) gr[aá]fica\b"),
+    ("minimalist", r"\bminimalist(?:ic)?[ -](?:" + _NOUN[3:-1] + r"|design)s?\b|\b(?:camiseta|camisa|estilo|dise[ñn]o) minimalista\b"),
+    ("basic", r"\bbasic[ -](?:tee|t-shirt|t shirt|shirt|polo|top)s?\b|\b(?:camiseta|camisa|polo) b[aá]sic[oa]\b"),
+    ("casual", r"\bcasual[ -](?:tee|t-shirt|t shirt|shirt|polo|top|fit)s?\b|\b(?:camiseta|camisa|polo) casual\b"),
+]
+CARE = [
+    ("machine_wash", r"\bmachine[ -]wash(?:able)?\b|\blavar? a m[aá]quina\b|\blavado a m[aá]quina\b|\blavable a m[aá]quina\b|\blavable en lavadora\b"),
+    ("hand_wash", r"\bhand[ -]wash\b|\blavar a mano\b|\blavado a mano\b"),
+    ("wash_cold", r"\bwash(?:ing)?(?: \w+)? (?:in )?cold\b|\bcold (?:water )?wash\b|\bin cold water\b|\bagua fr[ií]a\b"),
+    ("do_not_tumble_dry", r"\b(?:do not|don'?t|no) tumble[ -]dry\b|\bno (?:usar |utilizar )?(?:la )?secadora\b"),
+    ("tumble_dry", r"(?<!not )(?<!n't )(?<!no )\btumble[ -]dry(?: low)?\b|\bsecar en secadora\b"),
+    ("do_not_bleach", r"\b(?:do not|don'?t|no) bleach\b|\bno (?:usar |utilizar )?(?:lej[ií]a|blanqueador)\b|\bno blanquear\b"),
+    ("do_not_iron", r"\b(?:do not|don'?t) iron\b|\bno planchar\b"),
+    ("iron_low", r"\biron(?:ing)? (?:on )?(?:low|cool|warm)\b|\b(?:cool|warm|low) iron\b|\bplanchar a (?:baja )?temperatura(?: baja| media)?\b"),
+    ("dry_clean", r"(?<!not )(?<!n't )\bdry[ -]clean(?:able)?\b|\blimpieza en seco\b"),
+]
+COLLAR_TYPE = [
+    ("button_down", r"\bbutton[ -]down(?: collar)?\b|\bcuello (?:con )?botones\b"),
+    ("spread", r"\bspread collar\b|\bcuello italiano\b"),
+    ("mandarin", r"\bmandarin collar\b|\bband collar\b|\bcuello mao\b"),
+    ("mock_neck", r"\bmock[ -]?neck\b|\bcuello perkins\b|\bmedio cuello\b"),
+    ("polo", r"\bpolo collar\b|\bcuello (?:tipo )?polo\b"),
+    ("henley", r"\bhenley\b|\bcuello panadero\b"),
+    ("v_neck", r"\bv[ -]neck(?:line)?\b|\bcuello (?:de pico|en v|pico)\b"),
+    ("crew", r"\bcrew[ -]?neck(?:line)?\b|\bround[ -]neck(?:line)?\b|\bcuello redondo\b|\bcuello caja\b"),
+]
+SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"]
+_SZ = r"(?:XXXXXL|XXXXL|XXXL|XXL|XXS|XS|XL|[2-6]XL|S|M|L)"
+_SIZECUE = r"(?i:\bsizes?\b|\btallas?\b|\bavailable in\b|\bdisponible en\b)\s*:?\s*"
+SIZE_RANGE = re.compile(_SIZECUE + r"(?:from\s+|de\s+)?\b(" + _SZ + r")\s*(?:-|–|to|a|hasta)\s*(" + _SZ + r")\b")
+SIZE_LIST = re.compile(_SIZECUE + r"((?:\b" + _SZ + r"\b\s*[-,/|]?\s*(?:and\s|y\s|&\s)?\s*){2,})")
+NUM_SIZE_LIST = re.compile(_SIZECUE + r"((?:\b\d{2}\b\s*[,/|]\s*)+\b\d{2}\b)")
+ONE_SIZE = re.compile(r"\bone[ -]size(?: fits (?:all|most))?\b|\btalla [uú]nica\b", re.I)
+
+
+def size_label(tok):
+    t = tok.upper()
+    return {"XXL": "2XL", "XXXL": "3XL", "XXXXL": "4XL", "XXXXXL": "5XL"}.get(t, t)
+
+
+def first_hit(sources, table):
+    """(value, matched_text, loc) for the earliest match in the first source that has one."""
+    for loc, text in sources:
+        best = None
+        for value, pattern in table:
+            m = re.search(pattern, text or "", re.I)
+            if m and (best is None or m.start() < best[0]):
+                best = (m.start(), value, m.group(0))
+        if best:
+            return best[1], best[2], loc
+    return None
+
+
+def all_hits(sources, table):
+    """[(value, matched_text, loc)] for every table value found in any source, one per value, table order."""
+    out = {}
+    for loc, text in sources:
+        for value, pattern in table:
+            m = re.search(pattern, text or "", re.I)
+            if m and value not in out:
+                out[value] = (value, m.group(0), loc)
+    return [out[v] for v, _ in table if v in out]
+
+
+def find_sizes(sources):
+    """(sizes, matched_text, loc): one size, an uppercase letter range (expanded), or an explicit size list."""
+    for loc, text in sources:
+        text = text or ""
+        m = ONE_SIZE.search(text)
+        if m:
+            return ["one_size"], m.group(0), loc
+        m = SIZE_LIST.search(text)
+        full = [size_label(t) for t in re.findall(r"\b" + _SZ + r"\b", m.group(1))] if m else []
+        if len(full) >= 3:  # "S-M-L-XL" is a list, not the range S..M
+            return list(dict.fromkeys(full)), m.group(0).strip(" ,/|&-"), loc
+        for m in SIZE_RANGE.finditer(text):
+            a, b = size_label(m.group(1)), size_label(m.group(2))
+            if a in SIZE_ORDER and b in SIZE_ORDER and SIZE_ORDER.index(a) < SIZE_ORDER.index(b):
+                return SIZE_ORDER[SIZE_ORDER.index(a):SIZE_ORDER.index(b) + 1], m.group(0), loc
+        m = SIZE_LIST.search(text)
+        if m:
+            sizes = list(dict.fromkeys(size_label(t) for t in re.findall(r"\b" + _SZ + r"\b", m.group(1))))
+            if len(sizes) >= 2:
+                return sizes, m.group(0).strip(" ,/|&-"), loc
+        m = NUM_SIZE_LIST.search(text)
+        if m:
+            return list(dict.fromkeys(re.findall(r"\d{2}", m.group(1)))), m.group(0).strip(), loc
+    return None
+
+
+def extra_fields(sources):
+    """TEAM-37 rules -> ({field: value}, [(field, value, source_text, loc)]) for the 7 extra fields."""
+    values, evs = {}, []
+    for field, table in (("materials.fabric_type", FABRIC_TYPE), ("materials.texture", TEXTURE),
+                         ("fit_and_style.shirt_length", SHIRT_LENGTH), ("fit_and_style.style", STYLE),
+                         ("fit_and_style.collar_type", COLLAR_TYPE)):
+        hit = first_hit(sources, table)
+        if hit:
+            values[field] = hit[0]
+            evs.append((field, hit[0], hit[1], hit[2]))
+    care = all_hits(sources, CARE)
+    found = {c[0] for c in care}
+    drop = ({"tumble_dry"} if "do_not_tumble_dry" in found else set()) | ({"iron_low"} if "do_not_iron" in found else set())
+    care = [c for c in care if c[0] not in drop]
+    if care:
+        values["care"] = [c[0] for c in care]
+        evs += [("care", c[0], c[1], c[2]) for c in care]
+    sz = find_sizes(sources)
+    if sz:
+        values["variants.sizes"] = sz[0]
+        evs.append(("variants.sizes", sz[0], sz[1], sz[2]))
+    return values, evs
+
+
 # ---- record builder ---------------------------------------------------------------------
 
 def text_sources(raw, kinds=ATTRIBUTE_SECTIONS):
