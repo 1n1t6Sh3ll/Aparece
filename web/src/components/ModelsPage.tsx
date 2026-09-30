@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Award, BarChart3, FlaskConical, Hourglass, Info } from "lucide-react";
-import { api, cap, fieldLabel, useI18n } from "../lib";
+import { api, cap, errorText, fieldLabel, useI18n } from "../lib";
 import { Tip } from "./RankParts";
 
 type Rates = { json_valid?: number; non_null_acc?: number; null_acc?: number; n?: number };
@@ -22,7 +22,7 @@ export default function ModelsPage() {
   const [data, setData] = useState<Comparison | null>(null);
   const [err, setErr] = useState("");
   useEffect(() => {
-    api<Comparison>("/v1/model-comparison").then(setData).catch((e) => setErr(t("err.generic", { detail: e.message })));
+    api<Comparison>("/v1/model-comparison").then(setData).catch((e) => setErr(errorText(e, t).msg));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const head = (
@@ -32,13 +32,13 @@ export default function ModelsPage() {
     </>
   );
   if (err) return <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}<p role="alert" className="mt-6 text-rose-700 dark:text-rose-400">{err}</p></div>;
-  if (!data) return <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}<div className="card mt-6 h-64 animate-pulse bg-slate-100/60 dark:bg-slate-800/40" aria-hidden /></div>;
+  if (!data) return <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}<div className="card mt-6 h-64 animate-pulse bg-stone-100/60 dark:bg-stone-800/40" aria-hidden /></div>;
   if (!data.available) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
         {head}
         <div className="card mt-8 flex flex-col items-center p-10 text-center">
-          <span className="grid size-14 place-items-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300"><Hourglass className="size-7" aria-hidden /></span>
+          <span className="grid size-14 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-300"><Hourglass className="size-7" aria-hidden /></span>
           <h2 className="mt-4 text-xl font-semibold">{t("mod.empty")}</h2>
           <p className="mt-1 max-w-md muted">{t("mod.emptyD")}</p>
         </div>
@@ -59,7 +59,7 @@ export default function ModelsPage() {
   const n = data.test.products;
 
   const cell = (v: string | null, isBest = false) => v == null
-    ? <span className="text-xs text-slate-400">{t("mod.notMeasured")}</span>
+    ? <span className="text-xs text-stone-400">{t("mod.notMeasured")}</span>
     : <span className={`tabular-nums ${isBest ? "font-bold text-emerald-700 dark:text-emerald-400" : ""}`}>{v}</span>;
 
   return (
@@ -73,7 +73,7 @@ export default function ModelsPage() {
 
       {winner && (
         <section className="card mt-6 flex items-start gap-4 p-6 rise">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white"><Award className="size-6" aria-hidden /></span>
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent)] text-white"><Award className="size-6" aria-hidden /></span>
           <div>
             <p className="text-lg font-semibold sm:text-xl">
               {n ? t("mod.headline", { m: winner.m.label, p: pct(winner.m.non_null_acc)!, n }) : t("mod.headlineNoN", { m: winner.m.label, p: pct(winner.m.non_null_acc)! })}
@@ -91,7 +91,7 @@ export default function ModelsPage() {
         <div className="mt-4 -mx-5 overflow-x-auto sm:-mx-6" role="region" tabIndex={0} aria-label={t("mod.overall")}>
           <table className="w-full min-w-[640px] text-sm">
             <thead className="text-left muted">
-              <tr className="border-b border-slate-200 dark:border-slate-800">
+              <tr className="border-b border-stone-200 dark:border-stone-800">
                 <th scope="col" className="px-5 py-2 font-medium sm:px-6">{t("mod.model")}</th>
                 <th scope="col" className="px-3 py-2 font-medium"><Tip text={t("mod.nonnullTip")}><span>{t("mod.nonnull")}</span></Tip></th>
                 <th scope="col" className="px-3 py-2 font-medium"><Tip text={t("mod.nullTip")}><span>{t("mod.null")}</span></Tip></th>
@@ -100,14 +100,14 @@ export default function ModelsPage() {
                 {showLatency && <th scope="col" className="px-3 py-2 font-medium">{t("mod.latency")}</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
               {ms.map(({ k, m }) => (
                 <tr key={k} className={k === winner?.k ? "bg-emerald-50/50 dark:bg-emerald-950/20" : ""}>
                   <th scope="row" className="px-5 py-3 text-left font-medium sm:px-6">
                     <span className="flex items-center gap-2">
                       <span className="size-2.5 shrink-0 rounded-full" style={{ background: color(k) }} aria-hidden />
                       {m.label}
-                      {k === BASELINE && <span className="chip bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{t("mod.baseline")}</span>}
+                      {k === BASELINE && <span className="chip bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300">{t("mod.baseline")}</span>}
                       {k === winner?.k && <span className="chip bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">{t("mod.best")}</span>}
                     </span>
                   </th>
@@ -147,7 +147,7 @@ function LangBars({ ms, color }: { ms: { k: string; m: Model }[]; color: (k: str
   if (!langs.length) return null;
   return (
     <section className="card mt-6 p-5 sm:p-6 rise">
-      <h2 className="flex items-center gap-2 text-lg font-semibold"><BarChart3 className="size-5 text-slate-400" aria-hidden />{t("mod.byLang")}</h2>
+      <h2 className="flex items-center gap-2 text-lg font-semibold"><BarChart3 className="size-5 text-stone-400" aria-hidden />{t("mod.byLang")}</h2>
       <p className="mt-0.5 text-sm muted">{t("mod.byLangSub")}</p>
       <div className="mt-5 grid gap-6 md:grid-cols-3">
         {langs.map((l) => (
@@ -160,10 +160,10 @@ function LangBars({ ms, color }: { ms: { k: string; m: Model }[]; color: (k: str
                 return (
                   <li key={k} className="flex items-center gap-2 text-xs">
                     <span className="w-28 shrink-0 truncate muted" title={m.label}>{m.label}</span>
-                    <span className="h-3 flex-1 rounded-full bg-slate-100 dark:bg-slate-800" role="img" aria-label={`${m.label}: ${v != null ? pct(v) : t("mod.notMeasured")}`}>
+                    <span className="h-3 flex-1 rounded-full bg-stone-100 dark:bg-stone-800" role="img" aria-label={`${m.label}: ${v != null ? pct(v) : t("mod.notMeasured")}`}>
                       {v != null && <span className="block h-full rounded-full" style={{ width: `${Math.max(1, v * 100)}%`, background: color(k) }} />}
                     </span>
-                    <span className="w-14 shrink-0 text-right tabular-nums">{v != null ? pct(v) : <span className="text-slate-400">{t("mod.notMeasured")}</span>}</span>
+                    <span className="w-14 shrink-0 text-right tabular-nums">{v != null ? pct(v) : <span className="text-stone-400">{t("mod.notMeasured")}</span>}</span>
                   </li>
                 );
               })}
@@ -186,12 +186,12 @@ function FieldTable({ title, sub, ms, fields }: { title: string; sub?: string; m
       <div className="mt-4 -mx-5 overflow-x-auto sm:-mx-6" role="region" tabIndex={0} aria-label={title}>
         <table className="w-full min-w-[640px] text-sm">
           <thead className="text-left muted">
-            <tr className="border-b border-slate-200 dark:border-slate-800">
+            <tr className="border-b border-stone-200 dark:border-stone-800">
               <th scope="col" className="px-5 py-2 font-medium sm:px-6">{t("mod.field")}</th>
               {ms.map(({ k, m }) => <th key={k} scope="col" className="px-3 py-2 font-medium">{m.label}</th>)}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
             {fields.map((f) => {
               const vals = ms.map(({ k, m }) => (k === BASELINE ? null : m.field_exact?.[f] ?? null));
               const top = Math.max(...vals.map((v) => v ?? -1));
@@ -203,7 +203,7 @@ function FieldTable({ title, sub, ms, fields }: { title: string; sub?: string; m
                     const isTop = k !== BASELINE && v != null && v === top && top >= 0;
                     return (
                       <td key={k} className={`px-3 py-2 tabular-nums ${isTop ? "bg-emerald-50 font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : k === BASELINE ? "muted" : ""}`}>
-                        {v != null ? pct(v) : <span className="text-xs text-slate-400">{t("mod.notMeasured")}</span>}
+                        {v != null ? pct(v) : <span className="text-xs text-stone-400">{t("mod.notMeasured")}</span>}
                       </td>
                     );
                   })}
@@ -228,7 +228,7 @@ function Method({ data }: { data: Comparison }) {
   return (
     <div className="mt-6 grid gap-6 md:grid-cols-2">
       <section className="card p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 font-semibold"><FlaskConical className="size-5 text-slate-400" aria-hidden />{t("mod.method")}</h2>
+        <h2 className="flex items-center gap-2 font-semibold"><FlaskConical className="size-5 text-stone-400" aria-hidden />{t("mod.method")}</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
           <li>{s ? t("mod.m1", { s }) : t("mod.m1NoN")}</li><li>{t("mod.m2")}</li><li>{t("mod.m3")}</li>
           {hasBaseline && <li>{t("mod.m4")}</li>}
@@ -238,13 +238,13 @@ function Method({ data }: { data: Comparison }) {
           <>
             <p className="mt-4 text-sm font-medium">{t("mod.settings")}</p>
             <dl className="mt-1 space-y-1 text-sm muted">
-              {settings.map(([l, v]) => <div key={l}><dt className="inline font-medium text-slate-700 dark:text-slate-200">{l}: </dt><dd className="inline">{v}</dd></div>)}
+              {settings.map(([l, v]) => <div key={l}><dt className="inline font-medium text-stone-700 dark:text-stone-200">{l}: </dt><dd className="inline">{v}</dd></div>)}
             </dl>
           </>
         )}
       </section>
       <section className="card p-5 sm:p-6">
-        <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-slate-400" aria-hidden />{t("mod.caveats")}</h2>
+        <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-stone-400" aria-hidden />{t("mod.caveats")}</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
           <li>{t("mod.c1")}</li><li>{t("mod.c2")}</li>{hasCost && <li>{t("mod.c3")}</li>}
         </ul>
