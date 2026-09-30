@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Aperture, Building2, Check, ChevronsUpDown, Cpu, FileText, Globe, Keyboard, LayoutDashboard, LogIn, Menu, MessageSquare,
-  Moon, Package, Plus, Scale, ScanSearch, Settings, Sun, UserPlus, X,
+  Moon, Package, Plus, Scale, ScanSearch, Settings, Sun, UserPlus, X, BookOpen,
 } from "lucide-react";
 import { useI18n } from "../lib";
 import { accounts, token } from "../profile";
@@ -16,6 +16,7 @@ export const NAV = [
   { to: "compare", key: "i", label: "nav.compare", Icon: Scale },
   { to: "models", key: "m", label: "nav.models", Icon: Cpu },
   { to: "chat", key: "c", label: "nav.chat", Icon: MessageSquare },
+  { to: "docs", key: "d", label: "nav.docs", Icon: BookOpen },
   { to: "settings", key: "s", label: "nav.settings", Icon: Settings },
 ] as const;
 
@@ -110,7 +111,7 @@ export default function Shell({ page, children }: { page: string; children: Reac
 
   const active = (to: string) => page === to || (to === "audit" && (page === "bulk" || page === "report"));
   const nav = (
-    <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5 px-3">
+    <nav aria-label={t("nav.menu")} className="flex flex-1 flex-col gap-0.5 px-3">
       {NAV.filter((n) => !("auth" in n) || signedIn).map(({ to, key, label, Icon }) => (
         <a key={to} href={`#/${to}`} aria-current={active(to) ? "page" : undefined}
           className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${active(to) ? "bg-white/10 text-white" : "text-[var(--sidebar-ink)] hover:bg-white/5 hover:text-white"}`}>
@@ -122,8 +123,8 @@ export default function Shell({ page, children }: { page: string; children: Reac
   );
   const brand = (
     <a href="#/" className="flex items-center gap-2 px-6 py-5 font-bold tracking-tight text-white">
-      <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] shadow-sm"><Aperture className="size-5" aria-hidden /></span>
-      ProductLens
+      <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] shadow-sm"><Aperture className="size-5" aria-hidden /></span>
+      Aparece
     </a>
   );
   const foot = (

@@ -251,7 +251,7 @@ def decide(pid: int, body: Decision, x_profile_token: str | None = Header(None))
     p = store.set_suggestion(x_profile_token, pid, body.field, body.model_dump(exclude={"field"}))
     if not p:
         raise HTTPException(404, "product not found")
-    return {**p, "note": "Recorded only. ProductLens never publishes to your store."}
+    return {**p, "note": "Recorded only. Aparece never publishes to your store."}
 
 
 @router.post("/profile/share")

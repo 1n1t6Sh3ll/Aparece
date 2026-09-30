@@ -1,4 +1,4 @@
-# ProductLens quickstart (Windows): venv -> install -> tests -> API on :8000.
+# Aparece quickstart (Windows): venv -> install -> tests -> API on :8000.
 # Usage: .\run.ps1 [-SkipTests]   Optional settings come from .env (see .env.example).
 param([switch]$SkipTests)
 $ErrorActionPreference = "Stop"
@@ -38,5 +38,5 @@ if (-not (Test-Path web\dist\index.html) -and (Get-Command npm -ErrorAction Sile
 }
 
 $port = if ($env:PORT) { $env:PORT } else { '8000' }
-Write-Host "ProductLens API: http://127.0.0.1:$port/docs  app: http://127.0.0.1:$port/"
+Write-Host "Aparece API: http://127.0.0.1:$port/docs  app: http://127.0.0.1:$port/"
 & $py -m uvicorn main:app --app-dir api --host 127.0.0.1 --port $port

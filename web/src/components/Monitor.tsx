@@ -3,7 +3,7 @@ import { ArrowLeft, Camera, ExternalLink, History, Loader2, PauseCircle, Refresh
 import { allManageTokens, api, cap, errorText, tn, fieldLabel, fmtValue, manageToken, useI18n } from "../lib";
 
 type Monitored = { id: string; url: string; enrolled_at: string; active: number; plan: string | null; last_snapshot_at: string | null;
-  snapshot_count: number; event_count: number; demo?: boolean };
+  snapshot_count: number; event_count: number };
 type Event = { id: number; at: string; type: string; field: string | null; before: unknown; after: unknown };
 type Snapshot = { id: number; taken_at: string; data: { content?: { title?: string; price?: number; currency?: string } } };
 
@@ -55,7 +55,6 @@ export function ProductsPage({ embedded = false }: { embedded?: boolean }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  {r.demo && <span className="chip bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">{t("prod.demo")}</span>}
                   {!r.active && <span className="chip bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300"><PauseCircle className="size-3" aria-hidden /> {t("prod.inactive")}</span>}
                   {r.plan && <span className="chip bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">{cap(r.plan)}</span>}
                 </div>

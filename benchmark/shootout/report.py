@@ -33,21 +33,26 @@ def audit(c, g):
 
 
 MERCHANT_LINE = re.compile(r"^(?:care|cuidado)\s*:", re.I)  # verbatim merchant care text
+OMITTED = {"en": ("(merchant description omitted from the committed sample)",
+                  " Care: (merchant care text omitted from the sample)."),
+           "es": ("(descripción del comercio omitida en la muestra publicada)",
+                  " Cuidado: (instrucciones de cuidado del comercio omitidas en la muestra).")}
 
 
-def scrub(a, gen, truth):
+def scrub(a, gen, truth, lang="en"):
     """Committed samples carry no verbatim merchant text: no original description, no care text, no flagged quotes."""
     care = " ".join(truth.get("care") or []).lower()
 
     def merchant(sent):
         body = MERCHANT_LINE.sub("", sent).strip().rstrip(".").lower()
         return bool(MERCHANT_LINE.match(sent)) or (len(body) > 3 and body in care)
+    desc_note, care_note = OMITTED.get(lang, OMITTED["en"])
     if gen == "original":
-        a["raw"]["text"] = "(merchant description omitted from the committed sample)"
+        a["raw"]["text"] = desc_note
     elif a["raw"]["text"]:
         sents = score.guard.sentences(a["raw"]["text"])
         kept = [x for x in sents if not merchant(x)]
-        a["raw"]["text"] = " ".join(kept) + (" Care: (merchant care text omitted from the sample)." if len(kept) < len(sents) else "")
+        a["raw"]["text"] = " ".join(kept) + (care_note if len(kept) < len(sents) else "")
     for part in ("title", "description"):
         if a[part]:
             a[part]["guard"]["flagged"] = []
@@ -118,7 +123,7 @@ def build(args, groups, gens, judges, log=print):
             a.update(raw={k: c.get(k) for k in ("title", "tags", "text", "error")},
                      visibility=ci(sel(primary, group=g["group"], generator=s)), cost_usd=round(c.get("cost_usd") or 0, 6))
             if getattr(args, "sample", False):
-                scrub(a, s, g["truth"])
+                scrub(a, s, g["truth"], g["language"])
             cands[s] = a
             audits[s].append(a)
         winners = part_winners(cands)

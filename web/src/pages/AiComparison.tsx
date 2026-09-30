@@ -1,18 +1,17 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, Scale, Check, FlaskConical, Info, Trophy, X } from "lucide-react";
+import { Scale, Check, FlaskConical, Info, Trophy, X } from "lucide-react";
 import { api, errorText, useI18n } from "../lib";
 
 // Page-local strings (EN/ES) so the page stays self-contained while shared i18n/layout are restyled.
 const STR: Record<string, Record<string, string>> = { en: {
   "cta": "Compare with AI models",
   "title": "AI comparison: title, tags, description",
-  "sub": "ProductLens and AI models each write a title, tags and description from the same verified facts. Every part is checked for unsupported claims, audited, and tested in a simulated AI shopping context.",
+  "sub": "Aparece and AI models each write a title, tags and description from the same verified facts. Every part is checked for unsupported claims, audited, and tested in a simulated AI shopping context.",
   "controlled": "Controlled evaluation: a simulated shopping context with 4 real competitor pages, judged by AI models. It is not proof of how any real assistant or search engine will rank a product.",
-  "sample": "Sample data: visibility numbers come from mock judges and mean nothing yet. The audits (claims, coverage, tags) are real. A paid run replaces this.",
   "notInSet": "This product is not in the comparison set yet, so there are no AI comparison results for it. Other products' numbers are never shown in its place.",
   "notInSetTitle": "No AI comparison for this product yet",
   "seeSet": "See the products that were compared",
-  "empty": "No comparison report yet. Run benchmark/shootout/run.py to create one.",
+  "empty": "Not run yet. Results appear here after a real run of benchmark/shootout/run.py.",
   "best.title": "Best title",
   "best.tags": "Best tags",
   "best.description": "Best description",
@@ -44,17 +43,20 @@ const STR: Record<string, Record<string, string>> = { en: {
   "noTags": "no tags",
   "caveats": "Caveats",
   "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats.",
-  "real": "Real run on {d}: live AI judges and generators, {n} judge calls, US${c} API cost as recorded by the run."
+  "real": "Real run on {d}: live AI judges and generators, {n} judge calls, US${c} API cost as recorded by the run.",
+  "pass": "passed",
+  "fail": "failed",
+  "liveRunning": "Comparing this product now: Aparece and AI models are writing a title, tags and description from its verified facts…",
+  "liveNote": "Live comparison of this product, just now. Every part was checked for unsupported claims and audited; AI-visibility is measured only in the benchmark set. API cost: US${c}.",
 }, es: {
   "cta": "Comparar con modelos de IA",
   "title": "Comparación IA: título, etiquetas, descripción",
-  "sub": "ProductLens y varios modelos de IA escriben un título, etiquetas y una descripción a partir de los mismos datos verificados. Cada parte se revisa para detectar afirmaciones sin respaldo, se audita y se prueba en un contexto de compra simulado.",
+  "sub": "Aparece y varios modelos de IA escriben un título, etiquetas y una descripción a partir de los mismos datos verificados. Cada parte se revisa para detectar afirmaciones sin respaldo, se audita y se prueba en un contexto de compra simulado.",
   "controlled": "Evaluación controlada: un contexto de compra simulado con 4 fichas reales de la competencia, juzgado por modelos de IA. No demuestra cómo clasificará un producto ningún asistente o buscador real.",
-  "sample": "Datos de ejemplo: la visibilidad viene de jueces simulados y todavía no significa nada. Las auditorías (afirmaciones, cobertura, etiquetas) son reales. Una ejecución de pago lo sustituirá.",
   "notInSet": "Este producto aún no está en el conjunto de comparación, así que no hay resultados de comparación con IA. Nunca mostramos cifras de otros productos en su lugar.",
   "notInSetTitle": "Aún no hay comparación con IA para este producto",
   "seeSet": "Ver los productos comparados",
-  "empty": "Aún no hay informe de comparación. Ejecuta benchmark/shootout/run.py para crearlo.",
+  "empty": "Aún no se ha ejecutado. Los resultados aparecen aquí tras una ejecución real de benchmark/shootout/run.py.",
   "best.title": "Mejor título",
   "best.tags": "Mejores etiquetas",
   "best.description": "Mejor descripción",
@@ -85,9 +87,41 @@ const STR: Record<string, Record<string, string>> = { en: {
   "candidates": "Todos los candidatos",
   "noTags": "sin etiquetas",
   "caveats": "Advertencias",
-  "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val x {r} repeticiones.",
-  "real": "Ejecución real del {d}: jueces y generadores de IA reales, {n} llamadas de juez, US${c} de coste de API según lo registrado por la ejecución."
+  "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val × {r} repeticiones.",
+  "real": "Ejecución real del {d}: jueces y generadores de IA reales, {n} llamadas de juez, US${c} de coste de API según lo registrado por la ejecución.",
+  "pass": "supera la revisión",
+  "fail": "no supera la revisión",
+  "liveRunning": "Comparando este producto ahora: Aparece y los modelos de IA escriben un título, etiquetas y una descripción con sus datos verificados…",
+  "liveNote": "Comparación en directo de este producto, hecha ahora. Cada parte se revisó en busca de afirmaciones sin respaldo y se auditó; la visibilidad en IA solo se mide en el conjunto del benchmark. Coste de API: US${c}.",
 } };
+
+// Caveats come in English from benchmark/shootout/report.py. Known ones are translated here; anything else is shown
+// as is with the "original text in English" marker.
+const CAVEATS_ES: [RegExp, string][] = [
+  [/^Simulated context: (\d+) product pages chosen by us, not a real search index or live assistant\.$/,
+    "Contexto simulado: $1 fichas de producto elegidas por nosotros, no un índice de búsqueda real ni un asistente de IA en funcionamiento."],
+  [/^Small n: (\d+) products x (\d+) prompts x (\d+) repeats; CIs are cluster bootstrap over \(product, prompt\)\.$/,
+    "Muestra pequeña: $1 productos × $2 preguntas × $3 repeticiones; los intervalos de confianza se calculan con bootstrap por grupos (producto, pregunta)."],
+  [/^SAMPLE: the judges were MOCK models \(deterministic fakes\), not OpenAI or Anthropic; the visibility numbers are placeholders and mean nothing\. Only the audits are real\.$/,
+    "EJEMPLO: los jueces eran modelos simulados (respuestas fijas), no de OpenAI ni de Anthropic; las cifras de visibilidad son de relleno y no significan nada. Solo las auditorías son reales."],
+  [/^Judges are from the same model families as the AI generators \(OpenAI, Anthropic\); self-preference is possible\.$/,
+    "Los jueces son de las mismas familias de modelos que los generadores de IA (OpenAI, Anthropic), así que pueden favorecer sus propios textos."],
+  [/^Winner chosen on judges other than the held-out one \((.+)\); nothing was tuned on these results\.$/,
+    "El ganador se eligió con los jueces que no son el reservado ($1); no se ajustó nada con estos resultados."],
+  [/^Guardrail is a strict allowlist: harmless paraphrases can be flagged, which disqualifies that part\.$/,
+    "El filtro solo admite palabras respaldadas por los datos: puede marcar paráfrasis inofensivas, y eso descalifica esa parte."],
+  [/^Title and tag winners are deterministic audit scores, not measured visibility\.$/,
+    "Los ganadores de título y etiquetas salen de puntuaciones de auditoría fijas, no de visibilidad medida."],
+  [/^The merchant original is judged against the same Product Truth; the dataset has no merchant tags\.$/,
+    "El texto original del comercio se evalúa con los mismos datos verificados; nuestra base de datos no incluye etiquetas del comercio."],
+];
+
+/** [text, isOriginalEnglish] for a report caveat in the UI language. */
+function caveatText(c: string, lang: string): [string, boolean] {
+  if (lang !== "es") return [c, lang !== "en"];
+  for (const [re, es] of CAVEATS_ES) if (re.test(c)) return [c.replace(re, es), false];
+  return [c, true];
+}
 
 function useStr() {
   const { lang } = useI18n();
@@ -96,9 +130,27 @@ function useStr() {
 }
 
 /** Link from an audit result to this page. */
-export function CompareLink({ productId }: { productId: string }) {
+const LIVE_KEY = "pl.compare.";  // sessionStorage: the audited record handed to #/compare/<id> for a live run
+
+export function CompareLink({ productId, record, reportId }: { productId: string; record?: Record<string, unknown> | null; reportId?: string | null }) {
   const s = useStr();
-  return <a href={`#/compare/${encodeURIComponent(productId)}`} className="btn-ghost no-print self-start sm:self-center"><Scale className="size-4" aria-hidden /> {s("cta")}</a>;
+  const keep = () => { try { if (record) sessionStorage.setItem(LIVE_KEY + productId, JSON.stringify(record)); } catch { /* storage off: the report id is enough */ } };
+  const q = reportId ? `?report=${encodeURIComponent(reportId)}` : "";
+  return <a href={`#/compare/${encodeURIComponent(productId)}${q}`} onClick={keep} className="btn-ghost no-print self-start sm:self-center"><Scale className="size-4" aria-hidden /> {s("cta")}</a>;
+}
+
+/** The audited record for a live run: this tab's copy, else the saved audit (GET /v1/audits/{id}) from ?report=. */
+async function findRecord(productId?: string): Promise<Record<string, unknown> | null> {
+  const local = liveRecord(productId);
+  if (local || !productId) return local;
+  const rid = new URLSearchParams(location.hash.split("?")[1] || "").get("report");
+  if (!rid) return null;
+  try { return (await api<{ record: Record<string, unknown> | null }>(`/v1/audits/${encodeURIComponent(rid)}`)).record; } catch { return null; }
+}
+
+function liveRecord(productId?: string): Record<string, unknown> | null {
+  if (!productId) return null;
+  try { const v = sessionStorage.getItem(LIVE_KEY + productId); return v ? JSON.parse(v) : null; } catch { return null; }
 }
 
 
@@ -125,7 +177,7 @@ type Product = {
 };
 type Part = "title" | "tags" | "description";
 type Report = {
-  available: boolean; sample?: boolean; label?: string; caveats?: string[]; generated_at?: string;
+  available: boolean; sample?: boolean; live?: boolean; label?: string; caveats?: string[]; generated_at?: string;
   cost?: { judge_calls?: number; judge_usd?: number; generation_usd?: number };
   setup?: { products: number; judges: string[]; holdout_judge: string | null; prompts_per_product: number; repeats: number };
   overall?: { winner: string | null; runner_up?: string; decisive?: boolean; diff_vs_runner_up?: CI | null;
@@ -134,21 +186,48 @@ type Report = {
   generators?: Record<string, Gen>; products?: Product[];
 };
 
+/** Display name for a generator id; ids stay unchanged.
+ *  "productlens" = Aparece's pipeline with no model (text built from the facts),
+ *  "productlens@openai:gpt-4o-mini" = Aparece's pipeline with gpt-4o-mini writing (guardrail, reward, fallback),
+ *  "openai:gpt-4o-mini" = the model alone (its own text, same facts), "original" = the shop's text. */
+let genLang: "en" | "es" = "en";  // set by the page on render
+const genName = (g: string | null | undefined) => {
+  if (!g) return g;
+  const es = genLang === "es";
+  if (g === "original") return es ? "Texto original de la tienda" : "Shop's original";
+  if (g === "productlens") return es ? "Aparece (sin modelo de IA)" : "Aparece (no AI model)";
+  const m = g.match(/^productlens@[^:]+:(.+)$/);
+  if (m) return `Aparece + ${m[1]}`;
+  const own = g.match(/^[^:@]+:(.+)$/);
+  return own ? (es ? `${own[1]} solo` : `${own[1]} alone`) : g;
+};
 const PARTS: Part[] = ["title", "tags", "description"];
 const pct = (v: number | null | undefined) => (v == null ? "–" : `${Math.round(v * 100)}%`);
 const ci = (v: CI | undefined) => (v ? `${v.value.toFixed(2)} [${v.lo.toFixed(2)}–${v.hi.toFixed(2)}]` : "–");
-const Pass = ({ ok }: { ok: boolean }) => ok
-  ? <Check className="size-4 shrink-0 text-emerald-600" aria-label="pass" />
-  : <X className="size-4 shrink-0 text-rose-600" aria-label="fail" />;
+function Pass({ ok }: { ok: boolean }) {
+  const t = useStr();
+  return ok ? <Check className="size-4 shrink-0 text-emerald-600" aria-label={t("pass")} />
+    : <X className="size-4 shrink-0 text-rose-600" aria-label={t("fail")} />;
+}
 
 export default function AiComparison({ productId }: { productId?: string }) {
   const { t: tShared, lang } = useI18n();
   const t = useStr();
+  genLang = lang === "es" ? "es" : "en";
   const [data, setData] = useState<Report | null>(null);
   const [err, setErr] = useState("");
   const [sel, setSel] = useState<string>("");
+  const [live, setLive] = useState<"idle" | "running" | "none">("idle");
   useEffect(() => {
-    api<Report>("/v1/shootout").then(setData).catch((e) => setErr(errorText(e, tShared).msg));
+    api<Report>("/v1/shootout").then(async (rep) => {
+      const inSaved = !!productId && (rep.products || []).some((p) => p.product_id === productId);
+      const rec = inSaved ? null : await findRecord(productId);
+      if (!rec) { setData(rep); if (productId && !inSaved) setLive("none"); return; }
+      setLive("running");  // not in the saved run: compare this product now (same checks, no simulated shopping test)
+      api<Report & { reason?: string }>("/v1/shootout/live", { method: "POST", body: JSON.stringify({ product: rec, language: lang }) })
+        .then((r) => { if (r.available) { setData(r); setLive("idle"); } else { setData(rep); setLive("none"); } })
+        .catch((e) => { setErr(errorText(e, tShared).msg); setLive("idle"); });
+    }).catch((e) => setErr(errorText(e, tShared).msg));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const head = (
@@ -159,14 +238,17 @@ export default function AiComparison({ productId }: { productId?: string }) {
   );
   const wrap = (body: ReactNode) => <div className="mx-auto max-w-6xl">{head}{body}</div>;
   if (err) return wrap(<p role="alert" className="mt-6 text-rose-700 dark:text-rose-400">{err}</p>);
+  if (live === "running") return wrap(<p className="card mt-6 p-6 muted" role="status">{t("liveRunning")}</p>);
   if (!data) return wrap(<div className="card mt-6 h-64 animate-pulse bg-stone-100/60 dark:bg-stone-800/40" aria-hidden />);
-  if (!data.available || !data.overall || !data.generators || !data.products) return wrap(<p className="card mt-6 p-6 muted">{t("empty")}</p>);
+  // The API falls back to a mock-judge sample report; never show it as results.
+  if (!data.available || data.sample || !data.overall || !data.generators || !data.products) return wrap(<p className="card mt-6 p-6 muted">{t("empty")}</p>);
 
   const o = data.overall, gens = data.generators, products = data.products;
   const inSet = products.some((p) => p.product_id === productId);
-  if (productId && !inSet) return wrap(  // never show another (demo) product's numbers for a real product
+  if (productId && !inSet) return wrap(  // never show another product's numbers for a real product
     <div className="card mt-6 p-6"><p className="font-semibold">{t("notInSetTitle")}</p><p className="mt-1 text-sm muted">{t("notInSet")}</p>
       <a className="btn-outline mt-4" href="#/compare">{t("seeSet")}</a></div>);
+  const caveats = (data.caveats || []).map((c) => caveatText(c, lang));
   const cur = products.find((p) => p.product_id === (sel || (inSet ? productId : products[0].product_id)))!;
 
   return wrap(
@@ -174,15 +256,11 @@ export default function AiComparison({ productId }: { productId?: string }) {
       <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-brand-300 bg-brand-50 p-3 text-sm text-brand-900 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-200">
         <FlaskConical className="mt-0.5 size-4 shrink-0" aria-hidden />{t("controlled")}
       </p>
-      {data.sample === false && data.generated_at && (
+      {data.live && <p role="note" className="mt-3 text-sm muted">{t("liveNote", { c: (data.cost?.generation_usd ?? 0).toFixed(4) })}</p>}
+      {data.sample === false && !data.live && data.generated_at && (
         <p role="note" className="mt-3 text-sm muted">
           {t("real", { d: data.generated_at.slice(0, 10), n: data.cost?.judge_calls ?? "–",
             c: ((data.cost?.judge_usd ?? 0) + (data.cost?.generation_usd ?? 0)).toFixed(4) })}
-        </p>
-      )}
-      {data.sample && (
-        <p role="note" className="mt-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{t("sample")}
         </p>
       )}
 
@@ -190,15 +268,15 @@ export default function AiComparison({ productId }: { productId?: string }) {
         {PARTS.map((part) => (
           <div key={part} className="card p-5">
             <p className="text-sm muted">{t(`best.${part}`)}</p>
-            <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{o.parts[part].winner || t("none")}</p>
-            <p className="mt-1 text-xs muted">{t("wins", { w: Object.entries(o.parts[part].wins).map(([g, n]) => `${g} ${n}`).join(", ") || "–" })}</p>
+            <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{genName(o.parts[part].winner) || t("none")}</p>
+            <p className="mt-1 text-xs muted">{t("wins", { w: Object.entries(o.parts[part].wins).map(([g, n]) => `${genName(g)} ${n}`).join(", ") || "–" })}</p>
           </div>
         ))}
         <div className="card p-5">
           <p className="text-sm muted">{t("best.visibility")}</p>
-          <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{o.winner || t("none")}</p>
+          <p className="mt-1 flex items-center gap-2 text-lg font-semibold"><Trophy className="size-4 text-amber-500" aria-hidden />{genName(o.winner) || t("none")}</p>
           <p className="mt-1 text-xs muted">
-            {o.diff_vs_runner_up ? t(o.decisive ? "separated" : "tie", { r: o.runner_up!, d: ci(o.diff_vs_runner_up) }) : ""}
+            {o.diff_vs_runner_up ? t(o.decisive ? "separated" : "tie", { r: genName(o.runner_up)!, d: ci(o.diff_vs_runner_up) }) : ""}
             {o.holdout_judge ? ` ${t(o.holdout_judge.agrees ? "holdoutAgrees" : "holdoutDisagrees", { j: o.holdout_judge.judge })}` : ""}
           </p>
         </div>
@@ -215,7 +293,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
             <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
               {Object.entries(gens).map(([g, v]) => (
                 <tr key={g} className={v.qualified ? "" : "text-stone-400"}>
-                  <th scope="row" className="px-5 py-2 text-left font-medium sm:px-6">{g}</th>
+                  <th scope="row" className="px-5 py-2 text-left font-medium sm:px-6">{genName(g)}</th>
                   <td className="px-3 py-2"><span className="flex items-center gap-1"><Pass ok={v.qualified} />{v.qualified_products}/{v.candidates}</span></td>
                   <td className="px-3 py-2 tabular-nums">{v.flagged}</td>
                   <td className="px-3 py-2 tabular-nums">{pct(v.title.score)}</td>
@@ -244,11 +322,11 @@ export default function AiComparison({ productId }: { productId?: string }) {
           </label>
         </div>
         <dl className="mt-4 space-y-3 text-sm">
-          <div><dt className="font-medium">{t("part.title")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.title?.from || "–"}</span></dt>
+          <div><dt className="font-medium">{t("part.title")} <span className="chip bg-stone-100 dark:bg-stone-800">{genName(cur.recommended.title?.from) || "–"}</span></dt>
             <dd className="mt-1">{cur.recommended.title?.text || t("none")}</dd></div>
-          <div><dt className="font-medium">{t("part.tags")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.tags?.from.join(", ") || "–"}</span></dt>
+          <div><dt className="font-medium">{t("part.tags")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.tags?.from.map(genName).join(", ") || "–"}</span></dt>
             <dd className="mt-1 flex flex-wrap gap-1.5">{cur.recommended.tags?.list.map((x) => <span key={x} className="chip bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200">{x}</span>) || t("none")}</dd></div>
-          <div><dt className="font-medium">{t("part.description")} <span className="chip bg-stone-100 dark:bg-stone-800">{cur.recommended.description?.from || "–"}</span></dt>
+          <div><dt className="font-medium">{t("part.description")} <span className="chip bg-stone-100 dark:bg-stone-800">{genName(cur.recommended.description?.from) || "–"}</span></dt>
             <dd className="mt-1">{cur.recommended.description?.text || t("none")}</dd></div>
         </dl>
         <p className="mt-3 text-xs muted">{t("recommendedNote")}</p>
@@ -257,7 +335,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
         <ul className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
           {Object.entries(cur.candidates).map(([g, c]) => (
             <li key={g} className="py-3 text-sm">
-              <p className="flex flex-wrap items-center gap-2 font-medium">{g}
+              <p className="flex flex-wrap items-center gap-2 font-medium">{genName(g)}
                 {Object.entries(cur.part_winners).filter(([, w]) => w === g).map(([part]) =>
                   <span key={part} className="chip bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">{t(`best.${part}`)}</span>)}
                 <span className="muted">MRR {ci(c.visibility?.mrr)}</span>
@@ -276,8 +354,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
       <section className="card mt-6 p-5 sm:p-6">
         <h2 className="flex items-center gap-2 font-semibold"><Info className="size-5 text-stone-400" aria-hidden />{t("caveats")}</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm muted">
-          {(data.caveats || []).map((c) => <li key={c} lang="en">{c}</li>)}
-          {lang !== "en" && (data.caveats || []).length > 0 && <li className="list-none muted">{tShared("mod.origEn")}</li>}
+          {caveats.map(([c, en]) => <li key={c} lang={en ? "en" : undefined}>{c}{en && <span className="muted"> ({tShared("mod.origEn")})</span>}</li>)}
           {data.setup && <li>{t("setup", { p: data.setup.products, j: data.setup.judges.join(", "), h: data.setup.holdout_judge || "–", q: data.setup.prompts_per_product, r: data.setup.repeats })}</li>}
         </ul>
       </section>

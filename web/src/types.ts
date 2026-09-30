@@ -56,5 +56,9 @@ export interface Audit {
   price_position: PricePosition;
   actions: Action[];
   unknowns: string[];
-  visibility: { available: boolean };
+  visibility: {
+    available: boolean; models?: string[]; responses?: number; mention_rate?: Record<string, number | null>;
+    site?: string | null; site_in_benchmark?: boolean; site_mention_rate?: Record<string, number | null>;
+    top_named?: { name: string; answers: number }[];
+  };
 }

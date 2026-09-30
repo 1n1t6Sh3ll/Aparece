@@ -4,7 +4,6 @@ const out = document.getElementById("out");
 const statusEl = document.getElementById("status");
 const auditBtn = document.getElementById("audit");
 const draftBtn = document.getElementById("draft");
-const MOCK = new URLSearchParams(location.search).has("mock");
 let S = DEFAULTS, T = STR.en, LANG = "en";
 
 const isAmazon = (u) => /(^|\.)amazon\.[a-z.]+$/i.test(new URL(u).hostname);
@@ -59,7 +58,6 @@ async function auditUrl() {
   draftBtn.hidden = true;
   out.replaceChildren();
   try {
-    if (MOCK) return render(await (await fetch("mock.json")).json(), { url: null }), show(T.mock);
     const tab = await activeTab();
     if (isAmazon(tab.url)) return offerDraft(T.amazon);
     show(T.auditing);
@@ -180,7 +178,6 @@ async function init() {
   draftBtn.textContent = T.draft;
   auditBtn.addEventListener("click", auditUrl);
   draftBtn.addEventListener("click", auditDraft);
-  if (MOCK) auditUrl();
 }
 
 init();

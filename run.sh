@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ProductLens quickstart: venv -> install -> tests -> API on :8000.
+# Aparece quickstart: venv -> install -> tests -> API on :8000.
 # Usage: ./run.sh [--skip-tests]   Optional settings come from .env (see .env.example).
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -12,7 +12,7 @@ if [ -x .venv/bin/python ]; then VPY=.venv/bin/python; else VPY=.venv/Scripts/py
 "$VPY" -m pip install -q --upgrade pip
 "$VPY" -m pip install -q -r api/requirements.txt
 
-# SKIP_DOTENV=1 is set by tools/demo_data.sh so .env cannot override fixture paths.
+# SKIP_DOTENV=1 skips .env (e.g. to run with explicit env vars only).
 if [ -f .env ] && [ "${SKIP_DOTENV:-0}" != "1" ]; then set -a; . ./.env; set +a; fi
 
 if [ "${1:-}" != "--skip-tests" ]; then
@@ -28,6 +28,6 @@ if [ ! -f web/dist/index.html ] && command -v npm >/dev/null 2>&1; then
   (cd web && npm ci && npm run build) || echo "web build failed; the API still works"
 fi
 
-echo "ProductLens site: http://127.0.0.1:${PORT:-8000}/"
-echo "ProductLens API: http://127.0.0.1:${PORT:-8000}/docs  app: http://127.0.0.1:${PORT:-8000}/"
+echo "Aparece site: http://127.0.0.1:${PORT:-8000}/"
+echo "Aparece API: http://127.0.0.1:${PORT:-8000}/docs  app: http://127.0.0.1:${PORT:-8000}/"
 exec "$VPY" -m uvicorn main:app --app-dir api --host 127.0.0.1 --port "${PORT:-8000}"

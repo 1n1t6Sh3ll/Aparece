@@ -9,18 +9,18 @@ The business plan's governance table is not in this repo; `docs/VISION.md` §43 
 |---|---|
 | **Account owner** | Budget and spend, plan/billing, who can see account data, alerts. |
 | **Merchant** | Their listings: which predictions become facts, what gets published, which experiments run. |
-| **ProductLens operator** | Running the service: crawls, extraction, benchmarks within budget, data licensing, audit integrity. |
+| **Aparece operator** | Running the service: crawls, extraction, benchmarks within budget, data licensing, audit integrity. |
 
 ## Action matrix
 Mode `auto` runs and is logged. `approve` means a named person with the owner role must approve that exact request, and the requester cannot approve it. `forbidden` is never automatic. Any action not listed is denied.
 
 | Action | Mode | Owner |
 |---|---|---|
-| extract_product: extract or normalize a page the user submitted | auto | ProductLens operator |
-| monitor_crawl: recrawl an enrolled product and record changes | auto | ProductLens operator |
-| benchmark_free_run: mock or local models, no spend | auto | ProductLens operator |
+| extract_product: extract or normalize a page the user submitted | auto | Aparece operator |
+| monitor_crawl: recrawl an enrolled product and record changes | auto | Aparece operator |
+| benchmark_free_run: mock or local models, no spend | auto | Aparece operator |
 | benchmark_paid_run: `--max-usd` <= `BENCHMARK_MAX_USD` (the standing budget) | auto | Account owner |
-| generate_suggestions: drafts only, not published | auto | ProductLens operator |
+| generate_suggestions: drafts only, not published | auto | Aparece operator |
 | change_alert: notify an enrolled owner | auto | Account owner |
 | benchmark_paid_run_over_cap: above the standing budget, or no budget set | approve | Account owner |
 | confirm_model_prediction: a predicted attribute becomes a fact | approve | Merchant |
@@ -28,11 +28,11 @@ Mode `auto` runs and is logged. `approve` means a named person with the owner ro
 | run_experiment: start a listing experiment | approve | Merchant |
 | change_plan_or_billing | approve | Account owner |
 | auto_publish_to_storefront without per-change approval | forbidden | Merchant |
-| optimize_on_hidden_split | forbidden | ProductLens operator |
+| optimize_on_hidden_split | forbidden | Aparece operator |
 | share_merchant_data: sell or share with third parties | forbidden | Account owner |
-| train_on_restricted_data: license or consent does not allow it | forbidden | ProductLens operator |
+| train_on_restricted_data: license or consent does not allow it | forbidden | Aparece operator |
 | fabricate_claims: attributes, reviews or metrics without evidence | forbidden | Merchant |
-| alter_audit_log | forbidden | ProductLens operator |
+| alter_audit_log | forbidden | Aparece operator |
 
 ## Approval flow
 1. The caller runs `require(action, actor, target, details)`. For an `approve` action with no valid approval, it raises `ApprovalRequired` and records a pending request (`GET /v1/approvals`).

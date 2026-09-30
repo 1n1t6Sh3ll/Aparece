@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { api, errorText, useI18n } from "../lib";
-import { emptyCompany, papi, token, type Company, type Person, type ProductIn, type Profile } from "../profile";
+import { auditDefaults, CURRENCIES, emptyCompany, papi, token, type Company, type Person, type ProductIn, type Profile } from "../profile";
+import { productLinks, refreshPrefill } from "../prefill";
 import { useSession } from "../session";
 import { useToast } from "../ui";
 
@@ -39,6 +40,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
   const [copied, setCopied] = useState(false);
   const steps = edit ? [t("ob.s1"), t("ob.s2")] : [t("ob.s1"), t("ob.s2"), t("ob.s3")];
   const setC = (k: keyof Company, v: string) => setCompany({ ...company, [k]: v });
+  const def = auditDefaults({ website: company.website, languages: lines(text.languages), markets: lines(text.markets) }, lang);
 
   function body() {
     return { person, language: lang, company: { ...company, markets: lines(text.markets), languages: lines(text.languages),
@@ -53,6 +55,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
       if (bad.length) return setErr(t("ob.badUrl", { url: bad[0] }));
       if (edit) return save();
     }
+    if (step === 1) setUrls(refreshPrefill(urls, def.prefix));  // store URL prefills the links; an unedited old prefill is replaced
     setStep(step + 1);
   }
 
@@ -64,7 +67,7 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
         await reload(); toast("ok", t("set.saved")); setBusy(false);
         return;
       }
-      const list = lines(urls);
+      const list = productLinks(urls);  // bare <store>/products/ prefills are not products
       const bad = list.find((u) => !URL_RE.test(u));
       if (bad) { setBusy(false); return setErr(t("ob.badUrl", { url: bad })); }
       const products = [...list.map((url) => ({ url })), ...manual.filter((m) => m.title?.trim())];
@@ -123,15 +126,16 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
           <Field id="p-about" label={t("ob.about")}><textarea id="p-about" rows={4} className="input" value={person.about} placeholder={t("ob.aboutPh")} onChange={(e) => setPerson({ ...person, about: e.target.value })} /></Field>
         </>}
         {step === 1 && <>
+          <p className="rounded-xl bg-[var(--surface-2)] p-3 text-sm">{t("ob.whyCompany")}</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="c-name" label={t("ob.company") + " *"}>{inp("name", "c-name")}</Field>
-            <Field id="c-web" label={t("ob.website")}>{inp("website", "c-web", "https://")}</Field>
+            <Field id="c-web" label={t("ob.website")} hint={t("ob.websiteHint")}>{inp("website", "c-web", "https://")}</Field>
           </div>
-          <Field id="c-sells" label={t("ob.sells")}>{inp("sells", "c-sells", t("ob.sellsPh"))}</Field>
+          <Field id="c-sells" label={t("ob.sells")} hint={t("ob.sellsHint")}>{inp("sells", "c-sells", t("ob.sellsPh"))}</Field>
           <Field id="c-brand" label={t("ob.brand")}><textarea id="c-brand" rows={3} className="input" value={company.brand} onChange={(e) => setC("brand", e.target.value)} /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="c-markets" label={t("ob.markets")} hint={t("ob.commaHint")}>{txt("markets", "c-markets", 1, "ES, US")}</Field>
-            <Field id="c-langs" label={t("ob.languages")} hint={t("ob.commaHint")}>{txt("languages", "c-langs", 1, "en, es")}</Field>
+            <Field id="c-markets" label={t("ob.markets")} hint={t("ob.marketsHint")}>{txt("markets", "c-markets", 1, "ES, US")}</Field>
+            <Field id="c-langs" label={t("ob.languages")} hint={t("ob.languagesHint")}>{txt("languages", "c-langs", 1, "en, es")}</Field>
             <Field id="c-price" label={t("ob.price")}>
               <select id="c-price" className="input" value={company.price_positioning} onChange={(e) => setC("price_positioning", e.target.value)}>
                 {POSITIONS.map((p) => <option key={p} value={p}>{t(`ob.price.${p || "none"}`)}</option>)}
@@ -145,11 +149,11 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
           </div>
           <Field id="c-aud" label={t("ob.audience")}>{inp("audience", "c-aud")}</Field>
           <Field id="c-claims" label={t("ob.claims")} hint={t("ob.claimsHint")}>{txt("claims", "c-claims", 3)}</Field>
-          <Field id="c-comp" label={t("ob.competitors")} hint={t("ob.urlHint")}>{txt("competitors", "c-comp", 2, "https://")}</Field>
+          <Field id="c-comp" label={t("ob.competitors")} hint={t("ob.competitorsHint")}>{txt("competitors", "c-comp", 2, "https://")}</Field>
         </>}
         {step === 2 && <>
           <Field id="pr-urls" label={t("ob.urls")} hint={t("ob.urlHint")}>
-            <textarea id="pr-urls" rows={4} className="input font-mono text-sm" value={urls} placeholder="https://yourstore.com/products/..." onChange={(e) => setUrls(e.target.value)} />
+            <textarea id="pr-urls" rows={4} className="input font-mono text-sm" value={urls} placeholder={t("hero.placeholder")} onChange={(e) => setUrls(e.target.value)} />
           </Field>
           <div>
             <p className="text-sm font-medium">{t("ob.manual")}</p>
@@ -163,12 +167,12 @@ export default function Onboarding({ edit }: { edit?: Profile }) {
                   <button type="button" className="btn-ghost" onClick={() => setManual(manual.filter((_, j) => j !== i))} aria-label={t("ob.removeProduct")}><Trash2 className="size-4" aria-hidden /></button>
                   <textarea aria-label={t("hero.draftText")} rows={3} className="input sm:col-span-4" placeholder={t("hero.draftTextPh")} value={m.text || ""} onChange={(e) => set("text", e.target.value)} />
                   <input aria-label={t("hero.draftPrice")} inputMode="decimal" className="input sm:col-span-2" placeholder="35.00" value={m.price || ""} onChange={(e) => set("price", e.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} />
-                  <select aria-label={t("hero.draftCurrency")} className="input" value={m.currency} onChange={(e) => set("currency", e.target.value)}>{["EUR", "USD", "GBP", "MXN"].map((c) => <option key={c}>{c}</option>)}</select>
+                  <select aria-label={t("hero.draftCurrency")} className="input" value={m.currency} onChange={(e) => set("currency", e.target.value)}>{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select>
                   <select aria-label={t("hero.draftLang")} className="input" value={m.language} onChange={(e) => set("language", e.target.value)}><option value="en">English</option><option value="es">Español</option></select>
                 </fieldset>
               );
             })}
-            <button type="button" className="btn-ghost mt-2 border border-stone-200 dark:border-stone-700" onClick={() => setManual([...manual, { currency: "EUR", language: lang }])}>
+            <button type="button" className="btn-ghost mt-2 border border-stone-200 dark:border-stone-700" onClick={() => setManual([...manual, { currency: def.currency, language: def.language }])}>
               <Plus className="size-4" aria-hidden /> {t("ob.addManual")}
             </button>
           </div>

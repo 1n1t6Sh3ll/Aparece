@@ -1,7 +1,8 @@
 import { api, store } from "./lib";
+import { productPrefix } from "./prefill";
 import type { Audit } from "./types";
 
-/** Merchant profile (TEAM-45). Everything here is merchant-stated; ProductLens verifies none of it. */
+/** Merchant profile (TEAM-45). Everything here is merchant-stated; Aparece verifies none of it. */
 export interface Company {
   name: string; website: string; sells: string; brand: string; markets: string[]; languages: string[];
   price_positioning: "" | "budget" | "mid" | "premium" | "luxury"; audience: string; claims: string[];
@@ -52,4 +53,20 @@ export const emptyCompany = (): Company => ({ name: "", website: "", sells: "", 
 
 export function productName(p: Product) {
   return p.audit?.product.title || p.title || p.url || `#${p.id}`;
+}
+
+/** Market (ISO country code) -> currency. Euro-area countries (2026) use EUR; unknown markets fall back to USD. */
+const EURO = "AT BE BG CY DE EE ES FI FR GR HR IE IT LT LU LV MT NL PT SI SK EU";
+const CURRENCY: Record<string, string> = {
+  ...Object.fromEntries(EURO.split(" ").map((c) => [c, "EUR"])),
+  US: "USD", GB: "GBP", UK: "GBP", MX: "MXN", CA: "CAD", AU: "AUD", CH: "CHF", JP: "JPY", IN: "INR", BR: "BRL", AR: "ARS",
+  CO: "COP", CL: "CLP", PE: "PEN", SE: "SEK", NO: "NOK", DK: "DKK", PL: "PLN", CZ: "CZK", HU: "HUF", RO: "RON",
+};
+export const CURRENCIES = [...new Set(Object.values(CURRENCY))];
+
+/** Audit defaults from the company profile: product-link prefix (store origin), draft language and currency. */
+export function auditDefaults(c: Pick<Company, "website" | "languages" | "markets">, fallbackLang: string) {
+  const l = (c.languages[0] || "").toLowerCase().slice(0, 2);
+  const currency = CURRENCY[(c.markets[0] || "").trim().toUpperCase()] || "USD";
+  return { currency, language: l === "en" || l === "es" ? l : fallbackLang, prefix: productPrefix(c.website) };
 }

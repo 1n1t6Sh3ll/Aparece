@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Award, BarChart3, FlaskConical, Hourglass, Info } from "lucide-react";
+import { Award, BarChart3, FlaskConical, Hourglass, Info } from "lucide-react";
 import { api, cap, errorText, fieldLabel, useI18n } from "../lib";
 import { Tip } from "./RankParts";
 import { nm } from "../modelLabel";
@@ -18,13 +18,21 @@ const ORDER = ["all_null_baseline", "base_qwen_0_5b", "base_zero_shot", "ft_qwen
 const COLORS = ["#94a3b8", "#0ea5e9", "#6366f1", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#14b8a6"];
 const BASELINE = "all_null_baseline";
 const pct = (v: number | undefined | null) => (v == null ? null : `${Math.round(v * 1000) / 10}%`);
+/** [answered, total] when a model answered fewer products than the test set (or the run marks it partial). */
+const partialOf = (m: Model, n?: number): [number, number] | null => {
+  const a = m.answered ?? m.n, tot = m.total ?? n;
+  return a != null && tot != null && (m.partial || a < tot) ? [a, tot] : null;
+};
+/** Run files may bake the status into the label ("Claude ... — partial: 87 of 200"); the translated chip shows it. */
+const tidy = (c: Comparison): Comparison => ({ ...c, models: Object.fromEntries(Object.entries(c.models || {}).map(([k, m]) =>
+  [k, partialOf(m, c.test?.products) ? { ...m, label: m.label.replace(/\s*(?:[—–-]\s*partial\b.*|\(partial\b[^)]*\))$/i, "") } : m])) });
 
 export default function ModelsPage() {
   const { t, lang } = useI18n();
   const [data, setData] = useState<Comparison | null>(null);
   const [err, setErr] = useState("");
   useEffect(() => {
-    api<Comparison>("/v1/model-comparison").then(setData).catch((e) => setErr(errorText(e, t).msg));
+    api<Comparison>("/v1/model-comparison").then((c) => setData(tidy(c))).catch((e) => setErr(errorText(e, t).msg));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const head = (
@@ -35,7 +43,7 @@ export default function ModelsPage() {
   );
   if (err) return <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}<p role="alert" className="mt-6 text-rose-700 dark:text-rose-400">{err}</p></div>;
   if (!data) return <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}<div className="card mt-6 h-64 animate-pulse bg-stone-100/60 dark:bg-stone-800/40" aria-hidden /></div>;
-  if (!data.available) {
+  if (!data.available || data.sample) {  // a sample file is never shown as results
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
         {head}
@@ -59,11 +67,7 @@ export default function ModelsPage() {
   const showLatency = ms.some(({ m }) => latency(m));
   const best = (f: (m: Model) => number | null | undefined) => Math.max(...contenders.map(({ m }) => f(m) ?? -1));
   const n = data.test.products;
-  /** [answered, total] when a model answered fewer products than the test set (or the run marks it partial). */
-  const partial = (m: Model): [number, number] | null => {
-    const a = m.answered ?? m.n, tot = m.total ?? n;
-    return a != null && tot != null && (m.partial || a < tot) ? [a, tot] : null;
-  };
+  const partial = (m: Model) => partialOf(m, n);
 
 
   const cell = (v: string | null, isBest = false) => v == null
@@ -73,15 +77,10 @@ export default function ModelsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
       {head}
-      {data.sample && (
-        <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{t("mod.sample")}
-        </p>
-      )}
 
       {winner && (
         <section className="card mt-6 flex items-start gap-4 p-6 rise">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent)] text-white"><Award className="size-6" aria-hidden /></span>
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--accent)] text-[var(--accent-fg)]"><Award className="size-6" aria-hidden /></span>
           <div>
             <p className="text-lg font-semibold sm:text-xl">
               {n ? t("mod.headline", { m: nm(winner.m), p: pct(winner.m.non_null_acc)!, n }) : t("mod.headlineNoN", { m: nm(winner.m), p: pct(winner.m.non_null_acc)! })}

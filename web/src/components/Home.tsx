@@ -5,11 +5,15 @@ import {
 } from "lucide-react";
 import { allManageTokens, api, ApiError, errorText, fieldLabel, money, useI18n } from "../lib";
 import { history, type Monitored } from "../history";
-import { papi, productName, token, type Product } from "../profile";
+import { auditDefaults, papi, productName, token, type Product } from "../profile";
+import { isBarePrefix } from "../prefill";
 import { useSession } from "../session";
 import { Empty, ErrorBox, PageHeader, Stat, Tabs, useTheme, useToast } from "../ui";
 import { ProductsPage as Monitoring } from "./Monitor";
 import { SAMPLES } from "./AuditPage";
+
+/** Send a URL to the audit page (it runs on arrival). */
+const start = (u: string) => { sessionStorage.setItem("pl.pendingUrl", u); window.location.hash = "/audit"; };
 
 /** Logged-out marketing landing (no app shell). */
 export function Landing() {
@@ -19,7 +23,6 @@ export function Landing() {
   const [err, setErr] = useState("");
   const [total, setTotal] = useState<number | null>(null);
   useEffect(() => { api<{ total: number }>("/v1/stats").then((s) => setTotal(s.total || null)).catch(() => undefined); }, []);
-  const start = (u: string) => { sessionStorage.setItem("pl.pendingUrl", u); window.location.hash = "/audit"; };
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!/^https?:\/\/[^\s/]+\.[^\s]+/i.test(url.trim())) return setErr(t("hero.invalidUrl"));
@@ -32,9 +35,9 @@ export function Landing() {
   return (
     <div className="min-h-screen bg-[var(--surface)]">
       <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--surface)]">
-        <nav className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4" aria-label="Main">
+        <nav className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4" aria-label={t("nav.menu")}>
           <a href="#/" className="mr-auto flex items-center gap-2 font-bold tracking-tight">
-            <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-white"><Aperture className="size-5" aria-hidden /></span>ProductLens
+            <span className="grid size-8 place-items-center rounded-lg bg-[var(--accent)] text-[var(--accent-fg)]"><Aperture className="size-5" aria-hidden /></span><span className="max-sm:sr-only">Aparece</span>
           </a>
           <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById("features")?.scrollIntoView({ behavior: "smooth" }); }} className="btn-ghost hidden sm:inline-flex">{t("land.nav.features")}</a>
           <a href="#/models" className="btn-ghost hidden sm:inline-flex">{t("nav.models")}</a>
@@ -66,19 +69,16 @@ export function Landing() {
           </div>
           <p className="mt-6 text-sm muted">{t("land.free")}</p>
         </div>
-        <figure className="card overflow-hidden" aria-label={t("land.sheet")}>
-          <figcaption className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5">
-            <span className="eyebrow">{t("land.sheet")}</span><span className="font-mono text-xs muted">7 / 9</span>
+        <figure className="card overflow-hidden" aria-label={t("land.checks")}>
+          <figcaption className="border-b border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5">
+            <span className="eyebrow">{t("land.checks")}</span>
           </figcaption>
-          <table className="w-full text-sm">
-            <tbody className="divide-y divide-[var(--border)]">
-              {["identity.brand", "materials.material_percentages", "materials.fabric_weight_gsm", "fit_and_style.fit", "fit_and_style.neckline", "variants.sizes", "variants.colors", "commerce.price", "commerce.gtin"].map((f, i) => (
-                <tr key={f}><td className="px-4 py-2">{fieldLabel(lang, f)}</td>
-                  <td className="px-4 py-2 text-right text-xs">{i % 4 === 3 ? <span className="text-amber-800 dark:text-amber-300">{t("land.sheet.missing")}</span> : <span className="text-[var(--accent)]">{t("land.sheet.found")}</span>}</td></tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="border-t border-[var(--border)] px-4 py-2.5 text-xs muted">{t("land.sheet.note")}</p>
+          <ul className="divide-y divide-[var(--border)] text-sm">
+            {["identity.brand", "materials.material_percentages", "materials.fabric_weight_gsm", "fit_and_style.fit", "fit_and_style.neckline", "variants.sizes", "variants.colors", "commerce.price", "commerce.gtin"].map((f) => (
+              <li key={f} className="px-4 py-2">{fieldLabel(lang, f)}</li>
+            ))}
+          </ul>
+          <p className="border-t border-[var(--border)] px-4 py-2.5 text-xs muted">{t("land.checks.note")}</p>
         </figure>
       </section>
 
@@ -110,7 +110,7 @@ export function Landing() {
           <ol className="mt-10 grid gap-6 sm:grid-cols-3">
             {[1, 2, 3].map((n) => (
               <li key={n} className="card p-6">
-                <span className="grid size-8 place-items-center rounded-full bg-[var(--accent)] text-sm font-bold text-white">{n}</span>
+                <span className="grid size-8 place-items-center rounded-full bg-[var(--accent)] text-sm font-bold text-[var(--accent-fg)]">{n}</span>
                 <h3 className="mt-4 font-semibold">{t(`land.how.${n}.t`)}</h3><p className="mt-1 text-sm muted">{t(`land.how.${n}.d`)}</p>
               </li>
             ))}
@@ -308,7 +308,9 @@ export function ProductsHub() {
   const toast = useToast();
   const [tab, setTab] = useState<"catalog" | "monitor">(signedIn ? "catalog" : "monitor");
   const { busy, run, running } = useAuditRunner();
+  const prefix = profile ? auditDefaults(profile.company, lang).prefix : "";  // store URL prefills the product-link field
   const [url, setUrl] = useState("");
+  useEffect(() => { if (prefix) setUrl((u) => u || prefix); }, [prefix]);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<SortK>("score");
   const [msg, setMsg] = useState("");
@@ -331,10 +333,10 @@ export function ProductsHub() {
 
   async function add(e: FormEvent) {
     e.preventDefault();
-    if (!/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url.trim())) return setMsg(t("hero.invalidUrl"));
+    if (isBarePrefix(url) || !/^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url.trim())) return setMsg(t("hero.invalidUrl"));
     try {
       const p = await papi<Product>("/v1/profile/products", { method: "POST", body: JSON.stringify({ url: url.trim() }) });
-      setUrl(""); setMsg(""); await reload();
+      setUrl(prefix); setMsg(""); await reload();
       toast("info", t("pr.added"));
       run([p]);
     } catch (x) { setMsg(errorText(x, t).msg); }
@@ -346,6 +348,7 @@ export function ProductsHub() {
     toast("ok", t("pr.removed"));
   }
   const pending = rows.filter((p) => !p.audit);
+  const rivals = profile?.company.competitors ?? [];
   const th = (k: SortK, label: string, cls = "") => (
     <th scope="col" className={`px-4 py-2 font-medium ${cls}`} aria-sort={sort === k ? "ascending" : undefined}>
       <button className="hover:text-[var(--text)]" onClick={() => setSort(k)}>{label}{sort === k ? " ↑" : ""}</button>
@@ -375,8 +378,14 @@ export function ProductsHub() {
             {pending.length > 0 && <button className="btn-primary" disabled={running} onClick={() => run(pending)}><Play className="size-4" aria-hidden /> {t("home.auditAll", { n: pending.length })}</button>}
           </div>
           {msg && <p role="alert" className="px-4 pt-2 text-sm text-rose-600">{msg}</p>}
+          {rivals.length > 0 && (
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--border)] px-4 py-2 text-xs">
+              <span className="muted">{t("pr.auditCompetitor")}:</span>
+              {rivals.slice(0, 5).map((u) => <button key={u} className="max-w-[14rem] truncate underline decoration-[var(--border)] underline-offset-4 hover:decoration-[var(--accent)]" onClick={() => start(u)}>{u.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</button>)}
+            </p>
+          )}
           {rows.length ? (
-            <div className="overflow-x-auto">
+            <div className="relative overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
                 <thead className="text-left text-xs muted"><tr>
                   {th("name", t("table.product"))}<th scope="col" className="px-4 py-2 font-medium">{t("pr.rank")}</th>{th("score", t("chart.score"))}{th("fixes", t("pr.fixes"))}

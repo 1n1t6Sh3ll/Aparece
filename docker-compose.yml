@@ -1,7 +1,7 @@
 services:
   api:
+    image: ghcr.io/1n1t6sh3ll/aparece:latest  # published image; `docker compose up --build` builds locally
     build: .
-    image: productlens-api
     ports:
       - "127.0.0.1:8000:8000"
     environment:

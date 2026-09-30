@@ -76,7 +76,7 @@ export default function Chat() {
         {!msgs.length && <div className="py-10 text-center"><MessageSquare className="mx-auto size-8 muted" aria-hidden /><p className="mt-2 text-sm muted">{t("chat.start")}</p></div>}
         {msgs.map((m, i) => (
           <div key={i} className={`flex ${m.from === "you" ? "justify-end" : ""}`}>
-            <div className={`max-w-[85%] rounded-md px-3 py-2 text-sm ${m.from === "you" ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-2)]"}`}>
+            <div className={`max-w-[85%] rounded-md px-3 py-2 text-sm ${m.from === "you" ? "bg-[var(--accent)] text-[var(--accent-fg)]" : "bg-[var(--surface-2)]"}`}>
               <p>{m.text}</p>
               {m.lines && m.lines.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-4">{m.lines.map((l, j) => <li key={j}>{l}</li>)}</ul>}
               {m.link && <a href={m.link[0]} className="mt-2 inline-block font-semibold text-[var(--accent)] underline-offset-2 hover:underline">{m.link[1]} →</a>}
