@@ -42,3 +42,29 @@ $PY train/eval.py --limit 50 --skip_base
 ```
 
 Prints, for an all-null baseline, the base model and the fine-tuned model (greedy decoding): JSON validity rate, per-field exact match, mean field exact match, accuracy on non-null gold fields and accuracy on null gold fields. A key missing from the output counts as a miss.
+
+## Reward (`reward.py`)
+
+Deterministic, CPU-only score of one model output against its input text (`common.prompt_text`), with optional gold. No model or network calls.
+
+| Part | Rule |
+|---|---|
+| format | +1 if the output is one JSON object and every value passes the field's schema in `dataset/schema/normalized_record.schema.json` (enums, types, percent ranges); otherwise −10 and scoring stops |
+| grounding | each non-null value must be supported by the input: re-derived with the `dataset/collect/normalize.py` rules (lookup tables, `parse_composition`, `parse_weight`, colour table), or matched verbatim/by alias (free text, sizes, care, features). Unsupported = hallucination, −2 per field |
+| correctness (gold given) | +1 per exact match on a non-null gold field; −0.5 for filling a field gold has as null only when the value is also unsupported. A supported value that gold lacks is neutral, since gold may be incomplete |
+
+`"unknown"` and empty lists/objects count as null; missing keys count as null and are listed in `errors`. `reward()` returns `total`, a per-field breakdown (`value`, `grounding`, `unsupported`, `correctness`) and the `hallucinated` field list.
+
+```sh
+python train/reward.py PRED.jsonl train/data/test.jsonl --rows rewards.jsonl
+python -m unittest discover -s train/tests -v
+```
+
+`PRED.jsonl` rows need `product_id` plus the output as `text` (the `api_eval.py` `*_responses.jsonl` format), `output` or `prediction`. `eval.py` does not save predictions yet, so write them in one of those forms first. Data rows are `build_examples.py` output (input = user message, gold = assistant message) or rows with `raw`. A data row with no prediction counts as a format failure. The summary gives mean reward, format rate, and hallucination rate and counts per field.
+
+Known limits: grounding is lexical, so a value can be supported by an unrelated mention (for example `"other"` or a size letter that appears elsewhere in the text), and paraphrased care or feature lines count as unsupported. Colour and size lists are compared with order, the same way `eval.py` compares them.
+
+### Use in best-of-N and DPO (not implemented)
+
+- **Best-of-N / rejection sampling:** sample N outputs per training input, score each with `reward(text, input_text, gold)`, keep the highest (ties: the first sample, so the choice is reproducible). Drop the input if the best output is not `format_ok` or has hallucinations. The kept outputs can be used as extra SFT data or as the output at inference time.
+- **DPO pairs:** from the same N samples, pair chosen = highest reward and rejected = lowest, and keep the pair only when the gap is large (for example ≥ 2, one hallucination) and the chosen output has no hallucinations. Without gold, grounding still ranks outputs, which makes pairs for unlabeled pages possible, but the only reward for filling a field is avoiding a penalty, so check for a drift toward all-null outputs. Keep the domain split from `build_examples.py` so no test store is used.
