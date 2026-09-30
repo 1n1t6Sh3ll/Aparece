@@ -88,7 +88,10 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(check("commerce.price", (24.99, ["AUD", "CAD", "MXN", "USD"]), HEAVY)[0], SUPPORTED)
         self.assertEqual(check("commerce.price", (40.0, ["USD"]), HEAVY)[0], CONTRADICTED)
         self.assertEqual(check("commerce.price", (22.0, ["EUR"]), HEAVY)[0], UNVERIFIABLE)
-        self.assertEqual(check("commerce.currency", ["EUR"], HEAVY)[0], CONTRADICTED)
+
+    def test_other_currency_is_not_a_hallucination(self):
+        cs = check_response("Solana Basics Heavy Tee costs 22 €.", products(), GOLD)
+        self.assertEqual([(c["field"], c["status"]) for c in cs], [("commerce.price", UNVERIFIABLE)])
         self.assertEqual(check("variants.colors", "white", HEAVY)[0], CONTRADICTED)
         self.assertEqual(check("variants.sizes", "XXL", HEAVY)[0], CONTRADICTED)
         self.assertEqual(check("origin", "portugal", HEAVY)[0], SUPPORTED)

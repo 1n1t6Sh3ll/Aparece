@@ -80,7 +80,6 @@ def extract_claims(text):
         curs = CURRENCY.get(sym.upper()) or CURRENCY.get(sym)
         price = N.to_price(num)
         if curs and price:
-            out.append(("commerce.currency", sorted(curs)))
             out.append(("commerce.price", (price, sorted(curs))))
     colors = []
     for word in re.findall(r"[^\W\d_]+", text):
@@ -181,11 +180,6 @@ def check(field, value, rec):
             return UNVERIFIABLE, None, None
         ok = abs(value - gold) <= max(5, 0.05 * gold)
         return (SUPPORTED if ok else CONTRADICTED), gold, _evidence(rec, field)
-    if field == "commerce.currency":
-        gold = com.get("currency")
-        if not gold:
-            return UNVERIFIABLE, None, None
-        return (SUPPORTED if gold in value else CONTRADICTED), gold, _evidence(rec, field)
     if field == "commerce.price":
         price, curs = value
         cur = com.get("currency")
