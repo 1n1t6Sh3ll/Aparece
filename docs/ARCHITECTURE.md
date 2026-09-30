@@ -23,6 +23,8 @@ flowchart LR
   subgraph AI["AI evaluation"]
     VIS["AI visibility<br/>real model answers<br/>benchmark/harness.py, match.py, metrics.py"]
     CMP["AI comparison<br/>shop vs Aparece vs models<br/>benchmark/shootout/"]
+    KW["Keyword boost, grounded only<br/>benchmark/shootout/boost.py"]
+    CHK["Check now, on request<br/>api/visibility_live_api.py"]
     HAL["Hallucination check<br/>benchmark/claims.py"]
   end
   subgraph LOOP["Over time"]
@@ -30,12 +32,14 @@ flowchart LR
     EXP["Experiments: lift vs controls<br/>experiments/"]
     GOV["Approvals + audit log<br/>governance/"]
   end
-  D[("20,037-shirt dataset<br/>dataset/")] --> M
+  D[("Shirt dataset, 20,037 rows<br/>peers read train.jsonl (PRODUCTLENS_DATA)")] --> M
   Q["Fine-tuned Qwen (predicted only)<br/>train/"] -.-> V
   U --> F
   R --> W
   V --> VIS
   V --> CMP
+  V --> KW --> CMP
+  V --> CHK
   VIS --> HAL
   RW --> GOV
   GOV --> MON
@@ -55,6 +59,8 @@ flowchart LR
 | AI visibility | `benchmark/harness.py`, `benchmark/match.py`, `benchmark/metrics.py`, `benchmark/prompts/` | The same shopping prompts (EN/ES; dev/val/hidden split) go to gpt-4o-mini, Claude Haiku or a local Qwen. Answers are matched to catalog shops by URL, alias, or brand and name on one line. Metrics: mention rate, top-k, MRR, citation rate, stability. Paid runs need a key, a price and `--max-usd`. The committed run is in `benchmark/results/visibility-2026-09-30/`, served by `api/dashboard_api.py` → `visibility_summary` to the audit page. |
 | Hallucination check | `benchmark/claims.py` | Attribute claims in AI answers are labelled SUPPORTED / CONTRADICTED / UNVERIFIABLE against the verified facts. |
 | AI comparison | `benchmark/shootout/run.py`, `score.py`, `report.py`, `live.py`; `api/shootout_api.py` | Shop original vs Aparece (no model) vs Aparece + gpt-4o-mini vs each model alone, all from the same facts. The fact-check gates every part, then title, tag and description scores are computed. The saved run adds a simulated shopping test judged by gpt-4o-mini and Claude Haiku (one held out) with bootstrap intervals. `POST /v1/shootout/live` runs it for any audited product, capped per request and per day, without the shopping test. |
+| Keyword boost | `benchmark/shootout/boost.py` | Adds shared shopper keywords (type, material, fit, neckline, sleeve, weight) to a title and description only when the fact-check accepts them as grounded in the page's own facts. It is the sixth writer in the live comparison. |
+| Check now | `api/visibility_live_api.py` (`POST /v1/visibility/live`) | On request, asks gpt-4o-mini and Claude Haiku 6 shopping questions each and reports whether the product was named or cited, its best position and the brands named instead. Capped per request (0.05 USD) and per day (1 USD), 3 requests a minute, cached 24 hours; without a key it returns `no_api_key` and simulates nothing. |
 | Monitoring and chat | `monitor/`, `chat/`, `api/monitor_api.py`, `api/chat_api.py` | Immutable SQLite snapshots, change events, and the rank computed with the audit's own function. The chat may only cite stored records. |
 | Experiments | `experiments/`, `api/experiments_api.py` | Before/after lift against auto-picked control products, a dev vs hidden overfitting flag, and an accuracy guardrail. Built; no real before/after experiment run yet. |
 | Governance | `governance/`, `api/governance_api.py` | Every action is `auto`, `approve` or `forbidden`, with an owner; an append-only audit log. Confirming a model prediction needs merchant approval. |
