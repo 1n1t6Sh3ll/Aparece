@@ -56,13 +56,25 @@ A flagged candidate can never win.
 
 **5. Matching AI answers.** For the visibility benchmark, `benchmark/match.py` counts a product as mentioned when its exact URL appears, one of its aliases appears, or its brand and name appear on the same line. The metrics are mention rate, top-3 rate and MRR (average of 1 ÷ position of the first mention).
 
-**6. The AI comparison.** `benchmark/shootout/` gives the same facts to each writer:
+**6. The AI comparison: how the versions are ranked.** Five writers get the same verified facts (`benchmark/shootout/run.py` → `generate`):
 - **Aparece (no AI model)**: text built from templates;
 - **Aparece + gpt-4o-mini**: the model writes inside Aparece's fact-check and reward;
 - **gpt-4o-mini alone** and **claude-haiku-4-5 alone**;
 - **the shop's original text**.
 
-Each title, tag set and description is fact-checked and audited, and only passing parts can win.
+Each part is then scored as follows. `score.py` is `benchmark/shootout/score.py`, and `report.py` is `benchmark/shootout/report.py`.
+
+| Step | Formula | Code |
+|---|---|---|
+| Fact-check (gate) | A part is **eligible** only if no sentence has an unbacked word or a wrong number | `optimizer/guard.py` → `check_sentence`, `_number_problems` |
+| Title score | (brand in title + product type + material + fit + length 15–90 chars) ÷ checks that apply | `score.py` → `title_audit` |
+| Tags score | mean(fact relevance, intent relevance, language match) × unique tags ÷ tags × passing tags ÷ unique tags | `score.py` → `tags_audit` |
+| Description | attribute coverage = facts stated correctly ÷ facts available; intent coverage = shopper questions addressed ÷ questions; readability = Flesch (EN) or Fernández-Huerta (ES) | `score.py` → `attribute_coverage`, `intent_coverage`, `readability` |
+| Simulated shopping test (saved run only) | Each description is placed as the target page among its 4 real competitors. Judges (gpt-4o-mini and claude-haiku, one held out) answer shopping questions. Mention rate, top-3 rate and MRR are computed, with 95% bootstrap intervals over (product, question) | `run.py` → `context`; `score.py` → `metrics`, `with_ci` |
+| Winner of each part | Among eligible parts: title = highest title score (tie: closest to 60 chars); tags = highest tags score; description = highest MRR, else highest attribute coverage | `report.py` → `part_winners` |
+| Recommended version | Winning title + winning description + passing tags merged (up to 8, no duplicates) | `report.py` → `merged` |
+| Overall ranking | Generators whose parts pass on every product, sorted by MRR, then mention rate. The leader is **decisive** only if the paired-difference interval against the runner-up is above 0; otherwise it's a tie | `report.py` → `build`; `score.py` → `paired_diff` |
+| Live run (any product) | Same generators, fact-check, scores and winners, with no shopping test and no visibility numbers | `benchmark/shootout/live.py` → `compare` |
 
 All formulas, in plain words: the site's **How it works** page (`#/docs`) and [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
 
