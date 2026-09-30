@@ -15,4 +15,5 @@ jobs:
           python-version: "3.12"
       - run: pip install -r dataset/requirements.txt
       - run: python -m unittest discover -s dataset/tests -v
+      - run: python -m unittest discover -s signals/tests -t . -v
       - run: python -m py_compile train/*.py

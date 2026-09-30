@@ -18,7 +18,7 @@ python signals/build.py --amazon-dir <amazon output dir> --wdc-dir <wdc output d
 python -m unittest discover -s signals/tests -t .
 ```
 - Reviews: Amazon rating mean/count/histogram + up to 3 verbatim excerpts (<=280 chars, most helpful) per `parent_asin`; WDC `aggregateRating`/`review` from schema.org.
-- Prices: discount % from explicit list price; `suspicious_discount` if >=50% off or list > peer p90 while price <= peer p75. Peer percentile/p25-p75 guidance within `product_type|language|currency` (n>=5); guidance is evidence, not a promise.
+- Prices: discount % from explicit list price; `suspicious_discount` if >=50% off or list > peer p90 while price <= peer p75. Peer percentile/p25-p75 guidance within `product_type|language|currency|observed-or-assumed currency` (n>=5); guidance is evidence, not a promise.
 - USD 2026: ECB reference rates (2024-10-01) then US CPI-U (BLS CUUR0000SA0) to 2026-08; null when currency, date, or rate is unknown. Amazon (amazon.com) prices are assumed USD, period 2023. Tables and sources: `signals/reference.py`.
 - Flags: `missing_currency`, `nonpositive_price`, `price_outlier` (log price beyond 3 IQR of peers, n>=10), `rating_out_of_range`, `rating_conflict`, `sale_above_list`, `conflicting_prices`, `suspicious_discount`.
 - TODO: price over time from Common Crawl snapshots.

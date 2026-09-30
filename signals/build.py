@@ -221,11 +221,17 @@ def fx_date_for_period(period, currency):
     return ref.fx_date_for(period)
 
 
+def peer_key(s):
+    """Assumed currencies (amazon.com USD) never share a peer group with observed ones."""
+    basis = "observed" if s["currency_source"] == "record" else "assumed"
+    return (s["product_type"], s["language"], s["currency"], basis)
+
+
 def add_peer_signals(signals):
     groups = collections.defaultdict(list)
     for s in signals:
         if s["price"] and s["price"] > 0 and s["currency"] and s["product_type"]:
-            groups[(s["product_type"], s["language"], s["currency"])].append(s["price"])
+            groups[peer_key(s)].append(s["price"])
     stats = {}
     for key, vals in groups.items():
         vals.sort()
@@ -233,11 +239,11 @@ def add_peer_signals(signals):
             stats[key] = {"n": len(vals), "vals": vals, "p25": quantile(vals, .25), "p50": quantile(vals, .5),
                           "p75": quantile(vals, .75), "p90": quantile(vals, .9)}
     for s in signals:
-        st = stats.get((s["product_type"], s["language"], s["currency"]))
+        st = stats.get(peer_key(s))
         if st and s["price"] and s["price"] > 0:
             p = s["price"]
             pos = "below_peer_range" if p < st["p25"] else "above_peer_range" if p > st["p75"] else "within_peer_range"
-            s["peer"] = {"group": "|".join(str(x) for x in (s["product_type"], s["language"], s["currency"])),
+            s["peer"] = {"group": "|".join(str(x) for x in peer_key(s)),
                          "n": st["n"], "p25": round(st["p25"], 2), "p50": round(st["p50"], 2),
                          "p75": round(st["p75"], 2), "percentile": percentile_rank(st["vals"], p), "position": pos}
             s["guidance"] = {

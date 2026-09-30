@@ -101,7 +101,7 @@ class BuildTest(unittest.TestCase):
         self.assertIn("conflicting_prices", s["conflict"]["flags"])
         self.assertIsNone(s["ars"]["price_usd"])  # no ECB rate -> null, never guessed
         p = s["p0"]
-        self.assertEqual(p["peer"]["group"], "t_shirt|en|EUR")
+        self.assertEqual(p["peer"]["group"], "t_shirt|en|EUR|observed")
         self.assertEqual(p["peer"]["position"], "below_peer_range")
         self.assertIn("not a recommended or guaranteed price", p["guidance"]["note"])
         self.assertAlmostEqual(p["price_usd"], 22.17)
@@ -118,6 +118,15 @@ class BuildTest(unittest.TestCase):
         self.assertIn("rating_conflict", s["flags"])
         self.assertEqual(s["reviews"]["rating_count"], 4)
         self.assertAlmostEqual(s["price_usd_2026"], round(17.99 * 334.98 / 304.702, 2))
+
+
+    def test_assumed_currency_never_peers_with_observed(self):
+        wdc = [clean("w%d" % i, 20.0 + i, currency="USD") for i in range(6)]
+        amz = [clean("a%d" % i, 10.0 + i, currency=None, domain="amazon.com") for i in range(6)]
+        s = self.run_build(wdc, [], amz, [])
+        self.assertEqual(s["w0"]["peer"]["group"], "t_shirt|en|USD|observed")
+        self.assertEqual(s["a0"]["peer"]["group"], "t_shirt|en|USD|assumed")
+        self.assertEqual((s["w0"]["peer"]["n"], s["a0"]["peer"]["n"]), (6, 6))
 
 
 if __name__ == "__main__":
