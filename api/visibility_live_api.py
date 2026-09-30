@@ -28,7 +28,7 @@ router = APIRouter(prefix="/v1", tags=["visibility"])
 ROOT = Path(__file__).resolve().parents[1] / "benchmark"
 MODELS = (("openai", "gpt-4o-mini", "OPENAI_API_KEY"),
           ("anthropic", "claude-haiku-4-5-20251001", "ANTHROPIC_API_KEY"))
-N_QUESTIONS, MAX_TOKENS, TTL = 6, 400, 24 * 3600
+N_QUESTIONS, MAX_TOKENS, TTL, MAX_CACHE = 6, 400, 24 * 3600, 500
 # product type -> (English, Spanish) patterns; matched against the product's name/type, then against question text
 TYPES = {"polo": ("polo", "polo"), "long sleeve": (r"long[- ]sleeve|henley", r"manga larga"),
          "tank": (r"tank|vest|singlet", r"tirantes|sin mangas"), "oversized": ("oversize", "oversize|holgada"),
@@ -58,11 +58,29 @@ def questions(rec, lang):
     return [{**r, "text": _fix(r["text"])} for r in out[:N_QUESTIONS]]
 
 
+MAX_FIELD = 300
+
+
+def _text(d, key):
+    """A str field of a dict: None or missing gives "", any other type or an oversize string is a 422."""
+    v = d.get(key)
+    if v is None:
+        return ""
+    if not isinstance(v, str) or len(v) > MAX_FIELD:
+        raise HTTPException(422, f"bad_product: {key} must be text of at most {MAX_FIELD} characters")
+    return v.strip()
+
+
 def _target(rec):
+    """The match target from an audited record; malformed or oversize fields raise 422 (before any spend)."""
     ident, src = rec.get("identity") or {}, rec.get("source") or {}
-    url = src.get("canonical_url") or src.get("url") or ""
-    site = host(src.get("merchant_domain") or url)
-    brand, name = (ident.get("brand") or "").strip(), (ident.get("product_name") or "").strip()
+    if not isinstance(ident, dict) or not isinstance(src, dict):
+        raise HTTPException(422, "bad_product: identity and source must be objects")
+    url = _text(src, "canonical_url") or _text(src, "url")
+    site = host(_text(src, "merchant_domain") or url)
+    brand, name = _text(ident, "brand"), _text(ident, "product_name")
+    for k in ("product_type", "subcategory"):
+        _text(ident, k)
     aliases = [a for a in (brand if len(norm(brand).strip()) >= 3 else "", site) if a]
     return {"product_id": "target", "brand": brand, "name": name, "url": url, "site": site, "aliases": aliases}
 
@@ -120,7 +138,9 @@ def check(rec, lang, factory=harness.make_adapter, now=time.time):
     target, qs = _target(rec), questions(rec, lang)
     if not qs:
         return {"available": False, "reason": "no_questions"}
-    key = (target["site"] + (url_key(target["url"])[len(target["site"]):] if target["url"] else ""), lang)
+    # everything the answers are judged against is in the key, so a caller cannot poison another product's cache
+    key = (target["site"] + (url_key(target["url"])[len(target["site"]):] if target["url"] else ""), lang,
+           norm(target["brand"]), norm(target["name"]), tuple(target["aliases"]), tuple(q["id"] for q in qs))
     today = datetime.now(timezone.utc).date().isoformat()
     with _lock:
         if _day["date"] != today:
@@ -164,9 +184,12 @@ def check(rec, lang, factory=harness.make_adapter, now=time.time):
             continue
         models[name] = summ = _summary(results, len(qs), partial=capped or bool(err))
         if not summ["partial"]:
+            while len(_cache) >= MAX_CACHE:
+                _cache.pop(next(iter(_cache)))  # oldest first
             _cache[key + (name,)] = (now(), summ)
     with _lock:
-        _day["spent"] -= cap - budget.spent
+        if _day["date"] == today:  # a refund after UTC midnight belongs to the old day
+            _day["spent"] = max(0.0, _day["spent"] - (cap - budget.spent))
     if not models:
         return {"available": False, "reason": "spend_cap" if capped else "model_error",
                 "cost_usd": round(budget.spent, 6), "caveats": notes}

@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 import main  # noqa: E402
 import visibility_live_api as vl  # noqa: E402
 
+os.environ["VISIBILITY_LIVE_RATE_LIMIT"] = "1000"  # the tests post many times from one client
 client = TestClient(main.app)
 REC = {"identity": {"brand": "Merch Monger", "product_name": "Green Line Short Sleeve Unisex T-Shirt", "product_type": "t_shirt"},
        "source": {"url": "https://merchmonger.com/products/green-line-tee", "merchant_domain": "merchmonger.com"}}
@@ -70,6 +71,34 @@ class VisibilityLiveTest(unittest.TestCase):
     def test_pound_sign_repaired(self):
         self.assertTrue(all("�" not in q["text"] and "Â" not in q["text"] for q in vl.questions(REC, "en")))
         self.assertEqual(vl._fix("around �25"), "around £25")
+
+    def test_malformed_product_is_422_not_500(self):
+        bad = [{"identity": {"brand": 5}}, {"identity": {"brand": "A"}, "source": "x"},
+               {"identity": {"brand": "A"}, "source": {"url": 5}}, {"identity": {"brand": "A"}, "source": {"merchant_domain": ["a"]}},
+               {"identity": {"product_name": ["x"]}}, {"identity": []}, {"identity": {"brand": "A"}, "source": []},
+               {"identity": {"brand": "A" * 301}}, {"identity": {"brand": "A"}, "source": {"url": "https://x.com/" + "a" * 300}}]
+        with mock.patch.dict(os.environ, KEYS):
+            for b in bad:
+                self.assertEqual(client.post("/v1/visibility/live", json={"product": b}).status_code, 422, b)
+
+    def test_cache_key_includes_brand_and_name(self):
+        run([NAMED])
+        other = {"identity": {"brand": "Fake Brand", "product_name": "Other Tee", "product_type": "t_shirt"}, "source": REC["source"]}
+        calls = []
+        with mock.patch.dict(os.environ, KEYS):
+            r = vl.check(other, "en", factory=lambda p, m: Fake([NOT], calls))
+        self.assertEqual(len(calls), 12)  # not served from the first product's entry
+        self.assertEqual(r["models"]["openai:gpt-4o-mini"]["mentioned"], 0)
+        _, calls = run([NOT])
+        self.assertEqual(calls, [])  # the original still hits its own entry
+
+    def test_cache_is_bounded(self):
+        with mock.patch.object(vl, "MAX_CACHE", 2):
+            for i in range(3):
+                rec = {"identity": {"brand": f"Brand{i}"}, "source": REC["source"]}
+                with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "x", "ANTHROPIC_API_KEY": ""}):
+                    vl.check(rec, "en", factory=lambda p, m: Fake([NOT], []))
+        self.assertLessEqual(len(vl._cache), 2)
 
     def test_named_with_position_and_brands_instead(self):
         r, calls = run([NAMED, NOT])
