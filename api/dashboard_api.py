@@ -3,7 +3,8 @@
 PRODUCTLENS_DATA: dataset path (default dataset/output/final/train.jsonl).
 PRODUCTLENS_EVAL: eval JSON from train/eval.py (default train/runs/eval.json).
 PRODUCTLENS_SIGNALS: signals/build.py output (default dataset/output/signals/signals.jsonl).
-PRODUCTLENS_VISIBILITY: benchmark report.json (default benchmark/reports/report.json).
+PRODUCTLENS_VISIBILITY: benchmark report.json (default benchmark/reports/report.json; falls back to the committed run in
+benchmark/results/visibility-2026-09-30/).
 A missing file gives empty results, never a 500. Peer/gap logic lives in analysis/.
 """
 import html
@@ -107,9 +108,17 @@ def signals():
                    lambda p: {s["product_id"]: s for s in load_records(p) if s.get("product_id")}, {})
 
 
+VISIBILITY_RUN = "benchmark/results/visibility-2026-09-30/report.json"  # committed real run (gpt-4o-mini, claude-haiku-4-5)
+
+
 def visibility():
-    return _cached("PRODUCTLENS_VISIBILITY", "benchmark/reports/report.json",
-                   lambda p: json.loads(p.read_text(encoding="utf-8")), {})
+    """A local run (PRODUCTLENS_VISIBILITY, default benchmark/reports/report.json, gitignored) wins; otherwise the
+    committed real run, so a fresh checkout shows real results rather than an empty page."""
+    load = lambda p: json.loads(p.read_text(encoding="utf-8"))  # noqa: E731
+    rep = _cached("PRODUCTLENS_VISIBILITY", "benchmark/reports/report.json", load, {})
+    if rep or os.environ.get("PRODUCTLENS_VISIBILITY"):  # an explicit path is used as given, even when missing
+        return rep
+    return _cached("PRODUCTLENS_VISIBILITY_RUN", VISIBILITY_RUN, load, {})
 
 
 def summary(r):
