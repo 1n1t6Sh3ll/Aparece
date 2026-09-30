@@ -1,0 +1,596 @@
+{
+ "n": 22,
+ "skipped": 0,
+ "rows": [
+  {
+   "url": "https://merchmonger.com/products/green-line-short-sleeve-unisex-t-shirt",
+   "language": "en",
+   "before": {
+    "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% cotton",
+    "description": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Colors: green. Price: 24.99 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 65,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0104,
+    "words": 19,
+    "intent_coverage_title_plus_desc": 0.1042
+   },
+   "after": {
+    "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% cotton, 142 gsm, stretch",
+    "description": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Colors: green. Price: 24.99 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 83,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.1042,
+    "words": 23,
+    "intent_coverage_title_plus_desc": 0.1042
+   }
+  },
+  {
+   "url": "https://mercharoo.com/products/kawartha-short-sleeve-womens-organic-v-neck-t-shirt-38017",
+   "language": "en",
+   "before": {
+    "title": "Mercharoo Kawartha short sleeve women's organic v-neck t-shirt - 38017",
+    "description": "Material: 95% organic cotton, 5% elastane. Fabric weight: 200 gsm. Stretch fabric. Short sleeves. V-neck. For women. Price: 4.32 GBP. In stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 70,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0625,
+    "words": 22,
+    "intent_coverage_title_plus_desc": 0.1354
+   },
+   "after": {
+    "title": "Mercharoo Kawartha short sleeve women's organic v-neck t-shirt - 38017, organic cotton",
+    "description": "Material: 95% organic cotton, 5% elastane. Fabric weight: 200 gsm. Stretch fabric. Short sleeves. V-neck. For women. Price: 4.32 GBP. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 86,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.1354,
+    "words": 26,
+    "intent_coverage_title_plus_desc": 0.1354
+   }
+  },
+  {
+   "url": "https://moderntribe.com/products/shofar-so-good-short-sleeve-unisex-t-shirt",
+   "language": "en",
+   "before": {
+    "title": "Shofar So Good Short-Sleeve Unisex T-Shirt - (Choice of Colors) - (Sizes XS - 4XL)",
+    "description": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Price: 32.00 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 0.5,
+    "title_chars": 82,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0104,
+    "words": 17,
+    "intent_coverage_title_plus_desc": 0.1042
+   },
+   "after": {
+    "title": "Shofar So Good Short-Sleeve Unisex T-Shirt - (Choice of Colors) - (Sizes XS - 4XL), cotton",
+    "description": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Price: 32.00 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 0.75,
+    "title_chars": 90,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.1042,
+    "words": 21,
+    "intent_coverage_title_plus_desc": 0.1042
+   }
+  },
+  {
+   "url": "https://merchlink.com/products/il-performance-short-sleeve-mens-athletic-t-shirt",
+   "language": "en",
+   "before": {
+    "title": "Merch Link IL Performance Short Sleeve Men's Athletic T-shirt - 92% polyester, 8% spandex",
+    "description": "Material: 92% polyester, 8% spandex. Fabric weight: 150 gsm. Stretch fabric. Short sleeves. For men. Price: 44.00 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 89,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 20,
+    "intent_coverage_title_plus_desc": 0.0417
+   },
+   "after": {
+    "title": "Merch Link IL Performance Short Sleeve Men's Athletic T-shirt - 92% polyester, 8% spandex",
+    "description": "Material: 92% polyester, 8% spandex. Fabric weight: 150 gsm. Stretch fabric. Short sleeves. For men. Price: 44.00 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 89,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0208,
+    "words": 24,
+    "intent_coverage_title_plus_desc": 0.0417
+   }
+  },
+  {
+   "url": "https://www.wearall.com/en-us/products/paris-t-shirt",
+   "language": "en",
+   "before": {
+    "title": "WearAll Paris T-Shirt - 100% cotton",
+    "description": "Material: 100% cotton. Oversized fit. Short sleeves. Crew neck. Printed. Price: 15.00 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 0.8,
+    "title_chars": 35,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0208,
+    "words": 15,
+    "intent_coverage_title_plus_desc": 0.125
+   },
+   "after": {
+    "title": "WearAll Paris T-Shirt - 100% cotton, oversized, crew neck, short sleeve, printed",
+    "description": "Material: 100% cotton. Oversized fit. Short sleeves. Crew neck. Printed. Price: 15.00 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 80,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.125,
+    "words": 19,
+    "intent_coverage_title_plus_desc": 0.125
+   }
+  },
+  {
+   "url": "https://www.bobrock.com.my/products/plus-size-t-shirt-thai-dye-plus-size-relax-fit-cotton-round-neck-short-sleeve-t-shirt",
+   "language": "en",
+   "before": {
+    "title": "Plus Size T-Shirt Tie Dye | Plus Size Relax Fit Cotton Round Neck Short Sleeve T-Shirt",
+    "description": "Fabric weight: 180 gsm. Short sleeves. Crew neck. Graphic print.",
+    "guard_pass": true,
+    "title_score": 0.6667,
+    "title_chars": 86,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0208,
+    "words": 10,
+    "intent_coverage_title_plus_desc": 0.1146
+   },
+   "after": {
+    "title": "Plus Size T-Shirt Tie Dye | Plus Size Relax Fit Cotton Round Neck Short Sleeve T-Shirt",
+    "description": "Fabric weight: 180 gsm. Short sleeves. Crew neck. Graphic print. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 0.6667,
+    "title_chars": 86,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0521,
+    "words": 14,
+    "intent_coverage_title_plus_desc": 0.1146
+   }
+  },
+  {
+   "url": "https://ladywhiteco.com/products/pima-lock-t-shirt-granite",
+   "language": "en",
+   "before": {
+    "title": "LADY WHITE CO. PIMA LOCK T-SHIRT - GRANITE - 100% cotton",
+    "description": "Material: 100% cotton. Relaxed fit. Short sleeves. Made in Los Angeles.",
+    "guard_pass": true,
+    "title_score": 0.8,
+    "title_chars": 56,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 11,
+    "intent_coverage_title_plus_desc": 0.0833
+   },
+   "after": {
+    "title": "LADY WHITE CO. PIMA LOCK T-SHIRT - GRANITE - 100% cotton, short sleeve",
+    "description": "Material: 100% cotton. Relaxed fit. Short sleeves. Made in Los Angeles. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 0.8,
+    "title_chars": 70,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0833,
+    "words": 15,
+    "intent_coverage_title_plus_desc": 0.0833
+   }
+  },
+  {
+   "url": "https://dadgrass.com/products/special-edition-pride-2023-daddy-chill-tee",
+   "language": "en",
+   "before": {
+    "title": "Dad Grass Special Edition Pride 2023 ‘Daddy Chill’ Tee - 100% cotton",
+    "description": "Material: 100% cotton. Relaxed fit. Short sleeves. Printed. Price: 49.00 USD. Out of stock.",
+    "guard_pass": true,
+    "title_score": 0.8,
+    "title_chars": 68,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0104,
+    "words": 14,
+    "intent_coverage_title_plus_desc": 0.0104
+   },
+   "after": {
+    "title": "Dad Grass Special Edition Pride 2023 ‘Daddy Chill’ Tee - 100% cotton, t-shirt, printed",
+    "description": "Material: 100% cotton. Relaxed fit. Short sleeves. Printed. Price: 49.00 USD. Out of stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 0.8,
+    "title_chars": 86,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0938,
+    "words": 18,
+    "intent_coverage_title_plus_desc": 0.0938
+   }
+  },
+  {
+   "url": "https://wearechimmi.com/products/children-of-immigrants-t-shirt-midnight-black",
+   "language": "en",
+   "before": {
+    "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black - 100% cotton",
+    "description": "Material: 100% cotton. Oversized fit. Short sleeves. Crew neck. Printed. Colors: black. Price: 40.00 USD. In stock. Made in India.",
+    "guard_pass": true,
+    "title_score": 0.8,
+    "title_chars": 68,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0208,
+    "words": 20,
+    "intent_coverage_title_plus_desc": 0.125
+   },
+   "after": {
+    "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black - 100% cotton, oversized, crew neck",
+    "description": "Material: 100% cotton. Oversized fit. Short sleeves. Crew neck. Printed. Colors: black. Price: 40.00 USD. In stock. Made in India. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 90,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.125,
+    "words": 24,
+    "intent_coverage_title_plus_desc": 0.125
+   }
+  },
+  {
+   "url": "https://gillz-gear.com/collections/short-sleeve21/products/mens-contender-series-ss-graphic-tee?variant=39849965256777",
+   "language": "en",
+   "before": {
+    "title": "Gillz Men's Contender Series SS Graphic Tee",
+    "description": "Fabric weight: 140 gsm. Short sleeves. Graphic print. For men. Price: 24.99 USD. Out of stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 43,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0208,
+    "words": 16,
+    "intent_coverage_title_plus_desc": 0.0208
+   },
+   "after": {
+    "title": "Gillz Men's Contender Series SS Graphic Tee - t-shirt, short sleeve, 140 gsm, print",
+    "description": "Fabric weight: 140 gsm. Short sleeves. Graphic print. For men. Price: 24.99 USD. Out of stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 83,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0521,
+    "words": 20,
+    "intent_coverage_title_plus_desc": 0.0625
+   }
+  },
+  {
+   "url": "https://wearbahama.com/en-sa/products/orange-toweling-t-shirt-copy",
+   "language": "en",
+   "before": {
+    "title": "Wear Bahama Midnight Black Toweling T-Shirt - 100% cotton",
+    "description": "Material: 100% cotton. Short sleeves. Crew neck. Colors: black.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 57,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 9,
+    "intent_coverage_title_plus_desc": 0.125
+   },
+   "after": {
+    "title": "Wear Bahama Midnight Black Toweling T-Shirt - 100% cotton, crew neck, short sleeve",
+    "description": "Material: 100% cotton. Short sleeves. Crew neck. Colors: black. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 82,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0833,
+    "words": 13,
+    "intent_coverage_title_plus_desc": 0.125
+   }
+  },
+  {
+   "url": "https://www.wearwhatinspiresyou.com/products/believe-short-sleeve-unisex-t-shirt-2",
+   "language": "en",
+   "before": {
+    "title": "Wear What Inspires You BELIEVE Short-Sleeve Unisex T-Shirt",
+    "description": "Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Price: 30.00 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 58,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 14,
+    "intent_coverage_title_plus_desc": 0.0625
+   },
+   "after": {
+    "title": "Wear What Inspires You BELIEVE Short-Sleeve Unisex T-Shirt - 142 gsm, stretch",
+    "description": "Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Price: 30.00 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 77,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0104,
+    "words": 18,
+    "intent_coverage_title_plus_desc": 0.0625
+   }
+  },
+  {
+   "url": "https://shop.lidanceconnection.com/products/dance-dad-short-sleeve-unisex-t-shirt-1",
+   "language": "en",
+   "before": {
+    "title": "Dance Connection Dance Dad Short-Sleeve Unisex T-Shirt - 100% cotton",
+    "description": "Material: 100% cotton. Short sleeves. Unisex. Price: 19.99 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 68,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 11,
+    "intent_coverage_title_plus_desc": 0.0938
+   },
+   "after": {
+    "title": "Dance Connection Dance Dad Short-Sleeve Unisex T-Shirt - 100% cotton",
+    "description": "Material: 100% cotton. Short sleeves. Unisex. Price: 19.99 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 68,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0938,
+    "words": 15,
+    "intent_coverage_title_plus_desc": 0.0938
+   }
+  },
+  {
+   "url": "https://wearableprideus.com/products/every-kiss-begins-with-gay-gay-pride-flag-short-sleeve-unisex-t-shirt",
+   "language": "en",
+   "before": {
+    "title": "WearablePrideUS Every Kiss Begins with Gay (gay pride flag) - Short-Sleeve Unisex T-Shirt",
+    "description": "Fabric weight: 153 gsm. Short sleeves. Unisex. Price: 18.00 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 89,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 12,
+    "intent_coverage_title_plus_desc": 0.0208
+   },
+   "after": {
+    "title": "WearablePrideUS Every Kiss Begins with Gay (gay pride flag) - Short-Sleeve Unisex T-Shirt",
+    "description": "Fabric weight: 153 gsm. Short sleeves. Unisex. Price: 18.00 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 89,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0104,
+    "words": 16,
+    "intent_coverage_title_plus_desc": 0.0208
+   }
+  },
+  {
+   "url": "https://www.abbiexpress.com/products/tshirts-6",
+   "language": "en",
+   "before": {
+    "title": "Abbiexpress Orange Tshirts (Unisex) | Ladies tshirt",
+    "description": "Short sleeves. Crew neck. Printed. Unisex. Colors: orange. Price: 38.00 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 51,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 13,
+    "intent_coverage_title_plus_desc": 0.0
+   },
+   "after": {
+    "title": "Abbiexpress Orange Tshirts (Unisex) | Ladies tshirt - t-shirt, crew neck, short sleeve",
+    "description": "Short sleeves. Crew neck. Printed. Unisex. Colors: orange. Price: 38.00 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 86,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0312,
+    "words": 17,
+    "intent_coverage_title_plus_desc": 0.0312
+   }
+  },
+  {
+   "url": "https://dogbedsupplies.com/products/funny-dog-print-t-shirt-fashion-women",
+   "language": "en",
+   "before": {
+    "title": "Dog Bed & Supplies Funny Dog Print T-Shirt Fashion women",
+    "description": "Relaxed fit. Short sleeves. Printed. For women. Price: 23.99 USD. In stock.",
+    "guard_pass": true,
+    "title_score": 0.75,
+    "title_chars": 56,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 12,
+    "intent_coverage_title_plus_desc": 0.0521
+   },
+   "after": {
+    "title": "Dog Bed & Supplies Funny Dog Print T-Shirt Fashion women - short sleeve",
+    "description": "Relaxed fit. Short sleeves. Printed. For women. Price: 23.99 USD. In stock. This is a t-shirt.",
+    "guard_pass": true,
+    "title_score": 0.75,
+    "title_chars": 71,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0521,
+    "words": 16,
+    "intent_coverage_title_plus_desc": 0.0521
+   }
+  },
+  {
+   "url": "https://thinkingmu.com/products/esque-blue-aaron-tee",
+   "language": "es",
+   "before": {
+    "title": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico",
+    "description": "Camiseta para hombre de manga corta y cuello redondo. Composición: 100% algodón orgánico. Gramaje: 180 g/m². Corte holgado. Diseño estampado. Cuidados: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidados: NO USAR LEJIA. Cuidados: NO USAR SECADORA. Cuidados: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidados: PERMITE LIMPIEZA EN SECO.",
+    "guard_pass": true,
+    "title_score": 0.8,
+    "title_chars": 56,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0729,
+    "words": 50,
+    "intent_coverage_title_plus_desc": 0.0729
+   },
+   "after": {
+    "title": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico, cuello redondo, manga corta",
+    "description": "Camiseta para hombre de manga corta y cuello redondo. Composición: 100% algodón orgánico. Gramaje: 180 g/m². Corte holgado. Diseño estampado. Cuidados: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidados: NO USAR LEJIA. Cuidados: NO USAR SECADORA. Cuidados: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidados: PERMITE LIMPIEZA EN SECO.",
+    "guard_pass": true,
+    "title_score": 0.8,
+    "title_chars": 85,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0729,
+    "words": 50,
+    "intent_coverage_title_plus_desc": 0.0729
+   }
+  },
+  {
+   "url": "https://sepiia.com/products/camiseta-hombre-cuello-redondo-estampado-rayas-rosa-palo-soft",
+   "language": "es",
+   "before": {
+    "title": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
+    "description": "Camiseta para hombre de manga corta y cuello redondo. Corte holgado. Diseño de rayas. Colores: rosa. Precio: 49,90 €. En stock. Cuidados: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidados: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidados: LAVAR EN FRÍO O MÁX 30º. Cuidados: LAVAR Y COLGAR.",
+    "guard_pass": true,
+    "title_score": 0.75,
+    "title_chars": 63,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 57,
+    "intent_coverage_title_plus_desc": 0.0104
+   },
+   "after": {
+    "title": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft - manga corta, diseno",
+    "description": "Camiseta para hombre de manga corta y cuello redondo. Corte holgado. Diseño de rayas. Colores: rosa. Precio: 49,90 €. En stock. Cuidados: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidados: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidados: LAVAR EN FRÍO O MÁX 30º. Cuidados: LAVAR Y COLGAR.",
+    "guard_pass": true,
+    "title_score": 0.75,
+    "title_chars": 85,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 57,
+    "intent_coverage_title_plus_desc": 0.0104
+   }
+  },
+  {
+   "url": "https://modestmolly.com/es/products/half-tees",
+   "language": "es",
+   "before": {
+    "title": "HALFTEE Layering Fashions Medias camisetas en Plus *Múltiples colores y mangas*",
+    "description": "Camiseta de manga corta. Tejido elástico. Precio: 32,99 USD. En stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 79,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 11,
+    "intent_coverage_title_plus_desc": 0.0
+   },
+   "after": {
+    "title": "HALFTEE Layering Fashions Medias camisetas en Plus *Múltiples colores y mangas*",
+    "description": "Camiseta de manga corta. Tejido elástico. Precio: 32,99 USD. En stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 79,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 11,
+    "intent_coverage_title_plus_desc": 0.0
+   }
+  },
+  {
+   "url": "https://www.pipiuets.com/es/productos/camiseta-manga-corta-coral/562",
+   "language": "es",
+   "before": {
+    "title": "Camiseta manga corta coral - 95% algodón y 5% elastano",
+    "description": "Camiseta para niños de manga corta. Composición: 95% algodón y 5% elastano. Precio: 6,99 €. En stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 54,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0104,
+    "words": 17,
+    "intent_coverage_title_plus_desc": 0.0104
+   },
+   "after": {
+    "title": "Camiseta manga corta coral - 95% algodón y 5% elastano, ninos",
+    "description": "Camiseta para niños de manga corta. Composición: 95% algodón y 5% elastano. Precio: 6,99 €. En stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 61,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0104,
+    "words": 17,
+    "intent_coverage_title_plus_desc": 0.0104
+   }
+  },
+  {
+   "url": "https://mundounico.us/es/products/camiseta-cuello-redondo-gorrion-morado",
+   "language": "es",
+   "before": {
+    "title": "mundounicocolombia CAMISETA CUELLO REDONDO GORRIÓN MORADO - 100% algodón",
+    "description": "Camiseta con cuello redondo. Composición: 100% algodón. Colores: morado. Precio: 33,60 USD. En stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 72,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 14,
+    "intent_coverage_title_plus_desc": 0.0
+   },
+   "after": {
+    "title": "mundounicocolombia CAMISETA CUELLO REDONDO GORRIÓN MORADO - 100% algodón",
+    "description": "Camiseta con cuello redondo. Composición: 100% algodón. Colores: morado. Precio: 33,60 USD. En stock.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 72,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0,
+    "words": 14,
+    "intent_coverage_title_plus_desc": 0.0
+   }
+  },
+  {
+   "url": "https://lasmamisrockerasnuncaduermen.com/products/camisetas-satisfasion",
+   "language": "es",
+   "before": {
+    "title": "PESCADERIA CAMISETAS SATISFASION - 100% algodón orgánico",
+    "description": "Camiseta de manga corta. Composición: 100% algodón orgánico. Color liso. Precio: 33,00 €. Agotado. Cuidados: Lavar máximo 30ºC. Cuidados: Lavar y planchar del revés. Cuidados: No usar secadora.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 56,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0833,
+    "words": 28,
+    "intent_coverage_title_plus_desc": 0.0833
+   },
+   "after": {
+    "title": "PESCADERIA CAMISETAS SATISFASION - 100% algodón orgánico, manga corta",
+    "description": "Camiseta de manga corta. Composición: 100% algodón orgánico. Color liso. Precio: 33,00 €. Agotado. Cuidados: Lavar máximo 30ºC. Cuidados: Lavar y planchar del revés. Cuidados: No usar secadora.",
+    "guard_pass": true,
+    "title_score": 1.0,
+    "title_chars": 69,
+    "attribute_coverage": 1.0,
+    "intent_coverage": 0.0833,
+    "words": 28,
+    "intent_coverage_title_plus_desc": 0.0833
+   }
+  }
+ ],
+ "average": {
+  "before": {
+   "guard_pass": 1.0,
+   "title_score": 0.8939,
+   "attribute_coverage": 1.0,
+   "intent_coverage": 0.0156,
+   "intent_coverage_title_plus_desc": 0.0634,
+   "words": 18.7273
+  },
+  "after": {
+   "guard_pass": 1.0,
+   "title_score": 0.9235,
+   "attribute_coverage": 1.0,
+   "intent_coverage": 0.0611,
+   "intent_coverage_title_plus_desc": 0.0706,
+   "words": 21.6364
+  }
+ }
+}
