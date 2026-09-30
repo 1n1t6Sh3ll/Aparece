@@ -28,21 +28,24 @@ NEWEST, SECOND = COLLINFO[0]["id"], COLLINFO[1]["id"]
 
 class Resp:
     def __init__(self, status=200, text="", content=b"", data=None):
-        self.status_code, self.text, self.content, self._data = status, text, content, data
+        self.status_code = status
+        self.content = json.dumps(data).encode() if data is not None else (text.encode() or content)
+        self.closed = False
 
-    def json(self):
-        return self._data
+    def iter_content(self, size):
+        for i in range(0, len(self.content), size):
+            yield self.content[i:i + size]
 
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            raise requests.HTTPError(str(self.status_code))
+    def close(self):
+        self.closed = True
 
 
 def network(index):
     """Fake requests.get: collinfo, CDX answers from index[(crawl, url)] (default 404), WARC range reads."""
     calls = []
 
-    def get(url, headers=None, timeout=None, allow_redirects=True, params=None):
+    def get(url, headers=None, timeout=None, allow_redirects=True, params=None, stream=False):
+        assert stream, "every body must be streamed"
         calls.append((url, params, headers, allow_redirects))
         if url == cc.COLLINFO:
             return Resp(data=COLLINFO)
@@ -53,7 +56,7 @@ def network(index):
                 return Resp(ans, "<html>gateway</html>")
             return Resp(200, ans) if ans else Resp(404, '{"message": "No Captures found"}')
         if url == cc.DATA + ROW["filename"]:
-            return Resp(206, content=RECORD)
+            return Resp(206, content=index.get("record", RECORD))
         return Resp(404)
     return get, calls
 
@@ -140,6 +143,42 @@ class CommonCrawlTest(unittest.TestCase):
                 b"Transfer-Encoding: chunked\r\n\r\n" + chunked)
         rec = b"WARC/1.0\r\nWARC-Type: response\r\nContent-Length: %d\r\n\r\n" % len(http) + http + b"\r\n\r\n"
         self.assertEqual(cc.parse_record(gzip.compress(rec)), body.decode())
+
+    def test_gzip_bomb_record_dropped(self):
+        bomb = gzip.compress(b"WARC/1.0\r\nWARC-Type: response\r\n\r\n" + b"\0" * (cc.MAX_INFLATED + 10))
+        self.assertLess(len(bomb), 20_000)
+        with self.assertRaises(cc.TooLarge):
+            cc.parse_record(bomb)
+        bare = "https://www.allbirds.com/products/mens-strider-medium-grey"
+        res, _ = self.run_with({(NEWEST, bare): CDX, "record": bomb})
+        self.assertIsNone(res)
+        # a gzip Content-Encoding bomb inside a small record is capped too
+        inner = zlib.compressobj(wbits=31)
+        payload = inner.compress(b"a" * (cc.MAX_INFLATED + 10)) + inner.flush()
+        http = b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Encoding: gzip\r\n\r\n" + payload
+        rec = b"WARC/1.0\r\nWARC-Type: response\r\nContent-Length: %d\r\n\r\n" % len(http) + http
+        with self.assertRaises(cc.TooLarge):
+            cc.parse_record(gzip.compress(rec))
+
+    def test_body_caps(self):
+        big = Resp(200, content=b"x" * (cc.MAX_INDEX + 1))
+        with mock.patch.object(cc.requests, "get", return_value=big):
+            with self.assertRaises(cc.TooLarge):
+                cc._get(cc.COLLINFO, cc.time.monotonic() + 5, cc.MAX_INDEX)
+        self.assertTrue(big.closed)
+        # the WARC Range read never asks for, or accepts, more than the CDX length (and never over MAX_RECORD)
+        self.assertIsNone(cc.fetch_record({**ROW, "length": str(cc.MAX_RECORD + 1)}, cc.time.monotonic() + 5))
+        with mock.patch.object(cc.requests, "get", return_value=Resp(206, content=RECORD + b"extra")):
+            with self.assertRaises(cc.TooLarge):
+                cc.fetch_record({**ROW, "length": str(len(RECORD))}, cc.time.monotonic() + 5)
+
+    def test_deadline_between_chunks(self):
+        clock = iter([0.0, 1.0, 11.0, 12.0])
+        slow = Resp(200, content=b"x" * (cc.CHUNK * 3))
+        with mock.patch.object(cc.requests, "get", return_value=slow),                 mock.patch.object(cc.time, "monotonic", side_effect=lambda: next(clock)):
+            with self.assertRaises(TimeoutError):
+                cc._get(cc.COLLINFO, 10.0, cc.MAX_INDEX)
+        self.assertTrue(slow.closed)
 
 
 if __name__ == "__main__":
