@@ -7,7 +7,7 @@ export type Theme = "light" | "dark";
 export function initialTheme(): Theme {
   const s = store.get("pl.theme");
   if (s === "light" || s === "dark") return s;
-  return "light";  // light by default; dark only when the visitor picks it
+  return "dark";  // dark by default; a visitor's saved choice (pl.theme) wins
 }
 export function applyTheme(t: Theme) {
   document.documentElement.dataset.theme = t;
