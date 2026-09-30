@@ -30,41 +30,6 @@
       "output": 0.6,
       "source": "https://openai.com/api/pricing/",
       "verified": true
-    },
-    "gemini-3.5-flash": {
-      "input": 1.5,
-      "output": 9.0,
-      "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "note": "paid tier standard, prompts <=200k; output includes thinking; page opened 2026-09-29",
-      "verified": true
-    },
-    "gemini-3.5-flash-lite": {
-      "input": 0.3,
-      "output": 2.5,
-      "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "note": "paid tier standard, prompts <=200k; output includes thinking; page opened 2026-09-29",
-      "verified": true
-    },
-    "gemini-2.5-pro": {
-      "input": 1.25,
-      "output": 10.0,
-      "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "note": "paid tier standard, prompts <=200k; output includes thinking; page opened 2026-09-29",
-      "verified": true
-    },
-    "gemini-2.5-flash": {
-      "input": 0.3,
-      "output": 2.5,
-      "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "note": "paid tier standard, prompts <=200k; output includes thinking; page opened 2026-09-29",
-      "verified": true
-    },
-    "gemini-2.5-flash-lite": {
-      "input": 0.1,
-      "output": 0.4,
-      "source": "https://ai.google.dev/gemini-api/docs/pricing",
-      "note": "paid tier standard, prompts <=200k; output includes thinking; page opened 2026-09-29",
-      "verified": true
     }
   }
 }

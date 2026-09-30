@@ -5,6 +5,11 @@ from itertools import combinations
 from .match import match_response
 
 
+def model_key(r):
+    """provider:model, so the same model id under two providers stays distinct."""
+    return f"{r['provider']}:{r['model']}" if r.get("provider") else r["model"]
+
+
 def _entity_rows(matched, entity_of, cited_key, k):
     """Mention rate, top-k, MRR, citation rate for every entity in `entity_of`."""
     n = len(matched)
@@ -28,7 +33,7 @@ def stability(records, matched):
     """Mean pairwise Jaccard of mentioned-product sets across repeats of one prompt."""
     groups = defaultdict(list)
     for r, m in zip(records, matched):
-        groups[(r["model"], r["prompt_id"], r["variant"])].append(set(m["mentions"]))
+        groups[(model_key(r), r["prompt_id"], r["variant"])].append(set(m["mentions"]))
     scores = []
     for sets in groups.values():
         for a, b in combinations(sets, 2):
@@ -51,7 +56,7 @@ def build_report(records, products, k=3):
     matched = [match_response(r.get("response_text", ""), products) for r in records]
     by_model = defaultdict(list)
     for r, m in zip(records, matched):
-        by_model[r["model"]].append((r, m))
+        by_model[model_key(r)].append((r, m))
     models = {}
     for model, pairs in sorted(by_model.items()):
         recs, ms = [p[0] for p in pairs], [p[1] for p in pairs]
@@ -76,7 +81,18 @@ def build_report(records, products, k=3):
 def to_markdown(report):
     k = report["k"]
     lines = [f"# AI visibility report ({report['responses']} responses)", "",
-             "Observed outputs of black-box systems; not claims about their internals.", "",
+             "Observed outputs of black-box systems; not claims about their internals.", ""]
+    names = list(report["models"])
+    sites = sorted({s for m in report["models"].values() for s in m["sites"]})
+    lines += ["## Model comparison (mention rate / MRR, all languages)", "",
+              "| site | " + " | ".join(names) + " |", "|---|" + "---|" * len(names)]
+    for site in sites:
+        cells = []
+        for n in names:
+            row = report["models"][n]["sites"].get(site)
+            cells.append(f"{row['mention_rate']:.2f} / {row['mrr']:.2f}" if row else "-")
+        lines.append(f"| {site} | " + " | ".join(cells) + " |")
+    lines += ["", "## Detail", "",
              f"| model | language | site | mention | top{k} | MRR | citation |",
              "|---|---|---|---|---|---|---|"]
     for model, m in report["models"].items():
