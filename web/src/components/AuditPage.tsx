@@ -5,7 +5,8 @@ import type { Audit } from "../types";
 import { ErrorBox, useToast } from "../ui";
 import Results, { Checklist } from "./Results";
 
-/** Examples verified 2026-09-29 against /v1/audit (robots.txt allows them, 200 in under 4 s, ranked among 25).
+/** Real live product pages (no sample data). Re-verified 2026-09-29 with POST /v1/audit: all return a real audit
+ * ranked among 25 comparable shirts (robots.txt allows them, 200 in under 4 s).
  * Re-verify before changing; stores that rate-limited us (HTTP 429) were dropped. */
 export const SAMPLES = [
   { label: "Mundo Domingo T-shirt", url: "https://mundodomingo.xyz/products/tacos-domingo-tee-white" },

@@ -42,7 +42,7 @@ Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | `monitor/` | Scheduled crawls, snapshots, change events |
 | `webhooks/` | Outgoing merchant webhooks: signed, retried, SSRF-checked deliveries (`/v1/webhooks`, [docs/WEBHOOKS.md](docs/WEBHOOKS.md)) |
 | `extension/` | MV3 Chrome popup |
-| `train/` | Optional Qwen2.5-0.5B / 1.5B QLoRA extractors (GPU; not needed to run the demo; [train/README.md](train/README.md)) |
+| `train/` | Optional Qwen2.5-0.5B / 1.5B QLoRA extractors (GPU; not needed to run the app; [train/README.md](train/README.md)) |
 
 ## Quickstart
 
@@ -60,11 +60,7 @@ Without Docker (Python 3.12+; creates `.venv`, installs `api/requirements.txt`, 
 ./run.sh --skip-tests # start faster
 ```
 
-Demo with bundled fixtures (no downloads, no keys):
-
-```sh
-tools/demo_data.sh   # then open http://127.0.0.1:8000/
-```
+Real data only: the app shows no sample or demo data. Point `PRODUCTLENS_DATA` at the real dataset built by `dataset/build` (20,037 records across `train`/`val`/`test_gold`; the default `dataset/output/final/train.jsonl` holds the 16,025 training records). Model results come from `train/runs/comparison.json`, the AI comparison from a real `benchmark/shootout` run and AI visibility from `benchmark/reports/report.json`; a page whose source is missing or is a sample file shows "Not run yet". Test fixtures under `api/tests/fixtures/` are for tests only.
 
 Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. Never commit `.env`.
 
@@ -76,7 +72,7 @@ Environment variables (all optional; see `.env.example`):
 |---|---|
 | `PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL` | Dashboard/audit data files (dataset JSONL, signals, benchmark report, extraction eval) |
 | `PRODUCTLENS_COMPARISON` | Model comparison JSON for `#/models` (default `train/runs/comparison.json`) |
-| `PRODUCTLENS_SHOOTOUT`, `PRODUCTLENS_SHOOTOUT_SAMPLE` | AI comparison report (else the bundled mock sample) |
+| `PRODUCTLENS_SHOOTOUT`, `PRODUCTLENS_SHOOTOUT_SAMPLE` | AI comparison report. Without a real report the API falls back to the bundled mock-judge sample, which the web page does not show (it says "Not run yet") |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `QWEN_API_KEY` | Paid/local model access; paid runs also need a spend cap (`--max-usd`, `BENCHMARK_MAX_USD`) |
 | `MONITOR_ENABLED`, `MONITOR_DB`, `MONITOR_DELAY` | Scheduler and snapshot store |
 | `GOVERNANCE_DB`, `GOVERNANCE_TOKEN`, `GOVERNANCE_ADMIN_TOKEN` | Audit log; enables `POST /v1/approvals`; admin view of the full log |

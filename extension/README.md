@@ -12,7 +12,7 @@ MV3 popup (plain JS, no build). On a product page, **Audit this product** sends 
 - The 3 things to fix first; expand one to see its evidence (how many top-ranked similar shirts state it, etc.).
 - Top missing attributes (not found on the page, which is not the same as the product lacking them).
 - Price position against comparable listings.
-- AI visibility: placeholder until the benchmark runs.
+- AI visibility: "Not run yet" until a real benchmark report exists.
 - **Compare with AI models** opens `{apiBase}/#/compare?product=<product_id>`; **Open full report** opens the web app audit for the URL.
 
 ## Audit as draft
@@ -23,8 +23,5 @@ Right-click the icon > **Options** (or the popup's Settings link):
 - API base URL. Saving requests optional host access to that origin only.
 - Profile token (optional), sent as the `X-Profile-Token` header. Stored in `chrome.storage.local`, never synced.
 - Language: browser default, English or Spanish.
-
-## Preview with mock data
-Open `chrome-extension://<extension-id>/popup.html?mock=1` (add `&lang=es` for Spanish). It renders `mock.json`, a real `/v1/audit` response for `api/tests/fixtures/heavy_tee.html` against the test fixtures dataset.
 
 Permissions: `activeTab`, `scripting`, `storage`, host access to `http://localhost:8000/*`. Other API origins are optional and requested on save. All page and API text is inserted with `textContent` (no `innerHTML`).

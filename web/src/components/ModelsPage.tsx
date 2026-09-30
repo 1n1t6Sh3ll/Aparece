@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Award, BarChart3, FlaskConical, Hourglass, Info } from "lucide-react";
+import { Award, BarChart3, FlaskConical, Hourglass, Info } from "lucide-react";
 import { api, cap, errorText, fieldLabel, useI18n } from "../lib";
 import { Tip } from "./RankParts";
 
@@ -34,7 +34,7 @@ export default function ModelsPage() {
   );
   if (err) return <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}<p role="alert" className="mt-6 text-rose-700 dark:text-rose-400">{err}</p></div>;
   if (!data) return <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">{head}<div className="card mt-6 h-64 animate-pulse bg-stone-100/60 dark:bg-stone-800/40" aria-hidden /></div>;
-  if (!data.available) {
+  if (!data.available || data.sample) {  // a sample file is never shown as results
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
         {head}
@@ -71,11 +71,6 @@ export default function ModelsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
       {head}
-      {data.sample && (
-        <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{t("mod.sample")}
-        </p>
-      )}
 
       {winner && (
         <section className="card mt-6 flex items-start gap-4 p-6 rise">

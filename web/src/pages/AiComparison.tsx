@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, Scale, Check, FlaskConical, Info, Trophy, X } from "lucide-react";
+import { Scale, Check, FlaskConical, Info, Trophy, X } from "lucide-react";
 import { api, errorText, useI18n } from "../lib";
 
 // Page-local strings (EN/ES) so the page stays self-contained while shared i18n/layout are restyled.
@@ -8,11 +8,10 @@ const STR: Record<string, Record<string, string>> = { en: {
   "title": "AI comparison: title, tags, description",
   "sub": "ProductLens and AI models each write a title, tags and description from the same verified facts. Every part is checked for unsupported claims, audited, and tested in a simulated AI shopping context.",
   "controlled": "Controlled evaluation: a simulated shopping context with 4 real competitor pages, judged by AI models. It is not proof of how any real assistant or search engine will rank a product.",
-  "sample": "Sample data: visibility numbers come from mock judges and mean nothing yet. The audits (claims, coverage, tags) are real. A paid run replaces this.",
   "notInSet": "This product is not in the comparison set yet, so there are no AI comparison results for it. Other products' numbers are never shown in its place.",
   "notInSetTitle": "No AI comparison for this product yet",
   "seeSet": "See the products that were compared",
-  "empty": "No comparison report yet. Run benchmark/shootout/run.py to create one.",
+  "empty": "Not run yet. Results appear here after a real run of benchmark/shootout/run.py.",
   "best.title": "Best title",
   "best.tags": "Best tags",
   "best.description": "Best description",
@@ -49,11 +48,10 @@ const STR: Record<string, Record<string, string>> = { en: {
   "title": "Comparación IA: título, etiquetas, descripción",
   "sub": "ProductLens y varios modelos de IA escriben un título, etiquetas y una descripción a partir de los mismos datos verificados. Cada parte se revisa para detectar afirmaciones sin respaldo, se audita y se prueba en un contexto de compra simulado.",
   "controlled": "Evaluación controlada: un contexto de compra simulado con 4 fichas reales de la competencia, juzgado por modelos de IA. No demuestra cómo clasificará un producto ningún asistente o buscador real.",
-  "sample": "Datos de ejemplo: la visibilidad viene de jueces simulados y todavía no significa nada. Las auditorías (afirmaciones, cobertura, etiquetas) son reales. Una ejecución de pago lo sustituirá.",
   "notInSet": "Este producto aún no está en el conjunto de comparación, así que no hay resultados de comparación con IA. Nunca mostramos cifras de otros productos en su lugar.",
   "notInSetTitle": "Aún no hay comparación con IA para este producto",
   "seeSet": "Ver los productos comparados",
-  "empty": "Aún no hay informe de comparación. Ejecuta benchmark/shootout/run.py para crearlo.",
+  "empty": "Aún no se ha ejecutado. Los resultados aparecen aquí tras una ejecución real de benchmark/shootout/run.py.",
   "best.title": "Mejor título",
   "best.tags": "Mejores etiquetas",
   "best.description": "Mejor descripción",
@@ -157,11 +155,12 @@ export default function AiComparison({ productId }: { productId?: string }) {
   const wrap = (body: ReactNode) => <div className="mx-auto max-w-6xl">{head}{body}</div>;
   if (err) return wrap(<p role="alert" className="mt-6 text-rose-700 dark:text-rose-400">{err}</p>);
   if (!data) return wrap(<div className="card mt-6 h-64 animate-pulse bg-stone-100/60 dark:bg-stone-800/40" aria-hidden />);
-  if (!data.available || !data.overall || !data.generators || !data.products) return wrap(<p className="card mt-6 p-6 muted">{t("empty")}</p>);
+  // The API falls back to a mock-judge sample report; never show it as results.
+  if (!data.available || data.sample || !data.overall || !data.generators || !data.products) return wrap(<p className="card mt-6 p-6 muted">{t("empty")}</p>);
 
   const o = data.overall, gens = data.generators, products = data.products;
   const inSet = products.some((p) => p.product_id === productId);
-  if (productId && !inSet) return wrap(  // never show another (demo) product's numbers for a real product
+  if (productId && !inSet) return wrap(  // never show another product's numbers for a real product
     <div className="card mt-6 p-6"><p className="font-semibold">{t("notInSetTitle")}</p><p className="mt-1 text-sm muted">{t("notInSet")}</p>
       <a className="btn-outline mt-4" href="#/compare">{t("seeSet")}</a></div>);
   const cur = products.find((p) => p.product_id === (sel || (inSet ? productId : products[0].product_id)))!;
@@ -171,11 +170,6 @@ export default function AiComparison({ productId }: { productId?: string }) {
       <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-brand-300 bg-brand-50 p-3 text-sm text-brand-900 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-200">
         <FlaskConical className="mt-0.5 size-4 shrink-0" aria-hidden />{t("controlled")}
       </p>
-      {data.sample && (
-        <p role="note" className="mt-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />{t("sample")}
-        </p>
-      )}
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {PARTS.map((part) => (
