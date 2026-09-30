@@ -40,7 +40,7 @@ export default function App() {
         </nav>
       </header>
       <main className="flex-1">
-        {page === "compare" ? <AiComparison productId={arg ? decodeURIComponent(arg) : undefined} /> : page === "models" ? <ModelsPage /> : page === "bulk" ? <BulkPage /> : page === "products" && arg ? <HistoryPage id={Number(arg)} />
+        {page === "compare" ? <AiComparison productId={arg ? decodeURIComponent(arg) : undefined} /> : page === "models" ? <ModelsPage /> : page === "bulk" ? <BulkPage /> : page === "products" && arg ? <HistoryPage id={arg} />
           : page === "products" ? <ProductsPage /> : <AuditPage />}
       </main>
       <footer className="no-print border-t border-slate-200/70 py-8 text-center text-sm muted dark:border-slate-800/70">
