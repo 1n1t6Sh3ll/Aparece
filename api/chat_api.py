@@ -92,18 +92,31 @@ def visibility_records(pid):
 
 
 def experiment_records(pids):
+    """Experiments on the product (treated or control), their result rows (without the bulky raw report) and the
+    lift analysis computed by experiments.lift.analyze (status, statement, caveat, flags, guardrail)."""
     try:
-        from experiments import store as exp  # optional package (TEAM-42)
+        from experiments import lift, store as exp  # optional package (TEAM-42)
     except ImportError:
         return []
+    pids = {p for p in pids if p}
     out = []
     for eid in exp.all_ids():
         e = exp.get(eid)
-        if not pids or not any(p and p in json.dumps(e, default=str) for p in pids):
+        if not pids or not pids & {e.get("product_id"), *(e.get("control_products") or [])}:
             continue
+        results = exp.results(eid)
         out.append(engine.record("experiment", eid, e, e.get("created_at")))
-        out += [engine.record("experiment_result", r["result_id"], {"experiment": eid, **r}, r.get("at"))
-                for r in exp.results(eid)]
+        out += [engine.record("experiment_result", r["result_id"],
+                              {"experiment": eid, **{k: v for k, v in r.items() if k != "report"}}, r.get("at"))
+                for r in results]
+        try:
+            a = lift.analyze(e, results)
+        except (KeyError, TypeError, ValueError, ZeroDivisionError):
+            continue
+        keep = {k: a[k] for k in ("status", "statement", "caveat", "flags", "accuracy", "dev_vs_hidden",
+                                  "generalization")}
+        out.append(engine.record("experiment_analysis", eid, {"experiment": eid, "product_id": e.get("product_id"),
+                                                              **keep}, results[-1]["at"] if results else None))
     return out
 
 

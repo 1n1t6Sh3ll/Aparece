@@ -124,6 +124,25 @@ class ChatApiTest(unittest.TestCase):
         r = self.post(product_id="p_target", message="What is my peer percentile in signals?").json()
         self.assertIn("signals:p_target", {f"{c['type']}:{c['id']}" for c in r["citations"]})
 
+    def test_experiment_results_and_analysis_in_context(self):
+        from experiments import store as exp
+        with mock.patch.dict(os.environ, {"EXPERIMENTS_DB": os.path.join(self.tmp.name, "e.db")}):
+            e = exp.create({"product_id": "p_target", "language": "en", "market": "DE", "problem": "p",
+                            "intervention": "i", "optimization_models": ["mock:mock-1"], "holdout_models": [],
+                            "control_products": ["p_heavy"], "accuracy_before": 0.9})
+            exp.add_result(e["id"], "accuracy", {"phase": "after", "accuracy": 0.95})
+            exp.create({"product_id": "p_other", "language": "en", "market": "DE", "problem": "p",
+                        "intervention": "i", "optimization_models": ["mock:mock-1"]})
+            recs = main.chat_api.collect("p_target")
+            r = self.post(product_id="p_target", message="What is the status of my experiment analysis?").json()
+        exp_recs = [x for x in recs if x["type"].startswith("experiment")]
+        self.assertEqual({(x["type"], x["id"]) for x in exp_recs if x["type"] != "experiment_result"},
+                         {("experiment", e["id"]), ("experiment_analysis", e["id"])})
+        self.assertEqual(sum(x["type"] == "experiment_result" for x in exp_recs), 1)
+        analysis = next(x for x in exp_recs if x["type"] == "experiment_analysis")
+        self.assertIn('"status":"pending"', analysis["text"])
+        self.assertIn(f"experiment_analysis:{e['id']}", r["context"])
+
     def test_token_and_validation(self):
         with mock.patch.dict(os.environ, {"CHAT_TOKEN": "s3cret"}):
             self.assertEqual(self.post(message="price").status_code, 401)
