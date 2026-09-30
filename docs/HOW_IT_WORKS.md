@@ -80,6 +80,24 @@ Full technical detail: [REFERENCE.md](REFERENCE.md). Architecture: [ARCHITECTURE
 
 The exact rules, formulas and code locations behind each step.
 
+### Every part and its code
+
+| Part | What it does | Code |
+|---|---|---|
+| Dataset | 20,037 shirts from Common Crawl and Amazon Reviews 2023; every fact keeps the text that proves it | `dataset/collect/`, `dataset/build/make_ground_truth.py` |
+| Fetch | Downloads a page politely: respects robots.txt, never fetches Amazon | `api/safe_fetch.py` |
+| Verified facts | Rules read the page into facts with evidence (EN/ES) | `dataset/collect/normalize.py`, `api/main.py` |
+| Fine-tuned model | Qwen2.5-0.5B fills facts the rules missed, labelled "predicted" | `train/train.py`, `train/eval.py` |
+| Matching | Comparable shirts: same type, language, audience, sleeve, price band | `analysis/peers.py` |
+| Score and rank | One visible formula for every shirt | `api/audit_api.py` → `quality`, `rank` |
+| Top 3 fixes | Missing facts the best similar shirts state, then description, markup, price, language | `api/audit_api.py` → `build_actions` |
+| Fact-check | Rejects any word or number the facts don't back | `optimizer/guard.py` |
+| Generate Fix | Several candidates from facts only; the reward picks the best one that passes | `optimizer/fix.py`, `train/reward.py` |
+| AI comparison | Shop's text vs Aparece vs AI models on title, tags and description | `benchmark/shootout/` (`live.py` for any product) |
+| AI visibility | Real AI answers to shopping questions; who gets named | `benchmark/harness.py`, `benchmark/match.py` |
+| Monitoring and chat | Re-checks over time; chat cites stored data only | `monitor/`, `chat/` |
+| Web app and extension | Site and Chrome extension | `web/src/`, `extension/` |
+
 **1. Matching (which shirts count as comparable).** `analysis/peers.py` keeps a candidate only if it has:
 - the same product type, language and audience (adult or kids),
 - the same pack size and sleeve length,

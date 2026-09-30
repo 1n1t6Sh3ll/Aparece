@@ -96,7 +96,7 @@ const EN: Doc = {
     "Publish anything to your store without your approval.",
   ],
   runT: "Run it yourself",
-  run: "docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/powerlens:latest   ·   or: git clone, then ./run.sh",
+  run: "docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/aparece:latest   ·   or: git clone, then ./run.sh",
   more: "Full technical reference, API routes and settings: docs/REFERENCE.md in the GitHub repository.",
 };
 
@@ -180,7 +180,7 @@ const ES: Doc = {
     "Publicar nada en tu tienda sin tu aprobación.",
   ],
   runT: "Ejecútalo tú",
-  run: "docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/powerlens:latest   ·   o bien: git clone y después ./run.sh",
+  run: "docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/aparece:latest   ·   o bien: git clone y después ./run.sh",
   more: "Referencia técnica completa, rutas de la API y ajustes: docs/REFERENCE.md en el repositorio de GitHub.",
 };
 

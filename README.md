@@ -2,72 +2,60 @@
 
 **See your product page the way AI shopping assistants do, and fix what they can't read.**
 
-## In plain words
-
-- **The problem.** Shoppers now ask AI assistants what to buy. We asked gpt-4o-mini and Claude Haiku 384 real shopping questions, in English and Spanish. None of the 103 small shirt shops we tested was named once. Big brands (Everlane, Uniqlo, Patagonia) were.
-- **What Aparece does.** You paste a link to your product page. Aparece shows what machines can and cannot read on it, compares it with similar shirts from real stores, and tells you the 3 things to fix first.
-- **What you get.** A rank, the fixes with the evidence for each, and a new title and description that only say what your page can prove. You approve everything; nothing changes on your store by itself.
-- **What it won't do.** Invent facts, get around a website's blocks, or promise that a fix will raise your ranking.
+Shoppers now ask AI what to buy. We asked gpt-4o-mini and Claude Haiku 384 real shopping questions, in English and Spanish. None of the 103 small shirt shops we tested was named; Everlane, Uniqlo and Patagonia were. Paste your product link, and Aparece shows what machines can read on your page, ranks it against similar shirts, and gives you the 3 fixes to make first. It suggests text that only states what your page proves; you approve everything.
 
 ## Try it
 
 ```sh
-docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/powerlens:latest
+docker run -p 8000:8000 ghcr.io/1n1t6sh3ll/aparece:latest
 ```
 
-Then open http://127.0.0.1:8000 and paste a product link. To run from source instead, use `git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens && ./run.sh` (on Windows, `.\run.ps1`). That needs Python 3.12+ and Node 22. No API keys are needed.
+Open http://127.0.0.1:8000 and paste a product link. To run from source: `git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens && ./run.sh` (Windows: `.\run.ps1`). You need Python 3.12+ and Node 22, and no API keys. To rank against real shirts, set `PRODUCTLENS_DATA` to the dataset (build it with `dataset/collect/wdc.py` → `dataset/build/make_ground_truth.py`). The model weights are in the [weights-v1 release](https://github.com/1n1t6Sh3ll/powerlens/releases/tag/weights-v1).
 
-To rank against real shirts, set `PRODUCTLENS_DATA=dataset/output/final/train.jsonl`. The dataset isn't in git because it contains other stores' page text; build it with `dataset/collect/wdc.py` and then `dataset/build/make_ground_truth.py`. The model weights are in the [weights-v1 release](https://github.com/1n1t6Sh3ll/powerlens/releases/tag/weights-v1).
+## How it works
 
-## What we built, and where the code is
+```mermaid
+flowchart TD
+    U["Product link or pasted text"] --> F{"Fetch the page<br/>respects robots.txt, never Amazon<br/>api/safe_fetch.py"}
+    F -- blocked --> X["Extension or pasted draft<br/>extension/"]
+    X --> V
+    F -- ok --> V["Verified facts, each with its evidence<br/>dataset/collect/normalize.py"]
+    Q["Fine-tuned Qwen fills empty fields<br/>labelled 'predicted'<br/>train/"] -.-> V
+    D[("20,037-shirt dataset<br/>dataset/")] --> M
+    V --> M["Match comparable shirts<br/>same type, language, audience, sleeve, price<br/>analysis/peers.py"]
+    M --> S["Score and rank<br/>60 facts + 20 questions + 20 markup<br/>api/audit_api.py"]
+    S --> A["Top 3 fixes, with evidence"]
+    A --> G["Generate Fix<br/>write from facts → fact-check → reward → best wins<br/>optimizer/, train/reward.py"]
+    G --> H{"Merchant approves?"}
+    H -- yes --> P["Use the new title and description"]
+    H -. "accept / dismiss, winner vs loser pairs" .-> T["Training feedback<br/>optimizer/data/pairs.jsonl"]
+    T -.-> Q
+    V --> C["AI comparison<br/>shop vs Aparece vs AI models<br/>benchmark/shootout/"]
+    V --> B["AI visibility<br/>real AI answers: who gets named?<br/>benchmark/harness.py"]
+    P --> N["Monitor over time<br/>snapshots, changes, chat<br/>monitor/, chat/"]
+    N --> F
+```
 
-| Part | What it does | Code |
-|---|---|---|
-| Dataset | 20,037 shirts from Common Crawl and Amazon Reviews 2023; every fact keeps the text that proves it | `dataset/collect/`, `dataset/build/make_ground_truth.py` |
-| Fetch | Downloads a page politely: respects robots.txt, never fetches Amazon | `api/safe_fetch.py` |
-| Verified facts | Rules read the page into facts with evidence (EN/ES) | `dataset/collect/normalize.py`, `api/main.py` |
-| Fine-tuned model | Qwen2.5-0.5B fills facts the rules missed, labelled "predicted" | `train/train.py`, `train/eval.py` |
-| Matching | Finds comparable shirts: same type, language, audience, sleeve, price band | `analysis/peers.py` |
-| Score and rank | Scores every shirt with one visible formula (below) | `api/audit_api.py` → `quality`, `rank` |
-| Top 3 fixes | Missing facts the best similar shirts state, then description, markup, price, language | `api/audit_api.py` → `build_actions` |
-| Fact-check | Rejects any sentence with a word or number the facts don't back | `optimizer/guard.py` |
-| Generate Fix | Writes several candidates from facts only; the reward picks the best one that passes | `optimizer/fix.py`, `train/reward.py` |
-| AI comparison | Shop's text vs Aparece vs AI models on title, tags and description | `benchmark/shootout/` (`live.py` for any product) |
-| AI visibility | Asks real AI assistants shopping questions; measures who gets named | `benchmark/harness.py`, `benchmark/match.py` |
-| Monitoring and chat | Re-checks products over time and shows what changed; the chat cites only stored data | `monitor/`, `chat/` |
-| Web app and extension | The site, and a Chrome extension for pages we can't fetch | `web/src/`, `extension/` |
-
-## How it works (the key formulas)
+**The key formulas**
 
 ```
 listing score = 60 × (key facts stated ÷ 22) + 20 × (shopper questions answered ÷ 9) + 20 × (markup found ÷ 2)
 rank          = 1 + number of comparable shirts with a higher score
-reward        = 1 + share of sentences that pass the fact-check − 2 × flagged sentences + 2 × share of facts covered
+reward        = 1 + share of sentences passing the fact-check − 2 × flagged sentences + 2 × share of facts covered
 ```
 
-In the AI comparison, a title, tag set or description can only win if it passes the fact-check. The winners are:
-- **title:** the best title score;
-- **tags:** the best tag score;
-- **description:** the most AI mentions, or the most facts covered when mentions weren't measured.
+The fact-check rejects any word or number that your page's facts don't back (`optimizer/guard.py`). In the AI comparison, only parts that pass can win: the best title score, the best tag score, and the best description (most AI mentions, or the most facts covered).
 
-In the visibility test, a shop counts as "named" when an AI answer shows its link, or its brand and product name together.
+## Results
 
-Full explanation, every formula with its code location, and the vision mapping: the site's **How it works** page, or [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
-
-## Model comparisons
-
-| What's compared | Result |
+| Test (same input for every model) | Result |
 |---|---|
 | Reading product pages (200 products, 63 stores) | Aparece Qwen2.5-0.5B **85.8%** · GPT-4.1 27.2% · untuned Qwen 4.7% |
-| Writing product copy (same facts for all) | Aparece best on title, tags and description with no unsupported claims; visibility a statistical tie |
-| Which shops AI names (384 questions, 2 models) | 0% for the 103 small shops; big brands named instead |
+| Writing product copy | Aparece best on title, tags and description with no unsupported claims; visibility a statistical tie |
+| Which shops AI names (384 questions) | 0% for the 103 small shops; big brands named instead |
 
-The extraction test uses our own label format, which favours our model. The judges in the copy test are also AI models.
-
-## Human in the loop
-
-People review dataset labels and must confirm the model's guesses before they count as facts. They accept or dismiss every suggested fix. Each winning vs losing text pair is saved as future training data (`optimizer/data/pairs.jsonl`). The model has been trained on verified labels only so far; retraining on this feedback is designed but not run yet.
+Caveats: the extraction test uses our own label format, and the copy-test judges are also AI models. Human feedback is being collected (label reviews, confirmed predictions, accepted fixes, text pairs), but the model hasn't been retrained on it yet.
 
 ## Learn more
 
-[How it works](docs/HOW_IT_WORKS.md) · [Reference: settings and API](docs/REFERENCE.md) · [Vision](docs/VISION.md) · [User stories](docs/USER_STORIES.md). Tests: `python -m unittest discover -s api/tests` and `cd web && npm test`; they run offline. The code is MIT-licensed; the data and model adapters are for research use.
+[How it works](docs/HOW_IT_WORKS.md) covers every formula, where it is in the code, tags, the human loop and the vision. The [Reference](docs/REFERENCE.md) lists all settings and API routes, and there's a [Vision](docs/VISION.md) document. Tests: `python -m unittest discover -s api/tests` and `cd web && npm test` (offline, no paid calls). The code is MIT-licensed; the data and weights are for research use.
