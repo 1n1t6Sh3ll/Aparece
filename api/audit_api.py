@@ -18,7 +18,7 @@ from fastapi.responses import FileResponse
 from pydantic import ValidationError
 
 import dashboard_api as dash
-from analysis.gaps import ATTRIBUTES, INTENTS, analyze, attributes_present, description_chars, description_coverage
+from analysis.gaps import ATTRIBUTES, INTENTS, analyze, attributes_present, description_chars, description_coverage, description_text
 from analysis.peers import SLEEVE_FILL, find_peers, get, price, unknown_sleeve
 from normalize import PRODUCT_TYPE, SHIRT_TYPES, lang_code, match_lookup, shirt_type  # dataset/collect (on path via dashboard_api)
 from tools.linkcheck import status as link
@@ -643,7 +643,8 @@ def audit(payload: dict = Body(...)):
     facts_found = sum(attributes_present(target).values())
     return {
         "product": {**dash.summary(target), "url": get(target, "source", "url"),
-                    "image": (raw.get("image_urls") or [None])[0], "draft": draft},
+                    "image": (raw.get("image_urls") or [None])[0], "draft": draft,
+                    "description": description_text(target)},
         "facts": facts(target, norm),
         "not_found": not_found,
         "summary": {"facts_found": facts_found, "attributes_checked": len(ATTRIBUTES),

@@ -34,7 +34,7 @@ export interface Quality {
 export type BoardRow = Summary & Quality & { is_you: boolean; link_unverified?: boolean };
 
 export interface Audit {
-  product: Summary & { image: string | null; draft: boolean };
+  product: Summary & { image: string | null; draft: boolean; description?: string };
   notes?: string[];
   /** Not a shirt: the full audit without a rank (rank.position is null). read_text is what we read the type from. */
   unranked?: { reason: "not_a_shirt"; type: string | null; read_from: string; read_text: string } | null;

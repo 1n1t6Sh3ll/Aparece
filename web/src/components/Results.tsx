@@ -12,6 +12,7 @@ import { PriceChart, RankChart, ScoreBreakdown } from "./Charts";
 import { CompareTable, Tip } from "./RankParts";
 import FixPanel, { type FixDecision } from "./FixPanel";
 import { factCount } from "../facts";
+import { descStats } from "../description";
 import { CompareLink } from "../pages/AiComparison";
 
 const LABEL_STYLE: Record<Label, string> = {
@@ -236,6 +237,21 @@ function SaveToProducts({ url }: { url: string }) {
   );
 }
 
+/** The description as read from the page, as plain text (React escapes it), line breaks kept, scrollable when long. */
+function DescriptionPanel({ text }: { text: string }) {
+  const { t, lang } = useI18n();
+  const st = descStats(text);
+  const n = { c: st.chars.toLocaleString(lang), w: st.words.toLocaleString(lang) };
+  return (
+    <section className="card p-4 sm:p-5 rise">
+      <details open={st.chars <= 1200}>
+        <summary className="cursor-pointer text-sm font-semibold">{t("desc.title")} <span className="font-normal muted">· {st.chars ? t("desc.count", n) : t("desc.empty")}</span></summary>
+        {st.chars > 0 && <p className="mt-3 max-h-72 overflow-y-auto whitespace-pre-wrap break-words text-sm" lang={lang}>{text.trim()}</p>}
+      </details>
+    </section>
+  );
+}
+
 /** Right-hand results of the audit workspace. */
 export default function Results({ audit, onReset, record, reportId }: { audit: Audit; onReset: () => void; record?: Record<string, unknown> | null; reportId?: string | null }) {
   const { t, lang } = useI18n();
@@ -332,6 +348,8 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
           </ol>
         )}
       </section>
+
+      {p.description !== undefined && <DescriptionPanel text={p.description} />}
 
       {record && <FixPanel record={record} decisions={fixes} onDecide={(f, d) => { setFixes({ ...fixes, [f]: d }); toast("ok", t(d.status === "accepted" ? "sug.acceptedToast" : "sug.dismissedToast")); }} />}
 
