@@ -6,4 +6,11 @@ services:
       - "127.0.0.1:8000:8000"
     environment:
       MODEL_BACKEND: ${MODEL_BACKEND:-rules}
+      MONITOR_ENABLED: ${MONITOR_ENABLED:-0}
+      BENCHMARK_MAX_USD: ${BENCHMARK_MAX_USD:-}
+    volumes:
+      - monitor-data:/app/monitor/data
     restart: unless-stopped
+
+volumes:
+  monitor-data:

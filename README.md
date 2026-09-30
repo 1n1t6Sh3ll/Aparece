@@ -27,6 +27,11 @@ Pages: Product (plus price & reviews from signals, recommendations labelled Obse
 Read-only routes: `GET /v1/products?q=`, `/v1/products/{id}`, `/v1/products/{id}/gaps`, `/v1/products/{id}/signals`, `/v1/products/{id}/competitors`, `/v1/stats`, `/v1/languages`, `/v1/visibility`, `/v1/eval`. Data from env: `PRODUCTLENS_DATA` (normalized `*_clean.jsonl` or ground-truth rows, default `dataset/output/final/train.jsonl`), `PRODUCTLENS_SIGNALS` (`signals/build.py` output, default `dataset/output/signals/signals.jsonl`), `PRODUCTLENS_VISIBILITY` (benchmark `report.json`, default `benchmark/reports/report.json`), `PRODUCTLENS_EVAL` (`train/eval.py` JSON, default `train/runs/eval.json`). Missing files give empty states, not errors.
 Try with fixtures: `cd api && PRODUCTLENS_DATA=tests/fixtures/dashboard_records.jsonl PRODUCTLENS_EVAL=tests/fixtures/dashboard_eval.json PRODUCTLENS_SIGNALS=tests/fixtures/dashboard_signals.jsonl PRODUCTLENS_VISIBILITY=tests/fixtures/dashboard_visibility.json uvicorn main:app`, then open `http://127.0.0.1:8000/dashboard/`. The extension popup links an audited product to `/dashboard/?product=<id>`.
 
+## Monitoring (`monitor/`)
+Enroll product URLs; each crawl (safe_fetch -> extract/normalize -> gaps) stores an immutable SQLite snapshot (content SHA-256) and change events: `DESCRIPTION_CHANGED`, `PRICE_CHANGED`, `ATTRIBUTE_ADDED/REMOVED`, `SCHEMA_CHANGED`, `LANGUAGE_PAGE_ADDED` (hreflang), `VISIBILITY_CHANGED`. Plans are labels only (no billing, no email).
+Routes: `POST /v1/enroll {url, email?, plan?, crawl_now?}`, `GET /v1/monitored`, `DELETE /v1/enroll/{id}`, `POST /v1/monitored/{id}/crawl`, `GET /v1/products/{id}/history`, `GET /v1/plans`.
+`MONITOR_DB` (default `monitor/data/monitor.db`, a compose volume). `MONITOR_ENABLED=1` starts APScheduler: daily crawl 03:00 UTC, weekly visibility Mon 04:00 UTC, which runs `benchmark/harness` (`BENCHMARK_MODELS`, e.g. `anthropic:claude-haiku-4-5`; `BENCHMARK_PROMPTS`) only with an API key and `BENCHMARK_MAX_USD` set, else logs `skipped`; paid SDKs come from `benchmark/requirements.txt`. Cron alternative: `python -m monitor crawl|visibility`.
+
 ## Chrome extension
 `extension/` is a no-build MV3 popup that audits the current product page via `POST /v1/extract`. See `extension/README.md` to load it unpacked or preview it with mock data.
 
