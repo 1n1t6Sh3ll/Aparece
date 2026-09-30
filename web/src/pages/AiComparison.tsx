@@ -44,6 +44,8 @@ const STR: Record<string, Record<string, string>> = { en: {
   "noTags": "no tags",
   "caveats": "Caveats",
   "setup": "{p} products; judges {j} (held out: {h}); {q} dev/val prompts x {r} repeats.",
+  "liveRunning": "Comparing this product now: ProductLens and AI models are writing a title, tags and description from its verified facts…",
+  "liveNote": "Live comparison of this product, just now. Every part was checked for unsupported claims and audited; AI-visibility is measured only in the benchmark set. API cost: US${c}.",
   "real": "Real run on {d}: live AI judges and generators, {n} judge calls, US${c} API cost as recorded by the run."
 }, es: {
   "cta": "Comparar con modelos de IA",
@@ -86,6 +88,8 @@ const STR: Record<string, Record<string, string>> = { en: {
   "noTags": "sin etiquetas",
   "caveats": "Advertencias",
   "setup": "{p} productos; jueces {j} (reservado: {h}); {q} preguntas dev/val x {r} repeticiones.",
+  "liveRunning": "Comparando este producto ahora: ProductLens y los modelos de IA escriben un título, etiquetas y una descripción con sus datos verificados…",
+  "liveNote": "Comparación en directo de este producto, hecha ahora. Cada parte se revisó en busca de afirmaciones sin respaldo y se auditó; la visibilidad en IA solo se mide en el conjunto del benchmark. Coste de API: US${c}.",
   "real": "Ejecución real del {d}: jueces y generadores de IA reales, {n} llamadas de juez, US${c} de coste de API según lo registrado por la ejecución."
 } };
 
@@ -96,9 +100,17 @@ function useStr() {
 }
 
 /** Link from an audit result to this page. */
-export function CompareLink({ productId }: { productId: string }) {
+const LIVE_KEY = "pl.compare.";  // sessionStorage: the audited record handed to #/compare/<id> for a live run
+
+export function CompareLink({ productId, record }: { productId: string; record?: Record<string, unknown> | null }) {
   const s = useStr();
-  return <a href={`#/compare/${encodeURIComponent(productId)}`} className="btn-ghost no-print self-start sm:self-center"><Scale className="size-4" aria-hidden /> {s("cta")}</a>;
+  const keep = () => { try { if (record) sessionStorage.setItem(LIVE_KEY + productId, JSON.stringify(record)); } catch { /* storage off: no live run */ } };
+  return <a href={`#/compare/${encodeURIComponent(productId)}`} onClick={keep} className="btn-ghost no-print self-start sm:self-center"><Scale className="size-4" aria-hidden /> {s("cta")}</a>;
+}
+
+function liveRecord(productId?: string): Record<string, unknown> | null {
+  if (!productId) return null;
+  try { const v = sessionStorage.getItem(LIVE_KEY + productId); return v ? JSON.parse(v) : null; } catch { return null; }
 }
 
 
@@ -125,7 +137,7 @@ type Product = {
 };
 type Part = "title" | "tags" | "description";
 type Report = {
-  available: boolean; sample?: boolean; label?: string; caveats?: string[]; generated_at?: string;
+  available: boolean; sample?: boolean; live?: boolean; label?: string; caveats?: string[]; generated_at?: string;
   cost?: { judge_calls?: number; judge_usd?: number; generation_usd?: number };
   setup?: { products: number; judges: string[]; holdout_judge: string | null; prompts_per_product: number; repeats: number };
   overall?: { winner: string | null; runner_up?: string; decisive?: boolean; diff_vs_runner_up?: CI | null;
@@ -147,8 +159,17 @@ export default function AiComparison({ productId }: { productId?: string }) {
   const [data, setData] = useState<Report | null>(null);
   const [err, setErr] = useState("");
   const [sel, setSel] = useState<string>("");
+  const [live, setLive] = useState<"idle" | "running" | "none">("idle");
   useEffect(() => {
-    api<Report>("/v1/shootout").then(setData).catch((e) => setErr(errorText(e, tShared).msg));
+    api<Report>("/v1/shootout").then((rep) => {
+      const inSaved = !!productId && (rep.products || []).some((p) => p.product_id === productId);
+      const rec = inSaved ? null : liveRecord(productId);
+      if (!rec) { setData(rep); if (productId && !inSaved) setLive("none"); return; }
+      setLive("running");  // not in the saved run: compare this product now (same checks, no simulated shopping test)
+      api<Report & { reason?: string }>("/v1/shootout/live", { method: "POST", body: JSON.stringify({ product: rec, language: lang }) })
+        .then((r) => { if (r.available) { setData(r); setLive("idle"); } else { setData(rep); setLive("none"); } })
+        .catch((e) => { setErr(errorText(e, tShared).msg); setLive("idle"); });
+    }).catch((e) => setErr(errorText(e, tShared).msg));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const head = (
@@ -159,6 +180,7 @@ export default function AiComparison({ productId }: { productId?: string }) {
   );
   const wrap = (body: ReactNode) => <div className="mx-auto max-w-6xl">{head}{body}</div>;
   if (err) return wrap(<p role="alert" className="mt-6 text-rose-700 dark:text-rose-400">{err}</p>);
+  if (live === "running") return wrap(<p className="card mt-6 p-6 muted" role="status">{t("liveRunning")}</p>);
   if (!data) return wrap(<div className="card mt-6 h-64 animate-pulse bg-stone-100/60 dark:bg-stone-800/40" aria-hidden />);
   if (!data.available || !data.overall || !data.generators || !data.products) return wrap(<p className="card mt-6 p-6 muted">{t("empty")}</p>);
 
@@ -174,7 +196,8 @@ export default function AiComparison({ productId }: { productId?: string }) {
       <p role="note" className="mt-5 flex items-start gap-2 rounded-xl border border-brand-300 bg-brand-50 p-3 text-sm text-brand-900 dark:border-brand-800 dark:bg-brand-950/40 dark:text-brand-200">
         <FlaskConical className="mt-0.5 size-4 shrink-0" aria-hidden />{t("controlled")}
       </p>
-      {data.sample === false && data.generated_at && (
+      {data.live && <p role="note" className="mt-3 text-sm muted">{t("liveNote", { c: (data.cost?.generation_usd ?? 0).toFixed(4) })}</p>}
+      {data.sample === false && !data.live && data.generated_at && (
         <p role="note" className="mt-3 text-sm muted">
           {t("real", { d: data.generated_at.slice(0, 10), n: data.cost?.judge_calls ?? "–",
             c: ((data.cost?.judge_usd ?? 0) + (data.cost?.generation_usd ?? 0)).toFixed(4) })}

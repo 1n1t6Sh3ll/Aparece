@@ -9,7 +9,7 @@ so the page is never empty; nothing is computed here.
 """
 import json
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Body, HTTPException, Request
 
 import dashboard_api as dash
 
@@ -32,3 +32,20 @@ def _load(env, default):
 def shootout():
     rep = next((r for r in (_load(e, d) for e, d in SOURCES) if r), None)
     return {**rep, "available": True} if rep else {"available": False}
+
+
+@router.post("/shootout/live")
+def shootout_live(request: Request, payload: dict = Body(...)):
+    """AI comparison for one audited product, on request: {product: <normalized record from POST /v1/audits>,
+    language}. Same generators, guardrail and audit as the benchmark; no simulated AI-shopping test. Paid generators
+    run only with their key, capped per request and per day (benchmark/shootout/live.py)."""
+    try:
+        from profile_api import rate_limit
+        rate_limit(request, "shootout_live", "SHOOTOUT_LIVE_RATE_LIMIT", 6)
+    except ImportError:
+        pass
+    rec = payload.get("product")
+    if not isinstance(rec, dict) or not isinstance(rec.get("identity"), dict):
+        raise HTTPException(422, "bad_product: send the audited record as {product: ...}")
+    from benchmark.shootout.live import compare
+    return compare(rec, str(payload.get("language") or "en"))
