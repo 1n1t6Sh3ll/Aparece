@@ -7,10 +7,16 @@
 !signals/
 !benchmark/
 !monitor/
+!governance/
+!train/common.py
 !web/
 web/node_modules/
 web/dist/
 monitor/data/*
 !monitor/data/.gitignore
+governance/data/*
+!governance/data/.gitignore
 api/tests/
+**/tests/
 **/__pycache__
+**/.env

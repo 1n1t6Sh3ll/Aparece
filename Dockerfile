@@ -12,14 +12,12 @@ WORKDIR /app
 COPY dataset/requirements.txt dataset/requirements.txt
 COPY api/requirements.txt api/requirements.txt
 RUN pip install --no-cache-dir -r api/requirements.txt
-COPY dataset/collect dataset/collect
-COPY api api
-COPY analysis analysis
-COPY dashboard dashboard
+# Source set (api, dataset/collect, analysis, signals, dashboard, monitor, benchmark,
+# governance, train/common.py) is controlled by the .dockerignore allowlist.
+COPY . .
 COPY --from=web /web/dist web/dist
-COPY monitor monitor
-COPY benchmark benchmark
-RUN useradd --create-home --uid 10001 app && mkdir -p monitor/data && chown app monitor/data
+RUN useradd --create-home --uid 10001 app \
+ && mkdir -p monitor/data governance/data && chown app monitor/data governance/data
 USER app
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

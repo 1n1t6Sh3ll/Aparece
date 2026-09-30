@@ -1,74 +1,131 @@
 # ProductLens
 
-Evidence-driven view of how products are represented in search and AI answers. Vision: `docs/VISION.md`.
+ProductLens audits how a product page is understood by search and by AI assistants. It crawls a product page, extracts evidence-backed ground-truth attributes (every value points at an exact substring of the page), compares the product with comparable peers, measures whether AI models mention and cite it for realistic shopping prompts, and turns the gaps into labelled actions (observed fact, supported hypothesis, unknown) that a merchant can monitor over time. It is deterministic by default: no GPU, no paid API calls, and no composite "score". The first vertical is shirts/t-shirts in English and Spanish. Product vision: [docs/VISION.md](docs/VISION.md).
 
-## Layout
-- `dataset/` — shirt dataset schemas, examples, tests (spec: `docs/DATASET_SPEC.md`).
-- `train/` — Qwen fine-tuning and evaluation pipeline (see `train/README.md`).
-- `coordination/` — task board pointer (`BOARD.md`) and human decisions (`DECISIONS.md`).
+## Architecture
 
-## Gap analyzer
-`analysis/` compares one normalized product with up to k comparable products (same type and language; price within ±30% when both prices share a known currency; same audience when known) and reports metrics plus issues typed OBSERVED_FACT / SUPPORTED_HYPOTHESIS / UNKNOWN. No LLM, no composite score, no ranking claims.
-```
-python -m analysis.gaps --data records.jsonl --product-id p_123 [--k 10]
-python -m unittest discover -s analysis/tests -t .
-```
-
-## API
-FastAPI service in `api/` (reuses `dataset/collect` extract + normalize). OpenAPI docs at `/docs`.
-- `GET /v1/health`
-- `POST /v1/extract` with one of `url`, `html`, `text` (+ optional `language`) -> `{product_id, language, raw, normalized, evidence, conflicts, quality_status}`.
-URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s total deadline, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default) or `qwen` (`api/model_backend.py`, `pip install -r api/requirements-qwen.txt`): base Qwen2.5-1.5B-Instruct + LoRA adapter from `QWEN_ADAPTER_PATH` (501 if unset; optional `QWEN_BASE_MODEL`, `QWEN_TIMEOUT_S`=30, `QWEN_MAX_NEW`=512), 4-bit on CUDA else CPU fp32, loaded lazily once, prompt from `train/common.py`. Rule facts with evidence stay primary; the model only fills fields the rules left null, schema-validated, returned as `predicted: {field: {value, confidence, model}}` (never in `normalized`) plus `model_status` (`ok` or `fallback: <reason>`, rules-only on any model error/timeout). `confidence` = geometric mean of the generated token probabilities over the field's value; uncalibrated, null if no scores. The Docker image is rules-only (no `train/`, schema or torch).
-Run: `docker compose up --build` (port 8000 on localhost) or `pip install -r api/requirements.txt && uvicorn main:app --app-dir api`. Tests: `python -m unittest discover -s api/tests`.
-
-## Shirt audit site (`web/`, TEAM-30)
-The main product UI, served at `/` (React + TypeScript + Tailwind, built with Vite to `web/dist`; the Docker image builds it). A merchant pastes a product URL or a draft listing and gets: a listing-quality rank among comparable shirts (formula shown: 60 facts / 20 description / 20 structured data; not an AI or search rank), "3 things to fix first", a side-by-side table with the top-ranked shirts (only stated facts), facts with page evidence, price position, and monitoring (enroll, My products, history). EN/ES UI; bulk audit of up to 20 URLs with CSV export and print.
-API: `POST /v1/audit` with `{url}`, `{html|text}` or a draft `{title, text, price?, currency?, language?}` (`api/audit_api.py`; reuses `/v1/extract`, `analysis/` and the dashboard data loaders, so `PRODUCTLENS_DATA`/`PRODUCTLENS_SIGNALS` apply). Build: `cd web && npm ci && npm run build`; dev: `npm run dev` (proxies `/v1` to port 8000).
-
-## Merchant dashboard (analyst view)
-`dashboard/` is plain HTML/CSS/JS served by the API at `/dashboard/`: product search with facts + evidence, completeness and price vs peers, gap issues by label (reuses `analysis/`); dataset counts; model eval tables. No composite score.
-Pages: Product (plus price & reviews from signals, recommendations labelled Observed fact / Supported hypothesis / Unknown), Competitors, AI visibility, Languages, Dataset, Models. Assumed values (e.g. assumed currency) are labelled; no causal ranking claims.
-Read-only routes: `GET /v1/products?q=`, `/v1/products/{id}`, `/v1/products/{id}/gaps`, `/v1/products/{id}/signals`, `/v1/products/{id}/competitors`, `/v1/stats`, `/v1/languages`, `/v1/visibility`, `/v1/eval`. Data from env: `PRODUCTLENS_DATA` (normalized `*_clean.jsonl` or ground-truth rows, default `dataset/output/final/train.jsonl`), `PRODUCTLENS_SIGNALS` (`signals/build.py` output, default `dataset/output/signals/signals.jsonl`), `PRODUCTLENS_VISIBILITY` (benchmark `report.json`, default `benchmark/reports/report.json`), `PRODUCTLENS_EVAL` (`train/eval.py` JSON, default `train/runs/eval.json`). Missing files give empty states, not errors.
-Try with fixtures: `cd api && PRODUCTLENS_DATA=tests/fixtures/dashboard_records.jsonl PRODUCTLENS_EVAL=tests/fixtures/dashboard_eval.json PRODUCTLENS_SIGNALS=tests/fixtures/dashboard_signals.jsonl PRODUCTLENS_VISIBILITY=tests/fixtures/dashboard_visibility.json uvicorn main:app`, then open `http://127.0.0.1:8000/dashboard/`. The extension popup links an audited product to `/dashboard/?product=<id>`.
-
-## Monitoring (`monitor/`)
-Enroll product URLs; each crawl (safe_fetch -> extract/normalize -> gaps) stores an immutable SQLite snapshot (content SHA-256) and change events: `DESCRIPTION_CHANGED`, `PRICE_CHANGED`, `ATTRIBUTE_ADDED/REMOVED`, `SCHEMA_CHANGED`, `LANGUAGE_PAGE_ADDED` (hreflang), `VISIBILITY_CHANGED`. Plans are labels only (no billing, no email).
-Routes: `POST /v1/enroll {url, email?, plan?, crawl_now?}`, `GET /v1/monitored`, `DELETE /v1/enroll/{id}`, `POST /v1/monitored/{id}/crawl`, `GET /v1/products/{id}/history`, `GET /v1/plans`.
-`MONITOR_DB` (default `monitor/data/monitor.db`, a compose volume). `MONITOR_ENABLED=1` starts APScheduler: daily crawl 03:00 UTC, weekly visibility Mon 04:00 UTC, which runs `benchmark/harness` (`BENCHMARK_MODELS`, e.g. `anthropic:claude-haiku-4-5`; `BENCHMARK_PROMPTS`) only with an API key and `BENCHMARK_MAX_USD` set, else logs `skipped`; paid SDKs come from `benchmark/requirements.txt`. Cron alternative: `python -m monitor crawl|visibility`.
-
-## Chrome extension
-`extension/` is a no-build MV3 popup that audits the current product page via `POST /v1/extract`. See `extension/README.md` to load it unpacked or preview it with mock data.
-
-## AI-visibility benchmark
-`benchmark/` sends the same prompts + system instructions to `mock`, `anthropic`, `openai` (official SDKs; keys only from `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`) and `qwen` (a local OpenAI-compatible server such as Ollama/vLLM at `QWEN_BASE_URL`, default `http://localhost:11434/v1`; free unless priced in `prices.json`, then `--max-usd` applies). Several models per provider can run together (`--models openai:A,openai:B,anthropic:C`); the report compares them side by side, stores raw responses in resumable JSONL, then matches mentions to catalog products (URL, alias, brand+name; country-TLD sites distinct) and reports mention rate, top-k, MRR, citation rate, stability per model/language/site. Hidden split is excluded unless `--splits` names it. Always `--dry-run` first; paid runs need `--max-usd` and a price in `benchmark/prices.json` (reviewer-verified; re-check sources).
-
-T-shirt prompt set: `benchmark/prompts/tshirts.jsonl` (dev/val) holds 120 canonical intents (`INTENT_001`…), each written in natural EN (US/GB) and ES (ES/MX), with no brand names. The seeded 60/20/20 split by intent is in `benchmark/prompts/split.py`. Hidden prompts are kept only in `benchmark/prompts/hidden.jsonl`; optimizers must never read that file.
-```
-python -m benchmark.harness run --prompts benchmark/examples/prompts.example.jsonl --models mock:mock-1 --catalog benchmark/examples/catalog.example.jsonl --out runs.jsonl [--repeats 3 --shuffle --dry-run --max-usd 5]
-python -m benchmark.harness report --results runs.jsonl --catalog benchmark/examples/catalog.example.jsonl --out-dir reports/
-python -m unittest discover -s benchmark/tests -t .
+```mermaid
+flowchart LR
+  A[Crawl] --> B[Ground truth<br/>extract + normalize with evidence]
+  B --> C[Compare / rank vs peers]
+  B --> D[AI visibility benchmark]
+  D --> E[Hallucination check<br/>AI answers vs ground truth]
+  C --> F[Actions<br/>audit site, dashboard, extension]
+  E --> F
+  F --> G[Monitoring<br/>snapshots + change events]
+  G --> A
 ```
 
-Claim check (hallucination detection, `benchmark/claims.py`): `report` also parses the sentences around each matched product with the `dataset/collect/normalize.py` rules (composition %, fit, sleeve, neckline, gsm, price+currency, colors, sizes, audience, origin, certifications) and compares them with that product's non-null ground truth in the catalog (normalized records with evidence). Each claim is SUPPORTED, CONTRADICTED, or UNVERIFIABLE (gold unknown; never counted wrong). Per model/language: claim accuracy = supported/(supported+contradicted), hallucination rate = contradicted/(supported+contradicted), unverifiable share; examples quote the answer, gold value and evidence. Origin/certifications are checked against page text; a certification absent from the page stays unverifiable. Prices in a currency other than the gold currency are unverifiable. Sentences naming several products are skipped.
+Stage-by-stage mapping to code: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Review and price signals (`signals/`)
-Deterministic per-product signals keyed by `product_id`, written to `dataset/output/signals/` (git-ignored).
+| Path | What |
+|---|---|
+| `web/` | Shirt audit site served at `/` (React + TypeScript + Vite): paste a URL or draft listing, get a listing-quality rank among comparable shirts (formula shown; not an AI or search rank), top 3 fixes, side-by-side peers, facts with evidence, price position, monitoring; EN/ES; bulk audit of up to 20 URLs with CSV export |
+| `api/` | FastAPI service: `POST /v1/audit`, extraction, dashboard, monitoring and governance routes, OpenAPI at `/docs` |
+| `governance/` | Action policy (`auto` / `approve` / `forbidden`, each with an owner), append-only audit log, approvals ([docs/GOVERNANCE.md](docs/GOVERNANCE.md)) |
+| `dataset/` | Collectors (live fetch, WDC, Amazon Reviews 2023), normalization rules, ground-truth build ([spec](docs/DATASET_SPEC.md), [README](dataset/README.md)) |
+| `analysis/` | Peer comparison and gap issues (no LLM) |
+| `signals/` | Review and price signals |
+| `benchmark/` | AI-visibility benchmark harness |
+| `monitor/` | Scheduled crawls, snapshots, change events |
+| `dashboard/`, `extension/` | Analyst dashboard (served at `/dashboard/`) and MV3 Chrome popup |
+| `train/` | Optional Qwen2.5-1.5B QLoRA extractor (GPU; not needed to run the demo) |
+
+## Quickstart
+
+Docker (one command; audit site at http://127.0.0.1:8000/, dashboard at `/dashboard/`, API docs at `/docs`):
+
 ```sh
-python signals/reviews.py --products <amazon>/shirts_raw.jsonl   # streams ~28 GB Amazon Reviews 2023 (research-only)
-python signals/build.py --amazon-dir <amazon output dir> --wdc-dir <wdc output dir>
-python -m unittest discover -s signals/tests -t .
+docker compose up --build
 ```
-- Reviews: Amazon rating mean/count/histogram + up to 3 verbatim excerpts (<=280 chars, most helpful) per `parent_asin`; WDC `aggregateRating`/`review` from schema.org.
-- Prices: discount % from explicit list price; `suspicious_discount` if >=50% off or list > peer p90 while price <= peer p75. Peer percentile/p25-p75 guidance within `product_type|language|currency|observed-or-assumed currency` (n>=5); guidance is evidence, not a promise.
-- USD 2026: ECB reference rates (2024-10-01) then US CPI-U (BLS CUUR0000SA0) to 2026-08; null when currency, date, or rate is unknown. Amazon (amazon.com) prices are assumed USD, period 2023. Tables and sources: `signals/reference.py`.
-- Flags: `missing_currency`, `nonpositive_price`, `price_outlier` (log price beyond 3 IQR of peers, n>=10), `rating_out_of_range`, `rating_conflict`, `sale_above_list`, `conflicting_prices`, `suspicious_discount`.
-- TODO: price over time from Common Crawl snapshots.
 
-## Governance (`governance/`)
-Every action is `auto`, `approve` or `forbidden`, and each has a named owner (Account owner, Merchant or ProductLens operator). All decisions go to an append-only audit log in `GOVERNANCE_DB`. Endpoints: `GET /v1/governance/policy`, `GET /v1/audit-log?limit=`, `GET|POST /v1/approvals` (POST needs `GOVERNANCE_TOKEN`), `POST /v1/predictions/confirm`. See [docs/GOVERNANCE.md](docs/GOVERNANCE.md).
+Without Docker (Python 3.12+; creates `.venv`, installs `api/requirements.txt`, runs the tests, starts the API on :8000):
 
-## Checks
-CI (`ci / check`) runs `python -m unittest discover -s dataset/tests`, compiles `train/`, and runs `api/tests`.
+```sh
+./run.sh              # macOS/Linux/Git Bash
+.\run.ps1             # Windows PowerShell
+./run.sh --skip-tests # start faster
+```
 
-## Merging
-PR only. `main` requires the `check` status and 1 approval (repo admins can bypass the approval on PR merge). Every merge also needs independent review, updated docs, and explicit human approval of the exact revision.
+Demo with bundled fixtures (no downloads, no keys):
+
+```sh
+tools/demo_data.sh   # then open http://127.0.0.1:8000/dashboard/
+```
+
+Configuration: copy `.env.example` to `.env` and uncomment what you need. `run.sh`/`run.ps1` load it; `docker compose` reads it for variable substitution. Dashboard data paths (`PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL`) are optional; missing files give empty states. Never commit `.env`.
+
+The audit site at `/` needs the `web/` build: Docker builds it; `run.sh`/`run.ps1` build it when `npm` is available (else `cd web && npm ci && npm run build`; dev server: `npm run dev`, proxies `/v1` to :8000). Without it the API and `/dashboard/` still work.
+
+Main routes: `GET /v1/health`, `POST /v1/audit` (`{url}`, `{html|text}` or a draft `{title, text, price?, currency?, language?}`), `POST /v1/extract`, `GET /v1/products?q=`, `/v1/products/{id}/gaps`, `/v1/visibility`, `/v1/eval`, `POST /v1/enroll`, `GET /v1/governance/policy`, `GET /v1/audit-log`, `GET|POST /v1/approvals` (POST disabled unless `GOVERNANCE_TOKEN` is set). Details at `/docs`.
+
+Optional model backend: `MODEL_BACKEND=qwen` with `pip install -r api/requirements-qwen.txt` and a LoRA adapter at `QWEN_ADAPTER_PATH` (base Qwen2.5-1.5B-Instruct; 4-bit on CUDA, else CPU). Rule facts with evidence stay primary; the model only fills fields the rules left null, returned separately as `predicted` with `model_status`, and falls back to rules on any error. The Docker image is rules-only.
+
+## Tests
+
+```sh
+python -m unittest discover -s analysis/tests -t .
+python -m unittest discover -s benchmark/tests -t .
+python -m unittest discover -s signals/tests -t .
+python -m unittest discover -s dataset/tests
+python -m unittest discover -s api/tests
+```
+
+`run.sh` runs all five before starting the server. Tests use local fixtures and the `mock` model; they make no network or paid calls.
+
+## AI-visibility benchmark (spend-capped)
+
+```sh
+# free: mock model
+python -m benchmark.harness run --prompts benchmark/examples/prompts.example.jsonl \
+  --models mock:mock-1 --catalog benchmark/examples/catalog.example.jsonl --out runs.jsonl
+python -m benchmark.harness report --results runs.jsonl \
+  --catalog benchmark/examples/catalog.example.jsonl --out-dir benchmark/reports/
+
+# paid: always --dry-run first, then cap spend
+python -m benchmark.harness run ... --models anthropic:<model> --dry-run
+python -m benchmark.harness run ... --models anthropic:<model> --max-usd 5
+```
+
+- Keys come only from `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`. Paid runs require `--max-usd` and a price in `benchmark/prices.json`; the harness stops at the cap.
+- Local models: `qwen:<model>` against an OpenAI-compatible server at `QWEN_BASE_URL` (default Ollama).
+- Prompt set: `benchmark/prompts/tshirts.jsonl` (120 brand-free intents, EN US/GB and ES ES/MX, seeded 60/20/20 split). `benchmark/prompts/hidden.jsonl` is the held-out split; optimizers must never read it.
+- Scheduled weekly visibility (`MONITOR_ENABLED=1`) runs only when a key and `BENCHMARK_MAX_USD` are both set; otherwise it logs `skipped`.
+- Hallucination check (`benchmark/claims.py`): `report` parses the sentences around each matched product with the `normalize.py` rules and labels each attribute claim SUPPORTED / CONTRADICTED / UNVERIFIABLE against that product's non-null ground truth. Per model/language it reports claim accuracy = supported/(supported+contradicted), hallucination rate = contradicted/(supported+contradicted), the unverifiable share (never counted wrong), and quoted examples with gold evidence.
+- Metrics (mention rate, top-k, MRR, citation rate, stability) describe observed outputs of black-box systems, not their internals.
+
+## Results
+
+No results are claimed in this README. Numbers appear only when the evaluation files exist in your checkout:
+
+- Extraction eval: `train/runs/eval.json` (from `train/eval.py`), shown at `/dashboard/` (Models) and `GET /v1/eval`.
+- AI visibility: `benchmark/reports/report.json` (from `benchmark.harness report`), shown at `/dashboard/` (AI visibility) and `GET /v1/visibility`.
+- Dataset stats: `dataset/output/final/stats.json`.
+
+These outputs are git-ignored or generated locally; the files under `api/tests/fixtures/` are test fixtures, not results.
+
+## Data provenance and licensing
+
+The code is MIT-licensed ([LICENSE](LICENSE)). Datasets are not redistributed in this repo (`dataset/output/` is git-ignored) and are for research use only.
+
+| Source | Use | Terms |
+|---|---|---|
+| Live product pages (`dataset/collect/fetch.py`, `monitor/`) | Crawl and audit | robots.txt respected, 1 req/s per host, identifying User-Agent, no challenge bypass; page content stays with its owner |
+| [Web Data Commons schema.org Product, 2024-12](https://data.dws.informatik.uni-mannheim.de/structureddata/2024-12/quads/classspecific/Product/) (Common Crawl, Oct 2024) | Training/eval records | Research use; underlying pages remain their owners' content |
+| [Amazon Reviews 2023](https://amazon-reviews-2023.github.io/) (McAuley Lab) | Training volume, review signals | License not declared: research-only; every row carries `provenance.license = "undeclared-research-only"` so it can be excluded |
+| ECB reference rates, BLS CPI-U | USD-2026 price normalization | Public statistics; sources in `signals/reference.py` |
+| `Qwen/Qwen2.5-1.5B-Instruct` (optional) | Extraction fallback | Apache-2.0 per its model card |
+
+Do not use the collected data commercially without checking each source's terms. No third-party code is copied into this repo (dependencies are installed from `requirements.txt` files), so there is no THIRD_PARTY_NOTICES.md; add one if code is copied later.
+
+## Governance
+
+Every action is `auto`, `approve` or `forbidden` with a named owner (account owner, merchant, ProductLens operator); decisions go to an append-only audit log (`GOVERNANCE_DB`). Paid benchmark runs need a key and a spend cap; optimizers never read the hidden prompt split. Full policy: [docs/GOVERNANCE.md](docs/GOVERNANCE.md). Task board and decisions: `coordination/`.
+
+## Checks and merging
+
+CI (`ci / check`) runs `dataset/tests`, compiles `train/`, and runs `api/tests`. PR only: `main` requires the `check` status and 1 approval (repo admins can bypass the approval on PR merge). Every merge also needs independent review, updated docs, and explicit human approval of the exact revision.
+
+## Team and credits
+
+Built by [1n1t6sh3ll](https://github.com/1n1t6Sh3ll) with AI coding agents (Claude, Codex) working through a shared task board with independent review. Thanks to the Web Data Commons team (University of Mannheim), Common Crawl, the McAuley Lab (UCSD) for Amazon Reviews 2023, and the Qwen team.
