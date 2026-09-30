@@ -43,6 +43,8 @@ flowchart LR
     V --> L["Check now: does AI recommend it?<br/>api/visibility_live_api.py"]
     S --> N["Monitor, chat, governance"]
 ```
+## **Video POC**
+https://github.com/user-attachments/assets/ff4492f9-08dd-4be1-bd3e-df25adf25a27
 
 **Rank formula** (`api/audit_api.py`, no AI): `score = 60 x (facts stated / 22) + 20 x (shopper questions the description answers / 9) + 20 x (schema.org Product and Offer markup / 2)`. Ranked among up to 24 shirts of the same type, language, audience and sleeve, price within 30%. If structured data is unknown for any of them, weights become 75 / 25. It ranks listing completeness, not AI visibility.
 
