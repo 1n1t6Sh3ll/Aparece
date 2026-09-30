@@ -17,8 +17,8 @@ from fastapi.responses import FileResponse
 from pydantic import ValidationError
 
 import dashboard_api as dash
-from analysis.gaps import ATTRIBUTES, analyze, attributes_present, description_chars
-from analysis.peers import find_peers, get, price
+from analysis.gaps import ATTRIBUTES, INTENTS, analyze, attributes_present, description_chars, description_coverage
+from analysis.peers import SLEEVE_FILL, find_peers, get, price, unknown_sleeve
 from normalize import PRODUCT_TYPE, SHIRT_TYPES, lang_code, match_lookup, shirt_type  # dataset/collect (on path via dashboard_api)
 
 router = APIRouter()
@@ -27,12 +27,8 @@ K = 10          # most-similar shirts listed as "similar products"
 RANK_K = 24     # comparable shirts ranked together with the target (up to 25 in total)
 TOP = 10        # the action plan is derived from the top-ranked comparable shirts
 TABLE_PEERS = 5
-W_FACTS, W_DESC, W_SD = 60, 20, 20
-FORMULA = ("Listing quality = 60 x (key facts stated / 23) + 20 x min(1, description characters / group median) "
-           "+ 20 x (schema.org Product and Offer markup present / 2). It ranks page completeness among comparable "
-           "shirts only; it is not an AI-visibility or search rank.")
-FORMULA_DRAFT = ("Draft listing quality = 75 x (key facts stated / 23) + 25 x min(1, description characters / group "
-                 "median). Structured data is not scored for drafts. Not an AI-visibility or search rank.")
+BASE_WEIGHTS = {"facts": 60, "description": 20, "structured_data": 20}  # renormalized over the components used
+FACT_FIELDS = [f"{s}.{k}" for s, k in ATTRIBUTES if (s, k) != ("content", "full_description")]  # the text is scored once
 LABELS = {
     "identity.brand": "Brand", "identity.audience": "Who it's for (men, women, unisex)",
     "identity.subcategory": "Category", "content.full_description": "Product description",
@@ -99,25 +95,46 @@ def price_position(target, peers):
             "p25": round(p25, 2), "median": round(p50, 2), "p75": round(p75, 2), "position": pos}
 
 
-def weights(with_sd):
-    """Drafts have no page markup yet, so they are ranked on facts and description only (75/25)."""
-    return {"facts": W_FACTS, "description": W_DESC, "structured_data": W_SD} if with_sd else \
-        {"facts": 75, "description": 25, "structured_data": 0}
+SD_FLAGS = ("product_schema_present", "offer_schema_present")
 
 
-def quality(rec, desc_ref, with_sd=True):
+def sd_known(rec):
+    """Structured-data status is known only for records whose markup was read (live pages, normalized rows).
+    Drafts and ground-truth dataset rows carry no status."""
+    sd = rec.get("structured_data")
+    return isinstance(sd, dict) and all(isinstance(sd.get(f), bool) for f in SD_FLAGS)
+
+
+def weights(recs):
+    """BASE_WEIGHTS over the components known for every record compared (target and peers alike); a component
+    unknown for any of them is dropped for all and the rest renormalized to 100, so nobody gets free points."""
+    use = {k: w for k, w in BASE_WEIGHTS.items() if k != "structured_data" or all(sd_known(r) for r in recs)}
+    total = sum(use.values())
+    return {k: round(100 * use.get(k, 0) / total, 2) for k in BASE_WEIGHTS}
+
+
+def formula(w):
+    sd = (f" + {w['structured_data']:g} x (schema.org Product and Offer markup found / 2)" if w["structured_data"]
+          else "; structured data is not scored because it is unknown for the dataset shirts (or for a draft)")
+    return (f"Listing quality = {w['facts']:g} x (key facts stated / {len(FACT_FIELDS)}) + {w['description']:g} x "
+            f"(shopper questions the description answers in sentences and that match a verified fact / "
+            f"{len(INTENTS)}, each counted once; keyword lists and repeated text do not count){sd}. Drafts and pages use the same formula. Ties share a position. It ranks listing "
+            "completeness among comparable shirts only; it is not an AI-visibility or search rank.")
+
+
+def quality(rec, w):
     """Transparent listing-quality components (0-100); every component is returned so the UI shows the formula."""
-    w = weights(with_sd)
-    facts_n = sum(attributes_present(rec).values())
-    chars = description_chars(rec)
+    facts_n = sum(attributes_present(rec)[f] for f in FACT_FIELDS)
+    cov = description_coverage(rec)
     sd = rec.get("structured_data") or {}
-    sd_n = sum(bool(sd.get(f)) for f in ("product_schema_present", "offer_schema_present"))
-    points = {"facts": round(w["facts"] * facts_n / len(ATTRIBUTES), 1),
-              "description": round(w["description"] * (min(1.0, chars / desc_ref) if desc_ref else 0.0), 1),
+    sd_n = sum(bool(sd.get(f)) for f in SD_FLAGS)
+    points = {"facts": round(w["facts"] * facts_n / len(FACT_FIELDS), 1),
+              "description": round(w["description"] * cov["value"], 1),
               "structured_data": round(w["structured_data"] * sd_n / 2, 1)}
     return {"score": round(sum(points.values()), 1), "points": points, "facts_stated": facts_n,
-            "facts_checked": len(ATTRIBUTES), "description_chars": chars, "description_ref": desc_ref,
-            "structured_data_flags": sd_n}
+            "facts_checked": len(FACT_FIELDS), "description_chars": description_chars(rec),
+            "description_intents": cov["intents"], "description_ref": cov["of"],
+            "description_repetition": cov["repetition"], "structured_data_flags": sd_n}
 
 
 def peer_key(target, recs):
@@ -133,20 +150,25 @@ def peer_key(target, recs):
                  "and audience without a price band; prices were not compared.")
 
 
-def rank(target, recs, with_sd=True, match=None):
-    """Rank the target among comparable shirts (analysis.peers hard filters: type, language, price band, audience).
-    `match` (default: target) is the record used for peer matching. Returns (rank dict, shirts ordered by quality)."""
+def rank(target, recs, match=None):
+    """Rank the target among comparable shirts (analysis.peers hard filters). `match` (default: target) is the
+    record used for peer matching. Ties share a position ("position".."position_to"); inside a tie the order is
+    neutral (by product_id), never in the target's favour. Returns (rank dict, shirts ordered by quality)."""
     group = [p for _, p in find_peers(match or target, recs, RANK_K)]
-    ref = statistics.median([description_chars(x) for x in group + [target]])
-    scored = sorted(((quality(x, ref, with_sd), x) for x in group), key=lambda q: -q[0]["score"])
-    tq = quality(target, ref, with_sd)
-    pos = 1 + sum(q["score"] > tq["score"] for q, _ in scored)
-    board = [{**dash.summary(x), "url": get(x, "source", "url"), "is_you": False, **q} for q, x in scored]
-    board.insert(pos - 1, {**dash.summary(target), "url": get(target, "source", "url"), "is_you": True, **tq})
-    return {"position": pos, "total": len(group) + 1, "score": tq["score"], "components": tq,
-            "formula": FORMULA if with_sd else FORMULA_DRAFT, "kind": "listing_quality", "weights": weights(with_sd),
+    w = weights(group + [target])
+    tq = quality(target, w)
+    rows = [(quality(x, w), x, False) for x in group] + [(tq, target, True)]
+    rows.sort(key=lambda r: (-r[0]["score"], str(r[1].get("product_id") or "")))
+    pos = 1 + next(i for i, r in enumerate(rows) if r[2])
+    first = 1 + sum(q["score"] > tq["score"] for q, _, _ in rows)
+    last = sum(q["score"] >= tq["score"] for q, _, _ in rows)
+    board = [{**dash.summary(x), "url": get(x, "source", "url"), "is_you": you, **q} for q, x, you in rows]
+    return {"position": pos, "position_from": first, "position_to": last, "tied": last - first,
+            "total": len(group) + 1, "score": tq["score"], "components": tq, "formula": formula(w),
+            "kind": "listing_quality", "weights": w,
+            "price_band": bool(price(match or target) and get(match or target, "commerce", "currency")),
             "note": "Listing quality rank; an AI-visibility rank comes after the benchmark.",
-            "leaderboard": board}, [x for _, x in scored]
+            "leaderboard": board}, [x for _, x, you in rows if not you]
 
 
 def comparison_table(target, top):
@@ -405,7 +427,7 @@ def audit(payload: dict = Body(...)):
     norm, raw = ex["normalized"], ex["raw"]
     notes = []
     if draft:
-        norm["structured_data"] = {"product_schema_present": False, "offer_schema_present": False,
+        norm["structured_data"] = {"product_schema_present": None, "offer_schema_present": None,
                                    "product_group_present": False, "raw_json_ld": []}
         draft_facts(norm, d)
         if d["language_detected"]:
@@ -433,9 +455,13 @@ def audit(payload: dict = Body(...)):
     key, note = peer_key(target, recs)
     notes += [note] if note else []
     matched = find_peers(key, recs, K)
-    rk, ranked = rank(target, recs, with_sd=not draft, match=key)
+    rk, ranked = rank(target, recs, match=key)
     if not ranked and get(target, "identity", "product_type") != "unknown":
         notes.append("No comparable shirts found: we need the same product type and language in our dataset.")
+    n_unknown = unknown_sleeve(target, ranked)
+    if n_unknown:
+        notes.append(f"Fewer than {SLEEVE_FILL} comparable shirts state the same sleeve length as yours, so {n_unknown} "
+                     "shirts that don't state a sleeve length were included.")
     top = ranked[:TOP]
     res = analyze(target, top)  # the plan: what the top-ranked comparable shirts state that this one doesn't
     m = res["metrics"]

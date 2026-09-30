@@ -35,8 +35,8 @@ class AuditTest(unittest.TestCase):
         self.assertFalse(b["product"]["draft"])
         # 4 comparable en/EUR t-shirts in band (p_de other language, p_hood other type, p_boxy out of the +/-30% band)
         rk = b["rank"]
-        self.assertEqual((rk["position"], rk["total"]), (4, 5))
-        self.assertEqual(rk["components"]["facts_stated"], 12)
+        self.assertEqual((rk["position"], rk["total"]), (1, 5))  # the peer fixtures have no description text
+        self.assertEqual(rk["components"]["facts_stated"], 11)  # 22 facts: the description is scored once, not as a fact
         pts = rk["components"]["points"]
         self.assertAlmostEqual(rk["score"], pts["facts"] + pts["description"] + pts["structured_data"], places=1)
         self.assertIn("not an AI-visibility or search rank", rk["formula"])
@@ -286,6 +286,82 @@ class AuditTest(unittest.TestCase):
             b = self.audit(url=URL)
         fp.assert_called_once_with(URL)
         self.assertEqual(b["product"]["url"], URL)
+
+    def blink(self):
+        import json
+        prod = json.loads((FIX / "shopify_blink_tee.json").read_text(encoding="utf-8"))["product"]
+        u = "https://merchjungle.com/products/blink-182-roger-rabbit-tee"
+        with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(FIX / "dataset_blink_peers.jsonl")}), \
+                mock.patch.object(safe_fetch, "fetch_page", return_value=(u, safe_fetch.shopify_html(prod))):
+            page = self.audit(url=u)
+            draft = self.audit(title=prod["title"], description=re.sub(r"<[^>]+>", " ", prod["body_html"]),
+                               language="en", price=50, currency="AUD")
+        return page, draft
+
+    def test_no_free_structured_data_points(self):
+        """#82: dataset rows carry no markup status, so markup is scored for nobody (not 20 free points to the page)."""
+        page, _ = self.blink()
+        self.assertTrue(page["comparison"]["structured_data"]["product_schema_present"]["target"])
+        self.assertEqual(page["rank"]["weights"], {"facts": 75.0, "description": 25.0, "structured_data": 0.0})
+        self.assertTrue(all(r["points"]["structured_data"] == 0 for r in page["leaderboard"]))
+        self.assertIn("structured data is not scored", page["rank"]["formula"])
+        # peers whose markup was read (normalized rows) -> scored for everyone
+        b = self.audit(html=HTML, url=URL)
+        self.assertEqual(b["rank"]["weights"]["structured_data"], 20.0)
+
+    def test_draft_and_page_on_one_scale(self):
+        """#85: the same components and weights for a page and the equivalent draft; same facts/description points
+        for the same record whether it is scored as a page or a draft."""
+        import audit_api
+        page, draft = self.blink()
+        self.assertEqual(page["rank"]["weights"], draft["rank"]["weights"])
+        self.assertEqual(page["rank"]["components"]["points"]["description"],
+                         draft["rank"]["components"]["points"]["description"])
+        rec = {"content": {"full_description": "Soft 100% cotton jersey tee, regular fit, crew neck."},
+               "materials": {"primary_material": "cotton"}, "structured_data": {"product_schema_present": True,
+                                                                               "offer_schema_present": True}}
+        as_draft = {**rec, "structured_data": {"product_schema_present": None, "offer_schema_present": None}}
+        w = audit_api.weights([rec, as_draft])
+        self.assertEqual(w["structured_data"], 0)
+        qa, qb = audit_api.quality(rec, w), audit_api.quality(as_draft, w)
+        self.assertEqual((qa["score"], qa["points"]), (qb["score"], qb["points"]))
+
+    def test_keyword_stuffing_does_not_climb(self):
+        """#83: padding/stuffing adds no points and never moves a listing up; a real fact does."""
+        base = "Classic men's crew neck t-shirt in soft 100% cotton jersey. Regular fit, short sleeves. Machine washable."
+        runs = {k: self.audit(title="Men's Crew Neck Cotton Tee", description=d, language="en")["rank"] for k, d in (
+            ("base", base), ("stuffed", base + " cotton t-shirt men tee crew neck black cotton" * 12),
+            ("repeated", " ".join([base] * 6)), ("fact", base + " Fabric weight 180 gsm."),
+            ("keywords", base + " wash iron organic gots model wearing size guide"))}
+        self.assertLessEqual(runs["stuffed"]["score"], runs["base"]["score"])
+        self.assertGreaterEqual(runs["stuffed"]["position"], runs["base"]["position"])
+        self.assertLessEqual(runs["repeated"]["score"], runs["base"]["score"])
+        self.assertGreater(runs["fact"]["score"], runs["base"]["score"])
+        # PR #86 review: a bare keyword list (care, organic, GOTS, size guide) with no verified facts earns nothing
+        self.assertLessEqual(runs["keywords"]["score"], runs["base"]["score"])
+        self.assertGreaterEqual(runs["keywords"]["position_from"], runs["base"]["position_from"])
+        self.assertEqual(runs["stuffed"]["components"]["facts_checked"], 22)  # the description is not also a fact
+
+    def test_ties_share_a_position_in_neutral_order(self):
+        """#83: a target tied with peers gets the shared range; inside it the order is by product_id, not in its favour."""
+        import json
+        me = client.post("/v1/extract", json={"html": HTML, "url": URL}).json()["normalized"]
+        twins = [{**me, "product_id": pid, "source": {**me["source"], "url": f"https://x.example/{pid}",
+                                                      "canonical_url": None}} for pid in ("p_0", "p_zzzz")]
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "r.jsonl"
+            p.write_text("\n".join(json.dumps(r) for r in twins), encoding="utf-8")
+            with mock.patch.dict(os.environ, {"PRODUCTLENS_DATA": str(p)}):
+                b = self.audit(html=HTML, url=URL)
+                again = self.audit(html=HTML, url=URL)
+        rk = b["rank"]
+        self.assertEqual((rk["total"], rk["position_from"], rk["position_to"], rk["tied"]), (3, 1, 3, 2))
+        self.assertEqual(len({r["score"] for r in b["leaderboard"]}), 1)
+        ids = [r["product_id"] for r in b["leaderboard"]]
+        self.assertEqual(ids, sorted(ids))  # neutral order: p_0 < target id < p_zzzz, not the target first
+        self.assertEqual(rk["position"], 1 + ids.index(me["product_id"]))
+        self.assertEqual(rk["position"], 2)
+        self.assertEqual(again["rank"], rk)  # stable
 
     def test_ui_routes(self):
         import audit_api
