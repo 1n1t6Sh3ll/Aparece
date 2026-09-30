@@ -124,7 +124,7 @@ function Compare({ id, snaps }: { id: string; snaps: Snapshot[] }) {
   );
 }
 
-function ProductChat({ productId }: { productId: string | null }) {
+function ProductChat({ productId }: { productId: string }) {
   const { t } = useI18n();
   const [q, setQ] = useState("");
   const [log, setLog] = useState<{ q: string; a?: ChatAnswer; err?: string }[]>([]);
@@ -282,7 +282,7 @@ export default function ProductDetail({ id }: { id: string }) {
               </ol>
             )}
           </section>
-          <ProductChat productId={a?.product.product_id ?? null} />
+          <ProductChat productId={id} />
         </aside>
       </div>
     </div>

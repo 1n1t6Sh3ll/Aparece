@@ -720,5 +720,12 @@
   "mod.origEn": "original text in English",
   "pd.enterToken": "Manage key",
   "pd.useToken": "Open history",
-  "nav.closeMenu": "Close menu"
+  "nav.closeMenu": "Close menu",
+  "sug.reward": "Reward score",
+  "sug.accuracy": "Fact accuracy",
+  "sug.rw.grounding": "Grounding",
+  "sug.rw.hallucination": "Hallucination",
+  "sug.rw.coverage": "Coverage",
+  "sug.rwMax": "best {n}",
+  "sug.rewardNote": "The reward scores the suggested text only: 1 point for a valid title and description, plus grounding (share of sentences backed by facts on your page), minus 2 for each unsupported sentence, plus coverage (share of your verified facts it states, up to 2). Fact accuracy is the share of claims backed by verified facts: your current text → the suggestion."
 }
