@@ -37,6 +37,7 @@ export function RankCard({ audit }: { audit: Audit }) {
         <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">{t("rank.eyebrow")}</p>
         <h2 className="mt-2 text-2xl font-bold">{t("rank.alone")}</h2>
         <p className="mt-1 muted">{t("rank.aloneD")}</p>
+        {lang === "en" && (audit.notes || []).map((n) => <p key={n} className="mt-2 text-sm muted">{n}</p>)}
       </section>
     );
   }

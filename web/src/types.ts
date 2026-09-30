@@ -35,6 +35,7 @@ export type BoardRow = Summary & Quality & { is_you: boolean };
 
 export interface Audit {
   product: Summary & { image: string | null; draft: boolean };
+  notes?: string[];
   facts: Fact[];
   not_found: NotFound[];
   summary: { facts_found: number; attributes_checked: number; top_median_facts: number | null; top_count: number; top_missing: string[]; price_position: string | null };

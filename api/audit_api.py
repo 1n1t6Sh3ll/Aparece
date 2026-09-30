@@ -119,10 +119,23 @@ def quality(rec, desc_ref, with_sd=True):
             "structured_data_flags": sd_n}
 
 
-def rank(target, recs, with_sd=True):
+def peer_key(target, recs):
+    """The record used to match peers, plus a note. Dataset rows often have no recorded currency, and the
+    same-currency hard filter would then leave a priced page with no peers; in that case peers are matched with
+    the currency unknown (analysis.peers then skips the price band). Only matching changes, never the scored facts."""
+    if not get(target, "commerce", "currency") or find_peers(target, recs, 1):
+        return target, None
+    alt = {**target, "commerce": {**(target.get("commerce") or {}), "currency": None}}
+    if not find_peers(alt, recs, 1):
+        return target, None
+    return alt, ("Comparable shirts in our dataset have no recorded currency, so they were matched on type, language "
+                 "and audience without a price band; prices were not compared.")
+
+
+def rank(target, recs, with_sd=True, match=None):
     """Rank the target among comparable shirts (analysis.peers hard filters: type, language, price band, audience).
-    Returns (rank dict, comparable shirts ordered by listing quality)."""
-    group = [p for _, p in find_peers(target, recs, RANK_K)]
+    `match` (default: target) is the record used for peer matching. Returns (rank dict, shirts ordered by quality)."""
+    group = [p for _, p in find_peers(match or target, recs, RANK_K)]
     ref = statistics.median([description_chars(x) for x in group + [target]])
     scored = sorted(((quality(x, ref, with_sd), x) for x in group), key=lambda q: -q[0]["score"])
     tq = quality(target, ref, with_sd)
@@ -302,8 +315,14 @@ def audit(payload: dict = Body(...)):
         raise HTTPException(422, "not_a_product_page: we couldn't find a product name, price or product type")
     url = get(target, "source", "url")
     recs = [r for r in dash.records() if not url or get(r, "source", "url") != url]  # the page itself is not its own peer
-    matched = find_peers(target, recs, K)
-    rk, ranked = rank(target, recs, with_sd=not draft)
+    key, note = peer_key(target, recs)
+    notes += [note] if note else []
+    matched = find_peers(key, recs, K)
+    rk, ranked = rank(target, recs, with_sd=not draft, match=key)
+    if not ranked and not draft:
+        notes.append("No comparable shirts found: we need the same product type and language in our dataset"
+                     + ("" if get(target, "identity", "product_type") else ", and we couldn't tell this product's type"
+                        " (it may not be a shirt)") + ".")
     top = ranked[:TOP]
     res = analyze(target, top)  # the plan: what the top-ranked comparable shirts state that this one doesn't
     m = res["metrics"]
