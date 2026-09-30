@@ -306,5 +306,10 @@
     "materials.fabric_weight_raw": "el gramaje (tal cual)",
     "identity.product_type": "el tipo de producto",
     "features": "las características"
-  }
+  },
+  "err.rateLimited": "Esta tienda está limitando las solicitudes automáticas ahora mismo. Inténtalo de nuevo en un minuto o pega abajo el título y la descripción del producto.",
+  "hero.draftDetails": "Otros detalles (opcional)",
+  "hero.draftDetailsPh": "Cuidados, notas de corte, guía de tallas, enlace del producto",
+  "hero.draftSource": "Enlace del producto",
+  "draft.unknownType": "No pudimos deducir el tipo de producto del título o la descripción, así que no hay camisetas comparables con las que clasificarlo. Indica el tipo (p. ej. camiseta, polo) en el título."
 }
