@@ -3,7 +3,8 @@ import {
   Aperture, ArrowRight, BarChart3, Building2, CheckCircle2, Puzzle, FileText, Globe, KeyRound, Link2, ListChecks, Loader2, Moon,
   Package, Play, Plus, Quote, ScanSearch, Search, ShieldCheck, Sun, Trash2, TriangleAlert, UserPlus, PenLine, XCircle,
 } from "lucide-react";
-import { api, ApiError, errorText, fieldLabel, money, useI18n } from "../lib";
+import { allManageTokens, api, ApiError, errorText, fieldLabel, money, useI18n } from "../lib";
+import { history, type Monitored } from "../history";
 import { papi, productName, token, type Product } from "../profile";
 import { useSession } from "../session";
 import { Empty, ErrorBox, PageHeader, Stat, Tabs, useTheme, useToast } from "../ui";
@@ -256,7 +257,7 @@ export function Overview() {
               {worst.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
-                    <a href={`#/products/p/${p.id}`} className="block truncate text-sm font-medium hover:underline">{productName(p)}</a>
+                    <a href="#/products" className="block truncate text-sm font-medium hover:underline">{productName(p)}</a>
                     <p className="truncate text-xs muted">{p.audit!.actions[0] ? t("ov.next", { f: p.audit!.actions[0].field ? fieldLabel(lang, p.audit!.actions[0].field) : p.audit!.actions[0].kind }) : t("rep.noFixes")}</p>
                   </div>
                   <span className="text-xs muted">{rankText(p, t)}</span>
@@ -311,6 +312,17 @@ export function ProductsHub() {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<SortK>("score");
   const [msg, setMsg] = useState("");
+  const [tracked, setTracked] = useState<Record<string, string>>({});  // page URL -> monitored public id
+  const loadTracked = () => api<{ results: Monitored[] }>("/v1/monitored", { headers: { "X-Manage-Token": allManageTokens() } })
+    .then((r) => setTracked(Object.fromEntries(r.results.map((m) => [m.url, m.id])))).catch(() => undefined);
+  useEffect(() => { loadTracked(); }, []);
+  const [tracking, setTracking] = useState<number | null>(null);
+  async function track(p: Product) {
+    setTracking(p.id);
+    try { const id = await history.enroll(p.url!); toast("ok", t("pr.tracking")); window.location.hash = `/products/${encodeURIComponent(id)}`; }
+    catch (x) { toast("err", errorText(x, t).msg); }
+    setTracking(null);
+  }
   const rows = useMemo(() => {
     const ps = (profile?.products || []).filter((p) => productName(p).toLowerCase().includes(q.toLowerCase()) || (p.url || "").includes(q));
     const score = (p: Product) => p.audit?.rank.score ?? -1;
@@ -375,9 +387,11 @@ export function ProductsHub() {
                     return (
                       <tr key={p.id} className="hover:bg-[var(--surface-2)]/60">
                         <td className="max-w-[20rem] px-4 py-3">
-                          <a href={`#/products/p/${p.id}`} className="flex items-center gap-3 font-medium hover:underline">
-                            <Thumb src={a?.product.image} /><span className="truncate">{productName(p)}</span>
-                          </a>
+                          {p.url && tracked[p.url] ? (
+                            <a href={`#/products/${encodeURIComponent(tracked[p.url])}`} className="flex items-center gap-3 font-medium hover:underline">
+                              <Thumb src={a?.product.image} /><span className="truncate">{productName(p)}</span>
+                            </a>
+                          ) : <span className="flex items-center gap-3 font-medium"><Thumb src={a?.product.image} /><span className="truncate">{productName(p)}</span></span>}
                           <p className="flex items-center gap-2 truncate text-xs muted">
                             {p.merchant_stated ? <span className="chip bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("label.merchantStated")}</span> : <span className="truncate">{p.url}</span>}
                           </p>
@@ -388,6 +402,9 @@ export function ProductsHub() {
                         <td className="px-4 py-3 tabular-nums">{a ? a.actions.length : "–"}</td>
                         <td className="px-4 py-3 whitespace-nowrap">{a?.product.price != null ? money(a.product.price, a.product.currency, lang) : "–"}</td>
                         <td className="px-4 py-3 text-right whitespace-nowrap">
+                          {p.url && (tracked[p.url]
+                            ? <a className="btn-ghost px-2 py-1 text-xs" href={`#/products/${encodeURIComponent(tracked[p.url])}`}>{t("pr.history")}</a>
+                            : <button className="btn-ghost px-2 py-1 text-xs" disabled={tracking === p.id} onClick={() => track(p)}>{tracking === p.id ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}{t("pr.track")}</button>)}
                           <button className="btn-ghost px-2 py-1 text-xs" disabled={b === "run"} onClick={() => run([p])}>{a ? t("home.reaudit") : t("home.audit")}</button>
                           <button className="btn-ghost p-1.5" onClick={() => remove(p)} aria-label={t("ob.removeProduct")}><Trash2 className="size-4" aria-hidden /></button>
                         </td>

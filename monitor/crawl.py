@@ -26,13 +26,18 @@ def normalize_page(url, final_url, html):
     return main.backend()(raw)
 
 
+def peers_for(norm):
+    """Up to 10 comparable records from the local dataset (same as /v1/products/{pid}/gaps)."""
+    import dashboard_api
+    from analysis.peers import find_peers
+    return [r for _, r in find_peers(norm, dashboard_api.records(), 10)]
+
+
 def gaps_for(norm):
-    """Gaps vs peers from the local dataset (same as /v1/products/{pid}/gaps); None if unavailable."""
+    """Gaps vs peers from the local dataset; None if unavailable."""
     try:
-        import dashboard_api
         from analysis.gaps import analyze
-        from analysis.peers import find_peers
-        out = analyze(norm, find_peers(norm, dashboard_api.records(), 10))
+        out = analyze(norm, peers_for(norm))
         return {"metrics": out.get("metrics"), "issues": out.get("issues")}
     except Exception as e:  # gaps are advisory; never fail a crawl on them
         log.warning("gaps skipped: %s", e)
@@ -48,7 +53,7 @@ def snapshot(pid, url, html, final_url=None, visibility=None):
         visibility = old.get("visibility")  # carry the last weekly result forward
     new = changes.content(norm, html, visibility)
     events = changes.diff(old, new)
-    sid = store.add_snapshot(pid, {"content": new, "product_id": norm["product_id"],
+    sid = store.add_snapshot(pid, {"content": new, "product_id": norm["product_id"], "record": norm,
                                    "quality_status": norm["quality_status"], "gaps": gaps_for(norm)}, events)
     return sid, events
 

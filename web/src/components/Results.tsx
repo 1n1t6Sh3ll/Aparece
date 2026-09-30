@@ -3,13 +3,14 @@ import {
   BellRing, Bookmark, Radar, Check, ChevronDown, CircleHelp, ExternalLink, EyeOff, Gauge, ListChecks, Pencil, Printer,
   Quote, RotateCcw, ScanSearch, ShieldCheck, Shirt, Tag, Trophy, PenLine,
 } from "lucide-react";
-import { api, cap, fieldLabel, fmtField, fmtValue, money, store, useI18n, type Lang, type T } from "../lib";
+import { api, cap, fieldLabel, fmtField, fmtValue, money, saveManageToken, store, useI18n, type Lang, type T } from "../lib";
 import type { Action, Audit, Label } from "../types";
 import { papi } from "../profile";
 import { useSession } from "../session";
 import { useToast } from "../ui";
 import { PriceChart, RankChart, ScoreBreakdown } from "./Charts";
 import { CompareTable, Tip } from "./RankParts";
+import { CompareLink } from "../pages/AiComparison";
 
 const LABEL_STYLE: Record<Label, string> = {
   OBSERVED_FACT: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-400/20",
@@ -161,7 +162,8 @@ function Enroll({ url }: { url: string }) {
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setMsg({ ok: false, text: t("mon.badEmail") });
     setBusy(true); setMsg(null);
     try {
-      const r = await api<{ created: boolean }>("/v1/enroll", { method: "POST", body: JSON.stringify({ url, email: email || null, plan }) });
+      const r = await api<{ created: boolean; product: { id: string }; manage_token: string | null }>("/v1/enroll", { method: "POST", body: JSON.stringify({ url, email: email || null, plan }) });
+      if (r.manage_token) saveManageToken(r.product.id, r.manage_token);
       setMsg({ ok: true, text: r.created ? t("mon.ok") : t("mon.exists") });
     } catch (e) {
       setMsg({ ok: false, text: t("err.generic", { detail: e instanceof Error ? e.message : String(e) }) });
@@ -265,8 +267,12 @@ export default function Results({ audit, onReset }: { audit: Audit; onReset: () 
             {audit.context.language && <span className="chip bg-[var(--surface-2)]">{t("res.ctx.lang")}: {audit.context.language.toUpperCase()}</span>}
             <span className="chip bg-[var(--surface-2)]">{t("ws.dataset", { n: audit.context.dataset_size.toLocaleString(lang) })}</span>
           </div>
+          {p.draft && <p className="mt-1.5 text-xs muted">{t("draft.note")}</p>}
+          {p.draft && p.product_type === "unknown" && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{t("draft.unknownType")}</p>}
+          {lang === "en" && (audit.notes || []).map((n) => <p key={n} className="mt-1 text-xs muted">{n}</p>)}
         </div>
-        <div className="no-print flex flex-wrap gap-2">
+        <div className="no-print flex flex-wrap items-center gap-2">
+          <CompareLink productId={p.product_id} />
           {live && <SaveToProducts url={p.url!} />}
           {live && <a href={p.url!} target="_blank" rel="noopener noreferrer" className="btn-ghost px-2.5" aria-label={t("ws.open")}><ExternalLink className="size-4" aria-hidden /></a>}
           <button className="btn-ghost px-2.5" onClick={() => window.print()} aria-label={t("rep.print")}><Printer className="size-4" aria-hidden /></button>

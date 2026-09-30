@@ -1,64 +1,48 @@
 /**
- * Product history client (snapshots, diffs, trends, product chat).
- *
- * The endpoints are being built by another worker. Until they are merged, a 404/405/501 (or a network error) switches
- * the page to the labelled sample in fixtures/productHistory.ts; nothing from the sample is ever shown as the
- * merchant's data. Response shapes below are the contract this UI expects.
+ * Monitored-product history client (monitor_api, PR #79): snapshots, snapshot diffs, trends, change events, plus
+ * the grounded chat (chat_api). History calls send the per-product manage token saved at enrol (X-Manage-Token).
  */
-import { ApiError, api } from "./lib";
-import { token } from "./profile";
-import { sampleChat, sampleDiff, sampleSnapshots, sampleTrends } from "./fixtures/productHistory";
+import { api, manageToken, saveManageToken } from "./lib";
 
-export interface Snapshot { id: number; taken_at: string; title: string | null; price: number | null; currency: string | null;
-  score: number | null; rank: number | null; total: number | null; facts_found: number | null; facts_checked: number | null }
-export interface ChangeEvent { id: number; at: string; type: string; field: string | null; before: unknown; after: unknown }
-export interface SnapshotList { product_id: number; snapshots: Snapshot[]; events: ChangeEvent[] }
-export interface FieldChange { field: string; change: "added" | "removed" | "changed"; before: unknown; after: unknown }
-export interface Diff { a: number; b: number; fields: FieldChange[]; description: { before: string; after: string };
-  price: { before: number | null; after: number | null; currency: string | null } }
-export interface TrendPoint { at: string; score: number | null; rank: number | null; total: number | null; facts_found: number | null;
-  facts_checked: number | null; price: number | null; currency: string | null; visibility: number | null }
-export interface Trends { points: TrendPoint[] }
-export interface Citation { label: string; snapshot_id?: number | null; field?: string | null; quote?: string | null }
-export interface ChatAnswer { answer: string; citations: Citation[] }
-
-/** Header the history endpoints read (the profile access key). One place to change if the contract differs. */
-const AUTH = "X-Profile-Token";
-const headers = () => ({ [AUTH]: token.get() || "" });
-const missing = (e: unknown) => !(e instanceof ApiError) || e.status === 0 || [404, 405, 501].includes(e.status);
-
-export type Loaded<T> = { data: T; sample: boolean };
-async function load<T>(path: string, sample: () => T, init?: RequestInit): Promise<Loaded<T>> {
-  try {
-    return { data: await api<T>(path, { ...init, headers: headers() }), sample: false };
-  } catch (e) {
-    if (missing(e)) return { data: sample(), sample: true };
-    throw e;
-  }
+export interface Metrics {
+  completeness_rank: { position: number; of: number; by: string } | null; attribute_completeness_pct: number | null;
+  peer_median_completeness_pct: number | null; description_chars: number | null; price: number | null; currency: string | null;
+  structured_data_present: boolean | null; language: string | null; visibility: unknown;
 }
+export interface Snapshot { id: number; crawled_at: string; content_hash: string; metrics: Metrics }
+export interface TrendPoint extends Metrics { at: string; snapshot_id: number }
+export interface ChangeEvent { id: number; at: string; type: string; field: string | null; before: unknown; after: unknown }
+export interface Monitored { id: string; url: string; enrolled_at: string; active: number; plan: string | null;
+  last_snapshot_at: string | null; snapshot_count: number; event_count: number }
+export interface Diff {
+  from: { id: number; crawled_at: string }; to: { id: number; crawled_at: string };
+  attributes: { added: { field: string; new: unknown }[]; removed: { field: string; old: unknown }[]; changed: { field: string; old: unknown; new: unknown }[] };
+  description: { changed: boolean; old_chars: number; new_chars: number; text_diff: string[] | null };
+  price: { changed: boolean; old: { price: number | null; currency: string | null }; new: { price: number | null; currency: string | null } };
+  structured_data: { changed: boolean; old: Record<string, boolean>; new: Record<string, boolean> };
+  languages: { added: string[]; removed: string[] };
+  visibility: { changed: boolean; old: unknown; new: unknown };
+}
+export interface ChatAnswer { answer: string; citations: { type: string; id: string; date: string | null; merchant_stated: boolean }[]; refused: boolean }
+
+const h = (id: string) => ({ headers: { "X-Manage-Token": manageToken(id) } });
+const enc = encodeURIComponent;
 
 export const history = {
-  snapshots: (id: number) => load<SnapshotList>(`/v1/products/${id}/snapshots`, () => sampleSnapshots(id)),
-  diff: (id: number, a: number, b: number) => load<Diff>(`/v1/products/${id}/snapshots/${a}/diff/${b}`, () => sampleDiff(a, b)),
-  trends: (id: number) => load<Trends>(`/v1/products/${id}/trends`, sampleTrends),
-  chat: (id: number, question: string, language: string) => load<ChatAnswer>("/v1/chat", sampleChat,
-    { method: "POST", body: JSON.stringify({ product_id: id, question, language }) }),
+  snapshots: (id: string) => api<{ results: Snapshot[] }>(`/v1/products/${enc(id)}/snapshots`, h(id)).then((r) => r.results),
+  diff: (id: string, a: number, b: number) => api<Diff>(`/v1/products/${enc(id)}/snapshots/${a}/diff/${b}`, h(id)),
+  trends: (id: string) => api<{ points: TrendPoint[] }>(`/v1/products/${enc(id)}/trends`, h(id)).then((r) => r.points),
+  history: (id: string) => api<{ product: Monitored; events: ChangeEvent[] }>(`/v1/products/${enc(id)}/history`, h(id)),
+  recrawl: (id: string) => api(`/v1/monitored/${enc(id)}/crawl`, { method: "POST", ...h(id) }),
+  /** Start monitoring a URL (crawls once now) and keep its manage token in this browser. Returns the public id. */
+  enroll: async (url: string) => {
+    const r = await api<{ product: Monitored; manage_token: string | null }>("/v1/enroll", { method: "POST", body: JSON.stringify({ url, crawl_now: true }) });
+    if (r.manage_token) saveManageToken(r.product.id, r.manage_token);
+    return r.product.id;
+  },
+  chat: (productId: string | null, message: string, past: { role: "user" | "assistant"; content: string }[]) =>
+    api<ChatAnswer>("/v1/chat", { method: "POST", body: JSON.stringify({ product_id: productId, message, history: past.slice(-20) }) }),
 };
 
-/** Word-level diff (LCS) for description text: [op, text][] with op "=" | "+" | "-". */
-export function wordDiff(a: string, b: string): ["=" | "+" | "-", string][] {
-  const x = a.split(/(\s+)/), y = b.split(/(\s+)/);
-  if (x.length * y.length > 400_000) return [["-", a], ["+", b]];  // too long for a table: show both whole
-  const n = x.length, m = y.length;
-  const L = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
-  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
-  const out: ["=" | "+" | "-", string][] = [];
-  const push = (op: "=" | "+" | "-", s: string) => { const l = out[out.length - 1]; if (l && l[0] === op) l[1] += s; else out.push([op, s]); };
-  let i = 0, j = 0;
-  while (i < n && j < m) {
-    if (x[i] === y[j]) { push("=", x[i]); i++; j++; } else if (L[i + 1][j] >= L[i][j + 1]) push("-", x[i++]); else push("+", y[j++]);
-  }
-  while (i < n) push("-", x[i++]);
-  while (j < m) push("+", y[j++]);
-  return out;
-}
+/** A number from a metrics value, or null (visibility may be an object per model; only a plain number is charted). */
+export const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);

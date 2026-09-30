@@ -11,7 +11,10 @@
 !optimizer/
 !experiments/
 !profile/
+!chat/
 !train/common.py
+!train/reward.py
+!dataset/schema/
 !web/
 web/node_modules/
 web/dist/
@@ -22,6 +25,7 @@ governance/data/*
 experiments/data/*
 profile/data/*
 !profile/data/.gitignore
+optimizer/data/*
 api/tests/
 **/tests/
 **/__pycache__

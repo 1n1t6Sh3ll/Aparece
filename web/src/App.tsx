@@ -1,9 +1,9 @@
 import AuditPage from "./components/AuditPage";
 import BulkPage from "./components/BulkPage";
+import AiComparison from "./pages/AiComparison";
 import Chat from "./components/Chat";
 import { Landing, Overview, ProductsHub, SignIn } from "./components/Home";
 import ModelsPage from "./components/ModelsPage";
-import { HistoryPage } from "./components/Monitor";
 import Onboarding from "./components/Onboarding";
 import ProductDetail from "./components/ProductDetail";
 import { Report, SharedReport } from "./components/Report";
@@ -15,13 +15,13 @@ import { useSession } from "./session";
 export default function App() {
   const [route] = useHashRoute();
   const { signedIn } = useSession();
-  const [page, arg, arg2] = route.split("?")[0].split("/");
+  const [page, arg] = route.split("?")[0].split("/");
   if (page === "share" && arg) return <SharedReport id={arg} />;
   if (!page && !signedIn) return <Landing />;
   const body = page === "audit" ? <AuditPage />
     : page === "bulk" ? <BulkPage />
-    : page === "products" && arg === "p" && arg2 ? <ProductDetail id={Number(arg2)} />
-    : page === "products" && arg ? <HistoryPage id={Number(arg)} />
+    : page === "products" && arg ? <ProductDetail id={decodeURIComponent(arg)} />
+    : page === "compare" ? <AiComparison productId={arg ? decodeURIComponent(arg) : undefined} />
     : page === "products" ? <ProductsHub />
     : page === "reports" ? <Report />
     : page === "models" ? <ModelsPage />

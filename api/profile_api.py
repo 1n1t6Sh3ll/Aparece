@@ -150,8 +150,10 @@ def _requests(p):
     """(audit payload, ExtractRequest) for a stored product. A URL is fetched once and reused for both."""
     import main  # lazy: main imports this module
     if p["source"] == "manual":
-        payload = {k: p.get(k) for k in ("title", "text", "price", "currency", "language") if p.get(k) not in (None, "")}
-        return payload, audit_api.draft_request(main, payload)
+        payload = {k: p.get(k) for k in ("title", "price", "currency", "language") if p.get(k) not in (None, "")}
+        if p.get("text"):
+            payload["description"] = p["text"]
+        return payload, audit_api.draft_request(main, audit_api.draft_fields(payload))
     try:
         _, page = safe_fetch.fetch_page(p["url"])
     except safe_fetch.FetchError as e:

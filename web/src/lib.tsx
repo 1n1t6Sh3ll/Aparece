@@ -78,6 +78,15 @@ export class ApiError extends Error {
   constructor(public status: number, public detail: string) { super(detail); }
 }
 
+/** Per-enrollment manage tokens (shown once by POST /v1/enroll), kept only in this browser. */
+function manageTokens(): Record<string, string> {
+  try { return JSON.parse(store.get("pl.manage") || "{}"); } catch { return {}; }
+}
+export const saveManageToken = (id: string, token: string) => store.set("pl.manage", JSON.stringify({ ...manageTokens(), [id]: token }));
+export const manageToken = (id: string) => manageTokens()[id] || "";
+/** All tokens this browser holds, for GET /v1/monitored (which lists only the caller's products). */
+export const allManageTokens = () => Object.values(manageTokens()).join(",");
+
 export async function api<R>(path: string, init?: RequestInit): Promise<R> {
   let r: Response;
   try {
@@ -94,17 +103,20 @@ export async function api<R>(path: string, init?: RequestInit): Promise<R> {
 }
 
 /** Map an API error to user-facing copy; the raw detail is only interpolated as plain text. */
-export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean } {
+export function errorText(e: unknown, t: T): { msg: string; suggestText: boolean; openDraft?: boolean } {
   if (!(e instanceof ApiError)) return { msg: t("err.generic", { detail: String(e) }), suggestText: false };
   const d = e.detail;
   if (e.status === 0) return { msg: t("err.network"), suggestText: false };
   if (d.includes("robots")) return { msg: t("err.robots"), suggestText: true };
   if (d.startsWith("not_a_product_page")) return { msg: t("err.notProduct"), suggestText: false };
+  if (d.startsWith("not_a_shirt")) return { msg: t("err.notShirt"), suggestText: false };
   if (d.includes("does not resolve")) return { msg: t("err.dns"), suggestText: false };
   if (d.includes("http(s)")) return { msg: t("err.scheme"), suggestText: false };
   if (d.includes("non-public")) return { msg: t("err.private"), suggestText: false };
   if (e.status === 504 || d.includes("deadline") || d.includes("Timeout")) return { msg: t("err.timeout"), suggestText: true };
   if (e.status === 413) return { msg: t("err.tooBig"), suggestText: true };
+  if (e.status === 429 || /upstream HTTP (429|503)/.test(d)) return { msg: t("err.rateLimited"), suggestText: true, openDraft: true };
+  if (d.startsWith("draft_needs_title")) return { msg: t("hero.emptyTitle"), suggestText: false };
   if (d.startsWith("upstream") || d.startsWith("fetch failed")) return { msg: t("err.upstream", { detail: d }), suggestText: true };
   return { msg: t("err.generic", { detail: d }), suggestText: false };
 }
