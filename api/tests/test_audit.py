@@ -98,6 +98,7 @@ class AuditTest(unittest.TestCase):
         b = self.audit(title="Heavyweight organic cotton tee </script><b>x", text="Oversized fit.\n100% organic cotton, 240 gsm jersey.",
                        price="35", currency="EUR", language="en")
         self.assertTrue(b["product"]["draft"])
+        self.assertIn("100% organic cotton, 240 gsm jersey.", b["product"]["description"])  # the text the user pasted
         self.assertEqual(b["product"]["product_type"], "t_shirt")
         self.assertEqual(b["product"]["price"], 35.0)
         self.assertEqual(b["rank"]["weights"]["structured_data"], 0)

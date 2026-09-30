@@ -109,22 +109,51 @@ def signals():
 
 
 VISIBILITY_RUN = "benchmark/results/visibility-2026-09-30/report.json"  # committed real run (gpt-4o-mini, claude-haiku-4-5)
+VISIBILITY_MORE = "benchmark/results/visibility-2026-09-30-more/report.json"  # same 192 prompts, more models (optional)
+
+
+def _load_json(p):
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def _has_models(rep):
+    return isinstance(rep, dict) and isinstance(rep.get("models"), dict) and bool(rep["models"])
 
 
 def visibility():
     """A local run (PRODUCTLENS_VISIBILITY, default benchmark/reports/report.json, gitignored) wins; otherwise the
-    committed real run, so a fresh checkout shows real results rather than an empty page."""
-    load = lambda p: json.loads(p.read_text(encoding="utf-8"))  # noqa: E731
-    rep = _cached("PRODUCTLENS_VISIBILITY", "benchmark/reports/report.json", load, {})
+    committed real runs (the base run plus the optional extra-models run on the same prompts, merged), so a fresh
+    checkout shows real results rather than an empty page. PRODUCTLENS_VISIBILITY_RUN pins a single report."""
+    rep = _cached("PRODUCTLENS_VISIBILITY", "benchmark/reports/report.json", _load_json, {})
     if rep or os.environ.get("PRODUCTLENS_VISIBILITY"):  # an explicit path is used as given, even when missing
         return rep
-    return _cached("PRODUCTLENS_VISIBILITY_RUN", VISIBILITY_RUN, load, {})
+    base = _cached("PRODUCTLENS_VISIBILITY_RUN", VISIBILITY_RUN, _load_json, {})
+    if os.environ.get("PRODUCTLENS_VISIBILITY_RUN") or not _has_models(base):
+        return base
+    more = _cached("PRODUCTLENS_VISIBILITY_MORE", VISIBILITY_MORE, _load_json, {})
+    if not _has_models(more):
+        return base
+    return {**base, "responses": (base.get("responses") or 0) + (more.get("responses") or 0),
+            "models": {**base["models"], **more["models"]},
+            "product_rows": (base.get("product_rows") or []) + (more.get("product_rows") or [])}
 
 
 def visibility_brands():
-    """Brands the models named in the committed run (benchmark/results/.../brands.json), or {}."""
-    return _cached("PRODUCTLENS_VISIBILITY_BRANDS", str(Path(VISIBILITY_RUN).parent / "brands.json"),
-                   lambda p: json.loads(p.read_text(encoding="utf-8")), {})
+    """Brands the models named in the committed runs (brands.json next to each report), counts summed, or {}."""
+    base = _cached("PRODUCTLENS_VISIBILITY_BRANDS", str(Path(VISIBILITY_RUN).parent / "brands.json"), _load_json, {})
+    if os.environ.get("PRODUCTLENS_VISIBILITY_BRANDS") or not isinstance(base, dict) or not base:
+        return base
+    more = _cached("PRODUCTLENS_VISIBILITY_BRANDS_MORE", str(Path(VISIBILITY_MORE).parent / "brands.json"),
+                   _load_json, {})
+    if not isinstance(more, dict) or not more.get("top_named"):
+        return base
+    total = {}
+    for b in (base, more):
+        for x in b.get("top_named") or []:
+            total[x["name"]] = total.get(x["name"], 0) + x["answers"]
+    top = sorted(total.items(), key=lambda kv: (-kv[1], kv[0]))
+    return {**base, "answers": (base.get("answers") or 0) + (more.get("answers") or 0),
+            "top_named": [{"name": n, "answers": c} for n, c in top]}
 
 
 def visibility_summary(domain=None):
@@ -136,7 +165,8 @@ def visibility_summary(domain=None):
     d = (domain or "").lower().removeprefix("www.")
     site = {m: (v.get("sites") or {}).get(d) for m, v in models.items()}
     brands = visibility_brands()
-    return {"available": True, "models": sorted(models), "responses": rep.get("responses"),
+    shops = max((len(v.get("sites") or {}) for v in models.values()), default=0)
+    return {"available": True, "models": sorted(models), "responses": rep.get("responses"), "shops": shops,
             "mention_rate": {m: v.get("any_catalog_mention_rate") for m, v in models.items()},
             "site": d or None, "site_in_benchmark": any(site.values()),
             "site_mention_rate": {m: (s or {}).get("mention_rate") for m, s in site.items() if s},

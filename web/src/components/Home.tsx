@@ -41,6 +41,7 @@ export function Landing() {
           </a>
           <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById("features")?.scrollIntoView({ behavior: "smooth" }); }} className="btn-ghost hidden sm:inline-flex">{t("land.nav.features")}</a>
           <a href="#/models" className="btn-ghost hidden sm:inline-flex">{t("nav.models")}</a>
+          <a href="#/docs" className="btn-ghost hidden sm:inline-flex">{t("nav.docs")}</a>
           <button className="btn-ghost p-2" onClick={() => setLang(lang === "en" ? "es" : "en")} aria-label={t("nav.lang")}><Globe className="size-4" aria-hidden /><span className="text-xs">{lang === "en" ? "ES" : "EN"}</span></button>
           <button className="btn-ghost p-2" onClick={toggle} aria-label={t("kb.theme")}>{theme === "dark" ? <Sun className="size-4" aria-hidden /> : <Moon className="size-4" aria-hidden />}</button>
           <a href="#/signin" className="btn-ghost">{t("home.signin")}</a>

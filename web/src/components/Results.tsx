@@ -13,6 +13,7 @@ import { CompareTable, Tip } from "./RankParts";
 import FixPanel, { type FixDecision } from "./FixPanel";
 import { factCount } from "../facts";
 import { liveModelName, type LiveVisibility } from "../visLive";
+import { descStats } from "../description";
 import { CompareLink } from "../pages/AiComparison";
 
 const LABEL_STYLE: Record<Label, string> = {
@@ -237,6 +238,21 @@ function SaveToProducts({ url }: { url: string }) {
   );
 }
 
+/** The description as read from the page, as plain text (React escapes it), line breaks kept, scrollable when long. */
+function DescriptionPanel({ text }: { text: string }) {
+  const { t, lang } = useI18n();
+  const st = descStats(text);
+  const n = { c: st.chars.toLocaleString(lang), w: st.words.toLocaleString(lang) };
+  return (
+    <section className="card p-4 sm:p-5 rise">
+      <details open={st.chars <= 1200}>
+        <summary className="cursor-pointer text-sm font-semibold">{t("desc.title")} <span className="font-normal muted">· {st.chars ? t("desc.count", n) : t("desc.empty")}</span></summary>
+        {st.chars > 0 && <p className="mt-3 max-h-72 overflow-y-auto whitespace-pre-wrap break-words text-sm" lang={lang}>{text.trim()}</p>}
+      </details>
+    </section>
+  );
+}
+
 /** Right-hand results of the audit workspace. */
 export default function Results({ audit, onReset, record, reportId }: { audit: Audit; onReset: () => void; record?: Record<string, unknown> | null; reportId?: string | null }) {
   const { t, lang } = useI18n();
@@ -334,6 +350,8 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
         )}
       </section>
 
+      {p.description !== undefined && <DescriptionPanel text={p.description} />}
+
       {record && <FixPanel record={record} decisions={fixes} onDecide={(f, d) => { setFixes({ ...fixes, [f]: d }); toast("ok", t(d.status === "accepted" ? "sug.acceptedToast" : "sug.dismissedToast")); }} />}
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -379,7 +397,7 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
           <Panel icon={<Radar className="size-4" aria-hidden />} title={t("vis.title")}
             badge={!audit.visibility.available ? <span className="chip bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300">{t("vis.badge")}</span> : undefined}>
             {audit.visibility.available ? <VisibilityFacts v={audit.visibility} /> : <p className="text-sm muted">{t("vis.empty")}</p>}
-            <a href="#/models" className="mt-2 inline-block text-sm font-medium text-[var(--accent)] hover:underline">{t("ws.visNext")}</a>
+            <a href="#/docs" className="mt-2 inline-block text-sm font-medium text-[var(--accent)] hover:underline">{t("ws.visNext")}</a>
           </Panel>
           {record && live && <Panel icon={<Bot className="size-4" aria-hidden />} title={t("vl.title")} sub={t("vl.sub")}><LiveVisibilityCheck record={record} /></Panel>}
           <Panel icon={<CircleHelp className="size-4" aria-hidden />} title={t("unk.title")}>
@@ -443,11 +461,22 @@ function LiveVisibilityCheck({ record }: { record: Record<string, unknown> }) {
 function VisibilityFacts({ v }: { v: Audit["visibility"] }) {
   const { t } = useI18n();
   const pct = (x: number | null | undefined) => (x == null ? "–" : `${Math.round(x * 100)}%`);
-  const rates = Object.values(v.site_in_benchmark ? v.site_mention_rate ?? {} : v.mention_rate ?? {});
-  const rate = rates.length ? Math.max(...rates.map((x) => x ?? 0)) : null;
+  const own = !!v.site_in_benchmark;
+  const perModel = Object.entries(own ? v.site_mention_rate ?? {} : v.mention_rate ?? {});
+  const rate = perModel.length ? Math.max(...perModel.map(([, x]) => x ?? 0)) : null;
+  const args = { rate: pct(rate), n: v.responses ?? 0, count: (v.models ?? []).length, shops: v.shops ?? 0, models: (v.models ?? []).join(", ") };
   return (
     <div className="space-y-2 text-sm">
-      <p>{t(v.site_in_benchmark ? "vis.siteRate" : "vis.allRate", { rate: pct(rate), n: v.responses ?? 0, models: (v.models ?? []).join(", ") })}</p>
+      <p>{t(own ? "vis.siteRate" : rate === 0 ? "vis.allZero" : "vis.allRate", args)}</p>
+      {!own && rate === 0 && <p className="muted">{t("vis.zeroWhat")}</p>}
+      {!!perModel.length && (
+        <div>
+          <p className="muted">{t("vis.perModel")}</p>
+          <ul className="mt-1 space-y-0.5">
+            {perModel.map(([m, x]) => <li key={m} className="flex justify-between gap-3"><span className="break-all">{m}</span><span className="font-semibold tabular-nums">{pct(x)}</span></li>)}
+          </ul>
+        </div>
+      )}
       {!!v.top_named?.length && (
         <p className="muted">{t("vis.named")} {v.top_named.map((b) => `${b.name} (${b.answers})`).join(", ")}</p>
       )}

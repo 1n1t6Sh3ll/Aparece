@@ -184,9 +184,10 @@ def check(rec, lang, factory=harness.make_adapter, now=time.time):
             continue
         models[name] = summ = _summary(results, len(qs), partial=capped or bool(err))
         if not summ["partial"]:
-            while len(_cache) >= MAX_CACHE:
-                _cache.pop(next(iter(_cache)))  # oldest first
-            _cache[key + (name,)] = (now(), summ)
+            with _lock:
+                while len(_cache) >= MAX_CACHE:
+                    _cache.pop(next(iter(_cache)))  # oldest first
+                _cache[key + (name,)] = (now(), summ)
     with _lock:
         if _day["date"] == today:  # a refund after UTC midnight belongs to the old day
             _day["spent"] = max(0.0, _day["spent"] - (cap - budget.spent))

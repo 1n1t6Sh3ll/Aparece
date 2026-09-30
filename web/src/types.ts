@@ -34,7 +34,7 @@ export interface Quality {
 export type BoardRow = Summary & Quality & { is_you: boolean; link_unverified?: boolean };
 
 export interface Audit {
-  product: Summary & { image: string | null; draft: boolean };
+  product: Summary & { image: string | null; draft: boolean; description?: string };
   notes?: string[];
   /** Not a shirt: the full audit without a rank (rank.position is null). read_text is what we read the type from. */
   unranked?: { reason: "not_a_shirt"; type: string | null; read_from: string; read_text: string } | null;
@@ -57,7 +57,7 @@ export interface Audit {
   actions: Action[];
   unknowns: string[];
   visibility: {
-    available: boolean; models?: string[]; responses?: number; mention_rate?: Record<string, number | null>;
+    available: boolean; models?: string[]; responses?: number; shops?: number; mention_rate?: Record<string, number | null>;
     site?: string | null; site_in_benchmark?: boolean; site_mention_rate?: Record<string, number | null>;
     top_named?: { name: string; answers: number }[];
   };
