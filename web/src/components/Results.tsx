@@ -253,12 +253,12 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
 
   return (
     <div className="min-w-0 space-y-5">
-      <section className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center rise">
+      <section className="card flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center rise">
         <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-[var(--surface-2)]">
           {p.image && imgOk ? <img src={p.image} alt={p.title || ""} referrerPolicy="no-referrer" onError={() => setImgOk(false)} className="size-full object-cover" />
             : <Shirt className="size-8 text-stone-400" aria-hidden />}
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[14rem] flex-1 basis-80">
           {live && <p className="text-xs muted">{[p.brand, p.merchant].filter(Boolean).join(" · ")}</p>}
           <h1 className="break-words text-lg font-bold tracking-tight">{p.title || p.url}</h1>
           <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
