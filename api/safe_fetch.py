@@ -127,8 +127,10 @@ def robots(p, deadline):
     if hit is not None:
         return hit
     _, status, text = get(f"{p.scheme}://{p.netloc}/robots.txt", deadline)
-    if status in LIMITED:
-        raise FetchError(502, f"upstream HTTP {status} (robots.txt)")
+    if status == 429:
+        raise FetchError(502, "upstream HTTP 429 (robots.txt)")
+    if status >= 500:  # RFC 9309: server error = disallow for now; not cached
+        raise FetchError(502, f"upstream HTTP {status} (robots.txt): store temporarily unavailable")
     return remember(key, text if status == 200 else "", ROBOTS_TTL)
 
 

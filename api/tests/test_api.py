@@ -80,6 +80,16 @@ class FetchLimitTest(unittest.TestCase):
         self.assertEqual(r.json()["detail"], "upstream HTTP 429 (robots.txt)")
         self.assertNotIn(self.URL, calls)
 
+    def test_robots_5xx_disallows_and_is_not_cached(self):
+        robots = "https://shop.example.com/robots.txt"
+        for code in (500, 502):
+            r, calls, _ = self.run_fetch({robots: [resp(code)]})
+            self.assertEqual(r.json()["detail"], f"upstream HTTP {code} (robots.txt): store temporarily unavailable")
+            self.assertNotIn(self.URL, calls)
+        r, calls, _ = self.run_fetch({robots: [resp(404)], self.URL: [resp(200, FIXTURE)]})
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertIn(robots, calls)  # the 5xx answers were not cached
+
     def test_shopify_json_fallback(self):
         r, calls, _ = self.run_fetch({
             "https://shop.example.com/robots.txt": [resp(200, "User-agent: *\nDisallow: /cart")],
