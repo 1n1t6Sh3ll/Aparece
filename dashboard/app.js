@@ -143,7 +143,7 @@ function renderProduct(p, g, sig) {
       barRow("This product", d.target, dmax, String(d.target)),
       barRow("Peer median", d.peer_median ?? 0, dmax, fmt(d.peer_median), "peer")));
 
-  const price = el("div", { class: "card" }, el("h3", {}, "Price position"), priceRange(pr));
+  const price = el("div", { class: "card" }, el("h3", {}, "Price position"), priceRange(pr, sig));
 
   const facts = el("div", { class: "card" }, el("h3", {}, "Facts"),
     el("p", { class: "muted" }, "Underlined values have evidence; hover or focus to see the source text."),
@@ -168,25 +168,18 @@ function signalPanel(res) {
     card.append(el("p", { class: "muted" }, "No price or review signals for this product. Set PRODUCTLENS_SIGNALS to signals.jsonl."));
     return card;
   }
-  const r = s.reviews || {}, peer = s.peer;
-  const assumed = res.currency_assumed ? el("span", { class: "badge tag-SUPPORTED_HYPOTHESIS",
-    title: s.currency_source }, "Currency assumed") : null;
+  const r = s.reviews || {};
   const rating = r.rating_5 ?? r.rating_mean ?? null;
   const dl = el("dl", { class: "facts" },
     el("dt", {}, "Rating"), el("dd", {}, rating === null ? "—" : `${Number(rating).toFixed(2)} / 5`,
       r.research_only ? el("span", { class: "muted" }, " (research-only data)") : null),
     el("dt", {}, "Reviews"), el("dd", {}, fmt(r.review_count ?? r.rating_count)),
-    el("dt", {}, "Price"), el("dd", {}, money(s.price, s.currency), " ", assumed),
-    s.list_price ? [el("dt", {}, "List price"), el("dd", {}, `${money(s.list_price, s.currency)} (${fmt(s.discount_pct)}% off)`)] : null,
-    el("dt", {}, "Peer percentile"), el("dd", {}, peer ?
-      `${peer.percentile} (${human(peer.position)}, n=${peer.n})` : "— (too few comparable priced listings)"),
     el("dt", {}, "Price in USD"), el("dd", {}, money(s.price_usd, "USD"), s.fx ? el("span", { class: "muted" }, ` (FX ${s.fx.date})`) : null),
     el("dt", {}, "Inflation-adjusted"), el("dd", {}, s.price_usd_2026 === null ? "—" :
       `${money(s.price_usd_2026, "USD")} in ${s.cpi.target_period} dollars (CPI-U, from ${s.cpi.base_period})`),
     el("dt", {}, "Data-quality flags"), el("dd", {}, s.flags.length ?
       el("ul", { class: "flags" }, s.flags.map((f) => el("li", { title: f }, FLAG_NAMES[f] || human(f)))) : "None"));
-  card.append(dl);
-  if (s.guidance) card.append(el("p", { class: "muted" }, s.guidance.note));
+  card.append(dl, el("p", { class: "muted" }, "Price and peer position are in the Price position card."));
   return card;
 }
 
@@ -295,21 +288,49 @@ async function loadLanguages() {
   } catch (e) { showError(box, e); }
 }
 
-function priceRange(pr) {
-  if (typeof pr.target !== "number") return el("p", { class: "muted" }, "Price unknown for this product.");
-  if (!pr.peer_count) return el("p", {}, `${money(pr.target, pr.currency)} — no comparable peer prices.`);
-  const lo = Math.min(pr.peer_min, pr.target), hi = Math.max(pr.peer_max, pr.target), span = hi - lo || 1;
+function rangeBar(target, a, b, cur) {
+  const lo = Math.min(a, target), hi = Math.max(b, target), span = hi - lo || 1;
   const pos = (v) => `${(100 * (v - lo)) / span}%`;
+  return [el("div", { class: "range", role: "img",
+    "aria-label": `Price ${money(target, cur)}; peer range ${money(a)} to ${money(b)}` },
+  el("div", { class: "span", style: `left:${pos(a)};width:calc(${pos(b)} - ${pos(a)})` }),
+  el("div", { class: "dot", style: `left:${pos(target)}` })),
+  el("div", { class: "range-labels" }, el("span", {}, money(lo)), el("span", {}, money(hi)))];
+}
+
+// The single place the UI shows this product's price. Peer set: gap-analysis peers when they have
+// comparable prices, else the signals.jsonl peer group (same type, language, currency and currency basis).
+function priceRange(pr, res) {
+  const s = res && res.signal;
+  if (typeof pr.target === "number" && pr.peer_count) {
+    return el("div", {}, el("p", { class: "muted" }, `Peer set: ${pr.peer_count} comparable products from gap analysis, same currency.`),
+      rangeBar(pr.target, pr.peer_min, pr.peer_max, pr.currency),
+      el("dl", { class: "facts" },
+        el("dt", {}, "This product"), el("dd", {}, money(pr.target, pr.currency)),
+        el("dt", {}, "Peer range"), el("dd", {}, `${money(pr.peer_min)} – ${money(pr.peer_max, pr.currency)}`),
+        el("dt", {}, "Peer median"), el("dd", {}, `${money(pr.peer_median, pr.currency)} (n=${pr.peer_count})`)));
+  }
+  const target = typeof pr.target === "number" ? pr.target : s && s.price;
+  const cur = typeof pr.target === "number" ? pr.currency : s && s.currency;
+  if (typeof target !== "number") return el("p", { class: "muted" }, "Price unknown for this product.");
+  const assumed = s && res.currency_assumed ? el("span", { class: "badge tag-SUPPORTED_HYPOTHESIS", title: s.currency_source },
+    "Currency assumed") : null;
+  const list = s && s.list_price ? [el("dt", {}, "List price"),
+    el("dd", {}, `${money(s.list_price, cur)} (${fmt(s.discount_pct)}% off)`)] : null;
+  const peer = s && s.peer;
+  if (!peer || typeof pr.target === "number" && pr.currency !== s.currency) {
+    return el("div", {}, el("dl", { class: "facts" }, el("dt", {}, "This product"), el("dd", {}, money(target, cur), " ", assumed), list),
+      el("p", { class: "muted" }, "No comparable peer prices."));
+  }
   return el("div", {},
-    el("div", { class: "range", role: "img",
-      "aria-label": `Price ${money(pr.target, pr.currency)}; peer range ${money(pr.peer_min)} to ${money(pr.peer_max)}` },
-      el("div", { class: "span", style: `left:${pos(pr.peer_min)};width:calc(${pos(pr.peer_max)} - ${pos(pr.peer_min)})` }),
-      el("div", { class: "dot", style: `left:${pos(pr.target)}` })),
-    el("div", { class: "range-labels" }, el("span", {}, money(lo)), el("span", {}, money(hi))),
+    el("p", { class: "muted" }, `Peer set: ${peer.n} listings in signals group ${peer.group} (gap-analysis peers had no comparable prices). Bar shows the middle half.`),
+    rangeBar(target, peer.p25, peer.p75, cur),
     el("dl", { class: "facts" },
-      el("dt", {}, "This product"), el("dd", {}, money(pr.target, pr.currency)),
-      el("dt", {}, "Peer range"), el("dd", {}, `${money(pr.peer_min)} – ${money(pr.peer_max, pr.currency)}`),
-      el("dt", {}, "Peer median"), el("dd", {}, `${money(pr.peer_median, pr.currency)} (n=${pr.peer_count})`)));
+      el("dt", {}, "This product"), el("dd", {}, money(target, cur), " ", assumed), list,
+      el("dt", {}, "Middle half of peers"), el("dd", {}, `${money(peer.p25)} – ${money(peer.p75, cur)}`),
+      el("dt", {}, "Peer median"), el("dd", {}, money(peer.p50, cur)),
+      el("dt", {}, "Peer percentile"), el("dd", {}, `${peer.percentile} (${human(peer.position)})`)),
+    s.guidance ? el("p", { class: "muted" }, s.guidance.note) : null);
 }
 
 function factList(p) {
