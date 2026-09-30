@@ -232,12 +232,12 @@ class OptimizerTest(unittest.TestCase):
         self.assertEqual(out["accuracy_after"]["accuracy"], 1.0)
         d = out["description"]
         self.assertTrue(d.startswith("Camiseta para hombre de manga corta y escote redondo."), d)
-        for s in ("Composición: 60% algodón y 40% poliéster.", "Gramaje: 180 g/m².", "Corte athletic fit.",
-                  "Disponible en negro, blanco y marino.", "En stock."):
+        for s in ("Composición: 60% algodón y 40% poliéster.", "Gramaje: 180 g/m².", "Corte atlético.",
+                  "Colores: negro, blanco y azul marino.", "En stock."):
             self.assertIn(s, d)
         for english in ("Athletic fit.", "Scoop neck", "gsm", "EUR"):
             self.assertNotIn(english, d)
-        for s in ("Camiseta para mujer de manga corta.", "Precio: 30,00 €.", "Disponible en rojo."):
+        for s in ("Camiseta para mujer de manga corta.", "Precio: 30,00 €.", "Colores: rojo."):
             self.assertTrue(guard.check_text(s, product_truth(rec))[0]["problems"], s)  # still bound to the facts
 
     def test_not_enough_verified_facts(self):

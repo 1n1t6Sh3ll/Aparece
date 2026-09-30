@@ -82,7 +82,7 @@ MATERIAL = {"es": {"cotton": "algodón", "organic_cotton": "algodón orgánico",
                    "recycled_polyester": "poliéster reciclado", "elastane": "elastano", "spandex": "elastano",
                    "wool": "lana", "merino_wool": "lana merino", "linen": "lino", "viscose": "viscosa",
                    "nylon": "poliamida", "hemp": "cáñamo", "silk": "seda"}}
-COLOR = {"es": {"white": "blanco", "black": "negro", "navy": "marino", "blue": "azul", "red": "rojo", "green": "verde",
+COLOR = {"es": {"white": "blanco", "black": "negro", "navy": "azul marino", "blue": "azul", "red": "rojo", "green": "verde",
                 "yellow": "amarillo", "orange": "naranja", "pink": "rosa", "purple": "morado", "brown": "marrón",
                 "beige": "beige", "grey": "gris", "khaki": "caqui"}}
 COUNTRY = {"en": {"usa": "USA", "uk": "UK"},
@@ -103,7 +103,7 @@ PHRASES = {
            "origin": "Made in {}.", "cert": "Certification: {}.", "care": "Care: {}"},
     "es": {"material": "Composición: {}.", "gsm": "Gramaje: {} g/m².", "stretch": "Tejido elástico.",
            "fit": {"oversized": "Corte oversize.", "slim": "Corte entallado.", "relaxed": "Corte holgado.",
-                   "athletic": "Corte athletic fit.", "tailored": "Corte tailored fit.", "regular": "Corte regular."},
+                   "athletic": "Corte atlético.", "tailored": "Corte a medida.", "regular": "Corte regular."},
            "sleeve": {"short": "Manga corta.", "long": "Manga larga.", "sleeveless": "Sin mangas.",
                       "three_quarter": "Manga 3/4."},
            "neckline": {"crew": "Cuello redondo.", "v_neck": "Cuello en V.", "scoop": "Escote redondo.",
@@ -111,7 +111,7 @@ PHRASES = {
            "pattern": {"striped": "Diseño de rayas.", "plaid": "Diseño de cuadros.", "graphic": "Estampado gráfico.",
                        "printed": "Diseño estampado.", "solid": "Color liso."},
            "audience": {"men": "Para hombre.", "women": "Para mujer.", "unisex": "Unisex.", "kids": "Para niños."},
-           "colors": "Disponible en {}.", "sizes": "Tallas: {}.", "price": "Precio: {}.", "sale": "Precio rebajado: {}.",
+           "colors": "Colores: {}.", "sizes": "Tallas: {}.", "price": "Precio: {}.", "sale": "Precio rebajado: {}.",
            "availability": {"in_stock": "En stock.", "out_of_stock": "Agotado."},
            "origin": "Hecho en {}.", "cert": "Certificación: {}.", "care": "Cuidados: {}",
            # Spanish listings open with the garment: "Camiseta para hombre de manga corta y cuello redondo."
