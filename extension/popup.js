@@ -109,6 +109,10 @@ async function audit() {
     try { data = JSON.parse(body); } catch { throw new Error("API returned invalid JSON."); }
     statusEl.textContent = tab.url;
     render(data);
+    if (data.product_id && /^https?:\/\//.test(apiBase)) {
+      const href = `${apiBase}/dashboard/?product=${encodeURIComponent(data.product_id)}#product`;
+      out.prepend(el("a", { href, target: "_blank", rel: "noopener", textContent: "Open in dashboard" }));
+    }
   } catch (e) {
     statusEl.textContent = "";
     showError(e.message);
