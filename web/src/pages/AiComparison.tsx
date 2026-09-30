@@ -102,10 +102,20 @@ function useStr() {
 /** Link from an audit result to this page. */
 const LIVE_KEY = "pl.compare.";  // sessionStorage: the audited record handed to #/compare/<id> for a live run
 
-export function CompareLink({ productId, record }: { productId: string; record?: Record<string, unknown> | null }) {
+export function CompareLink({ productId, record, reportId }: { productId: string; record?: Record<string, unknown> | null; reportId?: string | null }) {
   const s = useStr();
-  const keep = () => { try { if (record) sessionStorage.setItem(LIVE_KEY + productId, JSON.stringify(record)); } catch { /* storage off: no live run */ } };
-  return <a href={`#/compare/${encodeURIComponent(productId)}`} onClick={keep} className="btn-ghost no-print self-start sm:self-center"><Scale className="size-4" aria-hidden /> {s("cta")}</a>;
+  const keep = () => { try { if (record) sessionStorage.setItem(LIVE_KEY + productId, JSON.stringify(record)); } catch { /* storage off: the report id is enough */ } };
+  const q = reportId ? `?report=${encodeURIComponent(reportId)}` : "";
+  return <a href={`#/compare/${encodeURIComponent(productId)}${q}`} onClick={keep} className="btn-ghost no-print self-start sm:self-center"><Scale className="size-4" aria-hidden /> {s("cta")}</a>;
+}
+
+/** The audited record for a live run: this tab's copy, else the saved audit (GET /v1/audits/{id}) from ?report=. */
+async function findRecord(productId?: string): Promise<Record<string, unknown> | null> {
+  const local = liveRecord(productId);
+  if (local || !productId) return local;
+  const rid = new URLSearchParams(location.hash.split("?")[1] || "").get("report");
+  if (!rid) return null;
+  try { return (await api<{ record: Record<string, unknown> | null }>(`/v1/audits/${encodeURIComponent(rid)}`)).record; } catch { return null; }
 }
 
 function liveRecord(productId?: string): Record<string, unknown> | null {
@@ -161,9 +171,9 @@ export default function AiComparison({ productId }: { productId?: string }) {
   const [sel, setSel] = useState<string>("");
   const [live, setLive] = useState<"idle" | "running" | "none">("idle");
   useEffect(() => {
-    api<Report>("/v1/shootout").then((rep) => {
+    api<Report>("/v1/shootout").then(async (rep) => {
       const inSaved = !!productId && (rep.products || []).some((p) => p.product_id === productId);
-      const rec = inSaved ? null : liveRecord(productId);
+      const rec = inSaved ? null : await findRecord(productId);
       if (!rec) { setData(rep); if (productId && !inSaved) setLive("none"); return; }
       setLive("running");  // not in the saved run: compare this product now (same checks, no simulated shopping test)
       api<Report & { reason?: string }>("/v1/shootout/live", { method: "POST", body: JSON.stringify({ product: rec, language: lang }) })

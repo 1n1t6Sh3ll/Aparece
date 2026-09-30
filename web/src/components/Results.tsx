@@ -274,7 +274,7 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
           {lang === "en" && (audit.notes || []).map((n) => <p key={n} className="mt-1 text-xs muted">{n}</p>)}
         </div>
         <div className="no-print flex flex-wrap items-center gap-2">
-          <CompareLink productId={p.product_id} record={record} />
+          <CompareLink productId={p.product_id} record={record} reportId={reportId} />
           {shareUrl && <button className="btn-outline" onClick={() => { navigator.clipboard?.writeText(shareUrl).catch(() => undefined); toast("ok", t("ws.linkCopied")); }}><Link2 className="size-4" aria-hidden /> {t("ws.copyLink")}</button>}
           {live && <SaveToProducts url={p.url!} />}
           {live && <a href={p.url!} target="_blank" rel="noopener noreferrer" className="btn-ghost px-2.5" aria-label={t("ws.open")}><ExternalLink className="size-4" aria-hidden /></a>}
