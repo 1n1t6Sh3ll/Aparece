@@ -36,7 +36,14 @@ if (-not $SkipTests) {
   }
 }
 
-if (-not (Test-Path web\dist\index.html) -and (Get-Command npm -ErrorAction SilentlyContinue)) {
+# Build web/ when it is missing or older than web/src (a stale build keeps serving an old page).
+$stale = -not (Test-Path web\dist\index.html)
+if (-not $stale) {
+  $built = (Get-Item web\dist\index.html).LastWriteTime
+  $stale = [bool](Get-ChildItem web\src, web\package.json, web\index.html -Recurse -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.LastWriteTime -gt $built } | Select-Object -First 1)
+}
+if ($stale -and (Get-Command npm -ErrorAction SilentlyContinue)) {
   Push-Location web
   try { npm ci; if ($LASTEXITCODE -eq 0) { npm run build } } finally { Pop-Location }
   if ($LASTEXITCODE -ne 0) { Write-Host "web build failed; the API still works" }
