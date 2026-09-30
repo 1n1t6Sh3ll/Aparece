@@ -12,6 +12,8 @@
 !experiments/
 !chat/
 !train/common.py
+!train/reward.py
+!dataset/schema/
 !web/
 web/node_modules/
 web/dist/
