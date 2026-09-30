@@ -106,16 +106,25 @@ document.getElementById("search").addEventListener("submit", (e) => {
   search(document.getElementById("q").value.trim());
 });
 
+let currentId = null;
+
 async function loadProduct(id) {
+  currentId = id;
+  const u = new URL(location.href);
+  u.searchParams.set("product", id);
+  history.replaceState(null, "", u);
   productBox.replaceChildren(el("p", { class: "muted" }, "Loading…"));
+  const base = `/products/${encodeURIComponent(id)}`;
   try {
-    const [p, g] = await Promise.all([getJSON(`/products/${encodeURIComponent(id)}`),
-      getJSON(`/products/${encodeURIComponent(id)}/gaps`)]);
-    renderProduct(p, g);
-  } catch (e) { showError(productBox, e); }
+    const [p, g, s] = await Promise.all([getJSON(base), getJSON(`${base}/gaps`),
+      getJSON(`${base}/signals`).catch(() => ({ available: false }))]);
+    renderProduct(p, g, s);
+  } catch (e) {
+    showError(productBox, e.message.startsWith("404") ? new Error("product not in the loaded dataset") : e);
+  }
 }
 
-function renderProduct(p, g) {
+function renderProduct(p, g, sig) {
   const s = p.summary, m = g.metrics, c = m.attribute_completeness_pct, d = m.description_chars, pr = g.price;
   const head = el("div", { class: "head" }, el("h2", {}, s.title || s.product_id),
     el("span", { class: "badge", title: "Page language" }, `Language: ${fmt(s.language)}`),
@@ -134,31 +143,194 @@ function renderProduct(p, g) {
       barRow("This product", d.target, dmax, String(d.target)),
       barRow("Peer median", d.peer_median ?? 0, dmax, fmt(d.peer_median), "peer")));
 
-  const price = el("div", { class: "card" }, el("h3", {}, "Price position"), priceRange(pr));
+  const price = el("div", { class: "card" }, el("h3", {}, "Price position"), priceRange(pr, sig));
 
   const facts = el("div", { class: "card" }, el("h3", {}, "Facts"),
     el("p", { class: "muted" }, "Underlined values have evidence; hover or focus to see the source text."),
     factList(p));
 
   productBox.replaceChildren(head, el("div", { class: "grid" }, compl, desc, price),
+    el("div", { class: "grid" }, signalPanel(sig), recommendations(g.issues)),
     el("div", { class: "grid" }, facts, el("div", { class: "card" }, el("h3", {}, "Issues vs comparable products"), issueGroups(g.issues))));
 }
 
-function priceRange(pr) {
-  if (typeof pr.target !== "number") return el("p", { class: "muted" }, "Price unknown for this product.");
-  if (!pr.peer_count) return el("p", {}, `${money(pr.target, pr.currency)} — no comparable peer prices.`);
-  const lo = Math.min(pr.peer_min, pr.target), hi = Math.max(pr.peer_max, pr.target), span = hi - lo || 1;
+const FLAG_NAMES = {
+  missing_currency: "Currency missing on page", nonpositive_price: "Price zero or negative",
+  sale_above_list: "Sale price above list price", conflicting_prices: "Conflicting prices on page",
+  rating_out_of_range: "Rating outside its scale", rating_conflict: "Listing rating differs from reviews",
+  price_outlier: "Price outlier vs peers", suspicious_discount: "Suspicious discount",
+};
+
+function signalPanel(res) {
+  const card = el("div", { class: "card" }, el("h3", {}, "Price & reviews"));
+  const s = res && res.signal;
+  if (!s) {
+    card.append(el("p", { class: "muted" }, "No price or review signals for this product. Set PRODUCTLENS_SIGNALS to signals.jsonl."));
+    return card;
+  }
+  const r = s.reviews || {};
+  const rating = r.rating_5 ?? r.rating_mean ?? null;
+  const dl = el("dl", { class: "facts" },
+    el("dt", {}, "Rating"), el("dd", {}, rating === null ? "—" : `${Number(rating).toFixed(2)} / 5`,
+      r.research_only ? el("span", { class: "muted" }, " (research-only data)") : null),
+    el("dt", {}, "Reviews"), el("dd", {}, fmt(r.review_count ?? r.rating_count)),
+    el("dt", {}, "Price in USD"), el("dd", {}, money(s.price_usd, "USD"), s.fx ? el("span", { class: "muted" }, ` (FX ${s.fx.date})`) : null),
+    el("dt", {}, "Inflation-adjusted"), el("dd", {}, s.price_usd_2026 === null ? "—" :
+      `${money(s.price_usd_2026, "USD")} in ${s.cpi.target_period} dollars (CPI-U, from ${s.cpi.base_period})`),
+    el("dt", {}, "Data-quality flags"), el("dd", {}, s.flags.length ?
+      el("ul", { class: "flags" }, s.flags.map((f) => el("li", { title: f }, FLAG_NAMES[f] || human(f)))) : "None"));
+  card.append(dl, el("p", { class: "muted" }, "Price and peer position are in the Price position card."));
+  return card;
+}
+
+function recommendations(issues) {
+  const order = Object.keys(LABELS);
+  const recs = issues.filter((i) => i.suggested_action)
+    .sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+  return el("div", { class: "card" }, el("h3", {}, "Recommendations"),
+    el("p", { class: "muted" }, "Suggestions from gaps vs comparable products. Their effect on AI or search ranking is not measured; none is a causal claim."),
+    recs.length ? el("ol", { class: "recs" }, recs.map((i) => el("li", {},
+      el("span", { class: `badge tag-${i.type}` }, LABELS[i.type] || i.type), " ", humanText(i.suggested_action),
+      el("div", { class: "muted" }, `Basis: ${humanText(i.statement)}`)))) :
+      el("p", { class: "muted" }, "None."));
+}
+
+/* ---------- Competitors view ---------- */
+
+async function loadCompetitors() {
+  const box = document.getElementById("competitors");
+  const id = currentId || new URLSearchParams(location.search).get("product");
+  if (!id) {
+    box.replaceChildren(el("div", { class: "card empty" }, "Pick a product on the Product page first."));
+    return;
+  }
+  box.replaceChildren(el("p", { class: "muted" }, "Loading…"));
+  try {
+    const c = await getJSON(`/products/${encodeURIComponent(id)}/competitors`);
+    const t = c.target;
+    const pos = (v) => (v === null || v === undefined ? "—" : v === 0 ? "same price" :
+      `${Math.abs(v)}% ${v > 0 ? "higher" : "lower"}`);
+    const row = (p, label) => [label || p.title || p.product_id, fmt(p.brand), fmt(p.merchant), `${p.completeness_pct}%`,
+      money(p.price, p.currency), label ? "—" : pos(p.price_diff_pct), fmt(p.peer_percentile)];
+    box.replaceChildren(
+      el("p", {}, "Comparable products for ", el("strong", {}, t.title || t.product_id),
+        " (same product type and language; closest matches first)."),
+      c.peers.length ? table(["Product", "Brand", "Merchant", "Attribute completeness", "Price", "Price vs this product", "Peer price percentile"],
+        [row(t, `This product: ${t.title || t.product_id}`), ...c.peers.map((p) => row(p))]) :
+        el("div", { class: "card empty" }, "No comparable products found in the dataset."),
+      el("p", { class: "muted" }, "Price differences only compare listings in the same currency. Percentiles come from signals.jsonl peer groups."));
+  } catch (e) { showError(box, e); }
+}
+
+/* ---------- AI visibility view ---------- */
+
+const rate = (v) => (typeof v === "number" ? `${(v * 100).toFixed(0)}%` : "—");
+
+function entityTable(first, rows, k) {
+  return table([first, "Mention rate", `Top-${k} rate`, "MRR", "Citation rate"],
+    Object.entries(rows || {}).map(([name, r]) => [name, rate(r.mention_rate), rate(r[`top${k}_rate`]),
+      typeof r.mrr === "number" ? r.mrr.toFixed(2) : "—", rate(r.citation_rate)]));
+}
+
+async function loadVisibility() {
+  const box = document.getElementById("visibility");
+  try {
+    const v = await getJSON("/visibility");
+    if (!v.available) {
+      box.replaceChildren(el("div", { class: "card empty" }, el("h2", {}, "No benchmark runs yet"),
+        "Run the AI-visibility benchmark report and point PRODUCTLENS_VISIBILITY at its report.json."));
+      return;
+    }
+    const rep = v.report, k = rep.k;
+    const parts = [el("p", { class: "muted" }, `${rep.responses} responses. Observed outputs of black-box AI systems; ` +
+      "rates describe what was mentioned, not why.")];
+    for (const [model, m] of Object.entries(rep.models)) {
+      parts.push(el("h2", {}, `Model: ${model}`),
+        el("div", { class: "tiles" }, tile("Responses", m.responses), tile("Any catalog mention", rate(m.any_catalog_mention_rate)),
+          tile("Stability", m.stability === null ? "n/a" : m.stability.toFixed(2), "Mean overlap across repeats"),
+          tile("Unmatched mentions", m.unmatched_mentions)),
+        el("h3", {}, "By site"), entityTable("Site", m.sites, k));
+      const langs = Object.entries(m.languages || {});
+      if (langs.length) {
+        parts.push(el("h3", {}, "By language"), table(["Language", "Responses", "Any catalog mention", "Stability"],
+          langs.map(([l, s]) => [l, fmt(s.responses), rate(s.any_catalog_mention_rate),
+            s.stability === null ? "n/a" : s.stability.toFixed(2)])));
+      }
+      if (Object.keys(m.products || {}).length) parts.push(el("h3", {}, "By product"), entityTable("Product", m.products, k));
+    }
+    box.replaceChildren(...parts);
+  } catch (e) { showError(box, e); }
+}
+
+/* ---------- Languages view ---------- */
+
+async function loadLanguages() {
+  const box = document.getElementById("languages");
+  try {
+    const { languages: langs, visibility_available: vis } = await getJSON("/languages");
+    const entries = Object.entries(langs);
+    if (!entries.length) {
+      box.replaceChildren(el("div", { class: "card empty" }, "No dataset or benchmark report loaded."));
+      return;
+    }
+    const models = [...new Set(entries.flatMap(([, x]) => Object.keys(x.visibility)))];
+    box.replaceChildren(
+      el("div", { class: "card", style: "margin-bottom:16px" }, el("h3", {}, "Median attribute completeness by language"),
+        el("div", { class: "bars" }, entries.map(([l, x]) =>
+          barRow(l, x.completeness_median ?? 0, 100, x.completeness_median === null ? "no products" : `${x.completeness_median}%`)))),
+      table(["Language", "Products", "Completeness (median)", "Completeness (mean)",
+        ...models.map((m) => `Any mention: ${m}`)],
+      entries.map(([l, x]) => [l, x.products, x.completeness_median === null ? "—" : `${x.completeness_median}%`,
+        x.completeness_mean === null ? "—" : `${x.completeness_mean}%`,
+        ...models.map((m) => x.visibility[m] ? `${rate(x.visibility[m].any_catalog_mention_rate)} (n=${x.visibility[m].responses})` : "—")])),
+      el("p", { class: "muted" }, vis ? "Coverage and visibility are shown side by side; this does not show that one causes the other." :
+        "Visibility appears here once a benchmark report is loaded (PRODUCTLENS_VISIBILITY)."));
+  } catch (e) { showError(box, e); }
+}
+
+function rangeBar(target, a, b, cur) {
+  const lo = Math.min(a, target), hi = Math.max(b, target), span = hi - lo || 1;
   const pos = (v) => `${(100 * (v - lo)) / span}%`;
+  return [el("div", { class: "range", role: "img",
+    "aria-label": `Price ${money(target, cur)}; peer range ${money(a)} to ${money(b)}` },
+  el("div", { class: "span", style: `left:${pos(a)};width:calc(${pos(b)} - ${pos(a)})` }),
+  el("div", { class: "dot", style: `left:${pos(target)}` })),
+  el("div", { class: "range-labels" }, el("span", {}, money(lo)), el("span", {}, money(hi)))];
+}
+
+// The single place the UI shows this product's price. Peer set: gap-analysis peers when they have
+// comparable prices, else the signals.jsonl peer group (same type, language, currency and currency basis).
+function priceRange(pr, res) {
+  const s = res && res.signal;
+  if (typeof pr.target === "number" && pr.peer_count) {
+    return el("div", {}, el("p", { class: "muted" }, `Peer set: ${pr.peer_count} comparable products from gap analysis, same currency.`),
+      rangeBar(pr.target, pr.peer_min, pr.peer_max, pr.currency),
+      el("dl", { class: "facts" },
+        el("dt", {}, "This product"), el("dd", {}, money(pr.target, pr.currency)),
+        el("dt", {}, "Peer range"), el("dd", {}, `${money(pr.peer_min)} – ${money(pr.peer_max, pr.currency)}`),
+        el("dt", {}, "Peer median"), el("dd", {}, `${money(pr.peer_median, pr.currency)} (n=${pr.peer_count})`)));
+  }
+  const target = typeof pr.target === "number" ? pr.target : s && s.price;
+  const cur = typeof pr.target === "number" ? pr.currency : s && s.currency;
+  if (typeof target !== "number") return el("p", { class: "muted" }, "Price unknown for this product.");
+  const assumed = s && res.currency_assumed ? el("span", { class: "badge tag-SUPPORTED_HYPOTHESIS", title: s.currency_source },
+    "Currency assumed") : null;
+  const list = s && s.list_price ? [el("dt", {}, "List price"),
+    el("dd", {}, `${money(s.list_price, cur)} (${fmt(s.discount_pct)}% off)`)] : null;
+  const peer = s && s.peer;
+  if (!peer || typeof pr.target === "number" && pr.currency !== s.currency) {
+    return el("div", {}, el("dl", { class: "facts" }, el("dt", {}, "This product"), el("dd", {}, money(target, cur), " ", assumed), list),
+      el("p", { class: "muted" }, "No comparable peer prices."));
+  }
   return el("div", {},
-    el("div", { class: "range", role: "img",
-      "aria-label": `Price ${money(pr.target, pr.currency)}; peer range ${money(pr.peer_min)} to ${money(pr.peer_max)}` },
-      el("div", { class: "span", style: `left:${pos(pr.peer_min)};width:calc(${pos(pr.peer_max)} - ${pos(pr.peer_min)})` }),
-      el("div", { class: "dot", style: `left:${pos(pr.target)}` })),
-    el("div", { class: "range-labels" }, el("span", {}, money(lo)), el("span", {}, money(hi))),
+    el("p", { class: "muted" }, `Peer set: ${peer.n} listings in signals group ${peer.group} (gap-analysis peers had no comparable prices). Bar shows the middle half.`),
+    rangeBar(target, peer.p25, peer.p75, cur),
     el("dl", { class: "facts" },
-      el("dt", {}, "This product"), el("dd", {}, money(pr.target, pr.currency)),
-      el("dt", {}, "Peer range"), el("dd", {}, `${money(pr.peer_min)} – ${money(pr.peer_max, pr.currency)}`),
-      el("dt", {}, "Peer median"), el("dd", {}, `${money(pr.peer_median, pr.currency)} (n=${pr.peer_count})`)));
+      el("dt", {}, "This product"), el("dd", {}, money(target, cur), " ", assumed), list,
+      el("dt", {}, "Middle half of peers"), el("dd", {}, `${money(peer.p25)} – ${money(peer.p75, cur)}`),
+      el("dt", {}, "Peer median"), el("dd", {}, money(peer.p50, cur)),
+      el("dt", {}, "Peer percentile"), el("dd", {}, `${peer.percentile} (${human(peer.position)})`)),
+    s.guidance ? el("p", { class: "muted" }, s.guidance.note) : null);
 }
 
 function factList(p) {
@@ -246,16 +418,20 @@ async function loadModels() {
     const fields = [...new Set(models.flatMap(([, r]) => Object.keys(r.field_exact || {})))];
     const rows = [["Examples (n)", (r) => fmt(r.n)], ["JSON valid", (r) => pct(r.json_valid)],
       ["Mean field exact", (r) => pct(r.mean_field_exact)],
-      ...fields.map((f) => [human(f), (r) => pct((r.field_exact || {})[f])])];
+      ["Accuracy on stated values", (r) => pct(r.non_null_acc)], ["Accuracy on absent values (null)", (r) => pct(r.null_acc)],
+      ...fields.map((f) => [human(f.split(".").pop()), (r) => pct((r.field_exact || {})[f])])];
     const parts = [el("h2", {}, "Per field (exact match)"),
       table(["Field", ...names.map(human)], rows.map(([label, fn]) => [label, ...models.map(([, r]) => fn(r))]))];
+    // Any per_<dimension> breakdown in the eval JSON (per_language, per_source, ...).
     for (const [name, r] of models) {
-      const langs = Object.entries(r.per_language || {});
-      if (!langs.length) continue;
-      const lf = [...new Set(langs.flatMap(([, x]) => Object.keys(x.field_exact || {})))];
-      parts.push(el("h2", {}, `Per language: ${human(name)}`),
-        table(["Field", ...langs.map(([l, x]) => `${l} (n=${fmt(x.n)})`)],
-          lf.map((f) => [human(f), ...langs.map(([, x]) => pct((x.field_exact || {})[f]))])));
+      for (const dim of Object.keys(r).filter((key) => key.startsWith("per_"))) {
+        const groups = Object.entries(r[dim] || {});
+        if (!groups.length) continue;
+        const lf = [...new Set(groups.flatMap(([, x]) => Object.keys(x.field_exact || {})))];
+        parts.push(el("h2", {}, `${human(dim.slice(4))}: ${human(name)}`),
+          table(["Field", ...groups.map(([g, x]) => `${g} (n=${fmt(x.n)})`)],
+            lf.map((f) => [human(f.split(".").pop()), ...groups.map(([, x]) => pct((x.field_exact || {})[f]))])));
+      }
     }
     box.replaceChildren(...parts);
   } catch (err) { showError(box, err); }
@@ -269,7 +445,8 @@ function table(head, rows) {
 
 /* ---------- Routing ---------- */
 
-const loaders = { product: () => results.childElementCount || search(""), dataset: loadStats, models: loadModels };
+const loaders = { product: () => results.childElementCount || search(""), competitors: loadCompetitors,
+  visibility: loadVisibility, languages: loadLanguages, dataset: loadStats, models: loadModels };
 
 function route() {
   const view = (location.hash.slice(1).split("/")[0]) || "product";
