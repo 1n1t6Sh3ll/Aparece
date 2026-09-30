@@ -137,10 +137,9 @@ def check_sentence(sentence, truth, rec=None, vocab=None):
     rec = rec or check_record(truth)
     words, numbers = vocab or vocabulary(truth)
     s = sentence
-    for k in ("identity.brand", "identity.product_name"):
-        v = truth["facts"].get(k)
-        if v:
-            s = re.sub(re.escape(str(v)), " ", s, flags=re.I)
+    names = [str(truth["facts"].get(k) or "") for k in ("identity.product_name", "identity.brand")]
+    for v in sorted((v for v in names if v.strip()), key=len, reverse=True):  # name first: it may contain the brand
+        s = re.sub(re.escape(v), " ", s, flags=re.I)
     for c in truth.get("care") or []:  # verbatim verified care text
         s = re.sub(re.escape(c.rstrip(".")), " ", s, flags=re.I)
     claims, problems = [], []
@@ -168,6 +167,17 @@ def check_text(text, truth):
         claims, problems = check_sentence(sent, truth, rec, vocab)
         out.append({"sentence": sent, "claims": claims, "problems": problems})
     return out
+
+
+def check_title(title, truth, rec=None, vocab=None):
+    """[{sentence, claims, problems}] for a title, checked as one unit (not split into sentences). Identity is only the
+    exact verified brand and/or exact verified product name (contiguous, case-insensitive; removed by check_sentence).
+    Every other word, including a lone word taken from the name, must be backed by an attribute fact."""
+    title = (title or "").strip()
+    if not title:
+        return []
+    claims, problems = check_sentence(title, truth, rec, vocab)
+    return [{"sentence": title, "claims": claims, "problems": problems}]
 
 
 FIELD_PREFIXES = ("materials.", "fit_and_style.", "identity.", "commerce.", "variants.", "origin", "certification")
