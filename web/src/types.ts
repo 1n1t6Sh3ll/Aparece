@@ -57,7 +57,7 @@ export interface Audit {
   actions: Action[];
   unknowns: string[];
   visibility: {
-    available: boolean; models?: string[]; responses?: number; mention_rate?: Record<string, number | null>;
+    available: boolean; models?: string[]; responses?: number; shops?: number; mention_rate?: Record<string, number | null>;
     site?: string | null; site_in_benchmark?: boolean; site_mention_rate?: Record<string, number | null>;
     top_named?: { name: string; answers: number }[];
   };

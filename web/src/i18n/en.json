@@ -738,8 +738,11 @@
   "land.checks": "What every audit checks",
   "land.checks.note": "Your audit marks each of these Found or Not found, with the exact text from your page.",
   "vis.siteRate": "Your store was named in {rate} of {n} real shopping answers from {models}.",
-  "vis.allRate": "The shops in our benchmark were named in {rate} of {n} real shopping answers from {models}.",
+  "vis.allZero": "None of the {shops} small shirt shops in our benchmark was named in any of {n} real shopping answers from {count} AI models.",
+  "vis.zeroWhat": "0% means none of these shops appeared in any answer. It does not mean they are bad shops: the assistants answered with well-known brands instead.",
+  "vis.allRate": "The {shops} small shirt shops in our benchmark were named in up to {rate} of the answers ({n} real shopping answers from {count} AI models).",
+  "vis.perModel": "Share of each model's answers that named one of these shops:",
   "vis.named": "Brands the AI assistants named instead (answers):",
-  "vis.note": "Real answers to 384 English and Spanish t-shirt questions (30 Sep 2026). Observed outputs, not how the models work inside.",
+  "vis.note": "Each model answered the same 192 English and Spanish t-shirt questions (30 Sep 2026). Observed outputs, not how the models work inside.",
   "nav.docs": "How it works"
 }

@@ -738,8 +738,11 @@
   "land.checks": "Qué revisa cada auditoría",
   "land.checks.note": "Tu auditoría marca cada uno como Encontrado o No encontrado, con el texto exacto de tu página.",
   "vis.siteRate": "Tu tienda apareció en el {rate} de {n} respuestas reales de compra de {models}.",
-  "vis.allRate": "Las tiendas de nuestro benchmark aparecieron en el {rate} de {n} respuestas reales de compra de {models}.",
+  "vis.allZero": "Ninguna de las {shops} pequeñas tiendas de camisetas de nuestro benchmark apareció en ninguna de las {n} respuestas reales de compra de {count} modelos de IA.",
+  "vis.zeroWhat": "0 % significa que ninguna de estas tiendas apareció en ninguna respuesta. No significa que sean malas tiendas: los asistentes respondieron con marcas conocidas.",
+  "vis.allRate": "Las {shops} pequeñas tiendas de camisetas de nuestro benchmark aparecieron en hasta el {rate} de las respuestas ({n} respuestas reales de compra de {count} modelos de IA).",
+  "vis.perModel": "Porcentaje de las respuestas de cada modelo que nombraron alguna de estas tiendas:",
   "vis.named": "Marcas que nombraron los asistentes de IA en su lugar (respuestas):",
-  "vis.note": "Respuestas reales a 384 preguntas sobre camisetas en inglés y español (30 sep 2026). Resultados observados, no cómo funcionan los modelos por dentro.",
+  "vis.note": "Cada modelo respondió a las mismas 192 preguntas sobre camisetas en inglés y español (30 sep 2026). Resultados observados, no cómo funcionan los modelos por dentro.",
   "nav.docs": "Cómo funciona"
 }

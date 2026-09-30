@@ -1,0 +1,176 @@
+{
+ "method": "Brand names in bold at the start of each recommended item (**Brand - Product**), counted once per answer. Heuristic; observed outputs, not claims about model internals.",
+ "answers": 384,
+ "by_language": {
+  "en": 192,
+  "es": 192
+ },
+ "top_named": [
+  {
+   "name": "Uniqlo",
+   "answers": 100
+  },
+  {
+   "name": "Patagonia",
+   "answers": 74
+  },
+  {
+   "name": "Nike",
+   "answers": 57
+  },
+  {
+   "name": "Everlane",
+   "answers": 53
+  },
+  {
+   "name": "H&M",
+   "answers": 42
+  },
+  {
+   "name": "Hanes",
+   "answers": 41
+  },
+  {
+   "name": "Under Armour",
+   "answers": 34
+  },
+  {
+   "name": "Adidas",
+   "answers": 34
+  },
+  {
+   "name": "Gildan",
+   "answers": 31
+  },
+  {
+   "name": "J.Crew",
+   "answers": 26
+  },
+  {
+   "name": "Tentree",
+   "answers": 25
+  },
+  {
+   "name": "Zara",
+   "answers": 22
+  },
+  {
+   "name": "Fruit of the Loom",
+   "answers": 21
+  },
+  {
+   "name": "Carhartt",
+   "answers": 20
+  },
+  {
+   "name": "Lululemon",
+   "answers": 19
+  },
+  {
+   "name": "Lacoste",
+   "answers": 18
+  },
+  {
+   "name": "Icebreaker",
+   "answers": 18
+  },
+  {
+   "name": "ASOS",
+   "answers": 17
+  },
+  {
+   "name": "PACT",
+   "answers": 17
+  },
+  {
+   "name": "Ralph Lauren",
+   "answers": 16
+  },
+  {
+   "name": "L.L.Bean",
+   "answers": 15
+  },
+  {
+   "name": "Levi's",
+   "answers": 15
+  },
+  {
+   "name": "Urban",
+   "answers": 13
+  },
+  {
+   "name": "Tommy Hilfiger",
+   "answers": 13
+  },
+  {
+   "name": "Smartwool",
+   "answers": 13
+  },
+  {
+   "name": "People",
+   "answers": 13
+  },
+  {
+   "name": "Buck",
+   "answers": 12
+  },
+  {
+   "name": "Thought",
+   "answers": 12
+  },
+  {
+   "name": "Amazon",
+   "answers": 11
+  },
+  {
+   "name": "Champion",
+   "answers": 11
+  }
+ ],
+ "top_named_by_language": {
+  "en": [
+   {
+    "name": "Uniqlo",
+    "answers": 52
+   },
+   {
+    "name": "Patagonia",
+    "answers": 37
+   },
+   {
+    "name": "Everlane",
+    "answers": 35
+   },
+   {
+    "name": "Hanes",
+    "answers": 28
+   },
+   {
+    "name": "Nike",
+    "answers": 23
+   }
+  ],
+  "es": [
+   {
+    "name": "Uniqlo",
+    "answers": 48
+   },
+   {
+    "name": "Patagonia",
+    "answers": 37
+   },
+   {
+    "name": "H&M",
+    "answers": 35
+   },
+   {
+    "name": "Nike",
+    "answers": 34
+   },
+   {
+    "name": "Adidas",
+    "answers": 23
+   }
+  ]
+ }
+}
