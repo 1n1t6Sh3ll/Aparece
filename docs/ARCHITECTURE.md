@@ -68,3 +68,21 @@ flowchart LR
 | Web and extension | `web/src/` (React, served at `/`), `extension/` (Chrome MV3) | Audit, comparison, models, monitoring, reports, and a How it works page (`#/docs`), in EN/ES. Dark theme by default (a saved choice wins). |
 
 Serving: FastAPI (`api/main.py`) exposes all `/v1` routes on port 8000 and serves the `web/` build at `/`. The Docker image (`ghcr.io/1n1t6sh3ll/aparece`, built by `.github/workflows/docker.yml`) is rules-only, with no torch.
+
+## Deployment
+
+```mermaid
+flowchart LR
+  B["Browser or Chrome extension"] -->|https| FLY["Fly.io proxy<br/>aparece.fly.dev"]
+  FLY --> APP["One machine, 1 GB<br/>Docker image: FastAPI + web build<br/>SQLite files inside the container"]
+  APP -->|"fetch, robots.txt respected"| SHOP["Shop product pages"]
+  APP -->|"keys from Fly secrets, spend-capped"| LLM["OpenAI and Anthropic APIs"]
+  PEER[("Peer dataset<br/>not in the image")] -.-> APP
+  GH["GitHub main"] -->|"fly deploy builds the Dockerfile"| APP
+```
+
+- **Hosting:** `fly.toml` runs one always-on machine on port 8000 with a `/v1/health` check. The keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) are Fly secrets, never in git or in the web build.
+- **State is not persistent yet.** Stored audits, share links, monitoring, governance and webhooks are SQLite files in the container and are lost on redeploy. A persistent volume and the `*_DB` paths would keep them.
+- **Peer data is not in the image.** Without `PRODUCTLENS_DATA` an audit ranks "1 of 1" and lists no fixes.
+- **Some shops block cloud servers** (HTTP 429 from datacenter addresses), so a pasted draft is the reliable path on the hosted app.
+- The paid routes have no login; they are limited by per-request and per-day caps and a rate limit.
