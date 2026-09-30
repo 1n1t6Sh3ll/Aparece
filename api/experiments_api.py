@@ -99,11 +99,16 @@ def read_experiment(eid: str):
 def add_result(eid: str, req: ResultRequest):
     exp = get_experiment(eid)
     if req.kind == "accuracy":
+        if req.phase == "before" and lift.accuracy_before(exp, store.results(eid)) is not None:
+            raise HTTPException(409, "accuracy_before is already recorded; start a new experiment to change it")
         data = {"phase": req.phase, "accuracy": req.accuracy}
     else:
-        metrics, scope = lift.extract_metrics(req.report, {exp["product_id"], *exp["control_products"]}, exp["language"])
+        try:
+            metrics = lift.extract_metrics(req.report, {exp["product_id"], *exp["control_products"]}, exp["language"])
+        except lift.MissingLanguageMetrics as e:
+            raise HTTPException(422, str(e))
         if exp["product_id"] not in {p for m in metrics.values() for p in m}:
             raise HTTPException(422, "report has no metrics for the experiment product")
-        data = {"phase": req.phase, "split": req.split, "run": req.run, "scope": scope, "metrics": metrics}
+        data = {"phase": req.phase, "split": req.split, "run": req.run, "scope": "language", "metrics": metrics}
     store.add_result(eid, req.kind, data)
     return view(exp)

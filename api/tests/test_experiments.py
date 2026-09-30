@@ -19,12 +19,19 @@ CATALOG = Path(__file__).parent / "fixtures" / "dashboard_records.jsonl"
 client = TestClient(main.app)
 
 
-def synthetic_report(values, k=3):
-    """Test-only report in benchmark/metrics.py shape. values: {model: {product_id: mention_rate}}."""
-    return {"k": k, "responses": 10, "models": {
-        m: {"products": {p: {"mention_rate": v, f"top{k}_rate": v / 2, "mrr": v / 3, "citation_rate": 0.0}
-                         for p, v in prods.items()}, "languages": {}}
-        for m, prods in values.items()}}
+def synthetic_report(values, k=3, language="en", per_language=True):
+    """Test-only report in benchmark/metrics.py build_report shape. values: {model: {product_id: mention_rate}}.
+    build_report's languages[lang] summaries have no per-product rows today; per_language=True adds them
+    (the rows a language experiment requires), per_language=False is the current real shape."""
+    def summary(rows):
+        out = {"responses": 10, "any_catalog_mention_rate": 0.5, "stability": None, "unmatched_mentions": 0, "sites": {}}
+        return {**out, "products": rows} if rows is not None else out
+
+    models = {}
+    for m, prods in values.items():
+        rows = {p: {"mention_rate": v, f"top{k}_rate": v / 2, "mrr": v / 3, "citation_rate": 0.0} for p, v in prods.items()}
+        models[m] = {**summary(rows), "languages": {language: summary(rows if per_language else None)}}
+    return {"k": k, "responses": 10, "models": models, "top_unmatched": []}
 
 
 class ExperimentsTest(unittest.TestCase):
@@ -84,7 +91,7 @@ class ExperimentsTest(unittest.TestCase):
         self.assertNotIn("caus", a["statement"].lower())
         self.assertFalse(a["dev_vs_hidden"]["overfitting_flag"])
         self.assertTrue(a["generalization"]["generalizes"])
-        self.assertEqual(a["accuracy"], {"before": 0.9, "after": 0.92, "guardrail": "pass"})
+        self.assertEqual(a["accuracy"], {"before": 0.9, "after": 0.92, "after_history": [0.92], "guardrail": "pass"})
         self.assertIsNotNone(a["lifts"]["dev"]["optimization"]["topk_rate"])
 
     def test_overfitting_flag(self):
@@ -142,11 +149,56 @@ class ExperimentsTest(unittest.TestCase):
         r = client.post(url, json={"kind": "benchmark", "phase": "post", "split": "dev", "report": other})
         self.assertEqual(r.status_code, 422)
 
-    def test_language_rows_preferred(self):
+    def test_language_rows_required(self):
         rep = synthetic_report({"opt": {"p_target": 0.1}})
-        rep["models"]["opt"]["languages"] = {"de": {"products": {"p_target": {"mention_rate": 0.7, "top3_rate": 0.1, "mrr": 0.2}}}}
-        self.assertEqual(lift.extract_metrics(rep, {"p_target"}, "de")[0]["opt"]["p_target"]["mention_rate"], 0.7)
-        self.assertEqual(lift.extract_metrics(rep, {"p_target"}, "en")[1], "all_languages")
+        rep["models"]["opt"]["languages"]["de"] = {"products": {"p_target": {"mention_rate": 0.7, "top3_rate": 0.1, "mrr": 0.2}}}
+        self.assertEqual(lift.extract_metrics(rep, {"p_target"}, "de")["opt"]["p_target"]["mention_rate"], 0.7)
+        with self.assertRaises(lift.MissingLanguageMetrics):
+            lift.extract_metrics(rep, {"p_target"}, "fr")  # never falls back to all-language rows
+
+    def test_real_build_report_without_language_products_is_refused(self):
+        from benchmark.metrics import build_report
+        products = [{"product_id": "p_target", "site": "shop.example.com", "url": "https://shop.example.com/p/p_target",
+                     "aliases": ["Everyday Tee"], "name": "Everyday Tee", "brand": "Northwind"}]
+        records = [{"provider": "mock", "model": "opt", "prompt_id": "q1", "variant": 0, "language": "en",
+                    "response_text": "Try https://shop.example.com/p/p_target"}]
+        rep = build_report(records, products)
+        self.assertIn("p_target", rep["models"]["opt"]["products"])
+        self.assertNotIn("products", rep["models"]["opt"]["languages"]["en"])
+        eid = self.create()["id"]
+        r = client.post(f"/v1/experiments/{eid}/results",
+                        json={"kind": "benchmark", "phase": "baseline", "split": "dev", "report": rep})
+        self.assertEqual(r.status_code, 422)
+        self.assertIn("per-language product metrics", r.json()["detail"])
+        r = client.post(f"/v1/experiments/{eid}/results", json={"kind": "benchmark", "phase": "baseline", "split": "dev",
+                        "report": synthetic_report({"opt": {"p_target": 0.3}}, per_language=False)})
+        self.assertEqual(r.status_code, 422)
+
+    def test_no_controls_reports_raw_change_only(self):
+        eid = self.create(control_products=[])["id"]
+        self.bench(eid, "baseline", "dev", 0.30, 0.20)
+        self.bench(eid, "post", "dev", 0.50, 0.25)
+        client.post(f"/v1/experiments/{eid}/results", json={"kind": "accuracy", "phase": "after", "accuracy": 0.95})
+        a = client.get(f"/v1/experiments/{eid}").json()["analysis"]
+        m = a["lifts"]["dev"]["optimization"]["mention_rate"]
+        self.assertEqual((m["raw_change_pp"], m["adjusted_lift_pp"], m["measure"]), (20.0, None, "raw"))
+        self.assertIn("no control products — adjusted lift not available", a["statement"])
+        self.assertNotIn("adjusted visibility lift", a["statement"])
+
+    def test_accuracy_failure_is_sticky(self):
+        eid, a = self.scenario(dev_post=0.50, hidden_post=0.50, acc_after=0.85)
+        url = f"/v1/experiments/{eid}/results"
+        a = client.post(url, json={"kind": "accuracy", "phase": "after", "accuracy": 0.99}).json()["analysis"]
+        self.assertEqual((a["accuracy"]["guardrail"], a["status"]), ("fail", "rejected"))
+        self.assertEqual(a["accuracy"]["after_history"], [0.85, 0.99])
+        self.assertEqual(client.post(url, json={"kind": "accuracy", "phase": "before", "accuracy": 0.5}).status_code, 409)
+
+    def test_unknown_accuracy_is_unverified(self):
+        eid = self.create(accuracy_before=None)["id"]
+        self.bench(eid, "baseline", "dev", 0.30, 0.20)
+        a = self.bench(eid, "post", "dev", 0.50, 0.25)["analysis"]
+        self.assertEqual((a["accuracy"]["guardrail"], a["status"]), ("unknown", "unverified"))
+        self.assertTrue(a["statement"].startswith("Unverified (accuracy guardrail unknown): Observed adjusted"))
 
 
 if __name__ == "__main__":

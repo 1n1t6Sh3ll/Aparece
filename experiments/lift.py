@@ -36,21 +36,29 @@ def load_catalog(path):
     return load_records(path) if path and Path(path).is_file() else []
 
 
-def extract_metrics(report, product_ids, language=None):
-    """{model: {product_id: {mention_rate, topk_rate, mrr}}} for the given products.
-    Uses per-language product rows when the report has them, else the all-language rows."""
+class MissingLanguageMetrics(ValueError):
+    pass
+
+
+def extract_metrics(report, product_ids, language):
+    """{model: {product_id: {mention_rate, topk_rate, mrr}}} for the given products, from the report's
+    per-language product rows (models[m].languages[language].products). Language experiments never fall back
+    to all-language rows: a report without per-language product rows raises MissingLanguageMetrics."""
     k = report.get("k", 3)
-    out, scope = {}, "all_languages"
+    out = {}
     for model, m in (report.get("models") or {}).items():
-        rows = m.get("products") or {}
-        lang_rows = ((m.get("languages") or {}).get(language) or {}).get("products") if language else None
-        if lang_rows:
-            rows, scope = lang_rows, "language"
+        rows = ((m.get("languages") or {}).get(language) or {}).get("products")
+        if not rows:
+            continue
         got = {pid: {"mention_rate": r["mention_rate"], "topk_rate": r.get(f"top{k}_rate"), "mrr": r["mrr"]}
                for pid, r in rows.items() if pid in product_ids}
         if got:
             out[model] = got
-    return out, scope
+    if not out:
+        raise MissingLanguageMetrics(
+            f"report has no per-language product metrics for language '{language}' "
+            f"(models[*].languages['{language}'].products); all-language rows are not used for a language experiment")
+    return out
 
 
 def _run_value(metrics, products, models, metric):
@@ -78,7 +86,7 @@ def lift(runs, treatment, controls, models, metric):
     def adjusted(b, p):
         return (_mean([x[0] for x in p]) - _mean([x[0] for x in b])) - (_mean([x[1] for x in p]) - _mean([x[1] for x in b]))
 
-    ci = None
+    ci = None  # CI of the reported measure: adjusted lift with controls, raw change without (c = 0)
     if len(base) > 1 or len(post) > 1:
         rng = random.Random(SEED)
         boots = sorted(adjusted(rng.choices(base, k=len(base)), rng.choices(post, k=len(post))) for _ in range(BOOTSTRAP))
@@ -88,13 +96,31 @@ def lift(runs, treatment, controls, models, metric):
     return {"treatment_before": round(tb, 4), "treatment_after": round(tp, 4),
             "control_before": round(cb, 4) if controls else None, "control_after": round(cp, 4) if controls else None,
             "raw_change_pp": round(100 * (tp - tb), 2), "control_change_pp": round(100 * (cp - cb), 2) if controls else None,
-            "adjusted_lift_pp": round(100 * adjusted(base, post), 2), "ci95_pp": ci,
+            "adjusted_lift_pp": round(100 * adjusted(base, post), 2) if controls else None,
+            "measure": "adjusted" if controls else "raw", "ci95_pp": ci,
             "runs_baseline": len(base), "runs_post": len(post)}
 
 
-def _latest_accuracy(exp, results, phase):
-    vals = [r["accuracy"] for r in results if r["kind"] == "accuracy" and r["phase"] == phase]
-    return vals[-1] if vals else exp.get(f"accuracy_{phase}")
+def accuracy_before(exp, results):
+    """Fixed once set: the value given at creation, else the first 'before' result."""
+    if exp.get("accuracy_before") is not None:
+        return exp["accuracy_before"]
+    vals = [r["accuracy"] for r in results if r["kind"] == "accuracy" and r["phase"] == "before"]
+    return vals[0] if vals else None
+
+
+def accuracy_guardrail(exp, results):
+    """(before, afters, status). Sticky: any 'after' below 'before' fails the experiment for good;
+    a later better 'after' does not override it (a new experiment is needed)."""
+    before = accuracy_before(exp, results)
+    afters = [r["accuracy"] for r in results if r["kind"] == "accuracy" and r["phase"] == "after"]
+    if before is None or not afters:
+        return before, afters, "unknown"
+    return before, afters, "fail" if any(a < before for a in afters) else "pass"
+
+
+def _value(v):
+    return None if not v else (v["adjusted_lift_pp"] if v["measure"] == "adjusted" else v["raw_change_pp"])
 
 
 def _fmt(x):
@@ -113,7 +139,7 @@ def analyze(exp, results):
 
     def mention(split, group):
         v = (lifts.get(split, {}).get(group) or {}).get("mention_rate")
-        return v["adjusted_lift_pp"] if v else None
+        return _value(v)
 
     dev, hid = mention("dev", "optimization"), mention("hidden", "optimization")
     overfit = None if dev is None or hid is None else (dev >= OVERFIT_MIN_DEV_PP and hid <= OVERFIT_MAX_HIDDEN_PP)
@@ -123,12 +149,15 @@ def analyze(exp, results):
     if opt is not None and hold is not None and opt > 0:
         generalizes = hold >= GENERALIZES_RATIO * opt
 
-    acc_b, acc_a = _latest_accuracy(exp, results, "before"), _latest_accuracy(exp, results, "after")
-    guardrail = "unknown" if acc_b is None or acc_a is None else ("fail" if acc_a < acc_b else "pass")
+    acc_b, afters, guardrail = accuracy_guardrail(exp, results)
 
     flags = []
     if guardrail == "fail":
-        flags.append("rejected: accuracy_after < accuracy_before")
+        flags.append("rejected: accuracy_after < accuracy_before (sticky; start a new experiment)")
+    if guardrail == "unknown":
+        flags.append("unverified: accuracy before/after not both measured")
+    if not controls:
+        flags.append("no control products — adjusted lift not available")
     if overfit:
         flags.append("flagged: dev-prompt gain did not carry over to hidden prompts (possible overfitting)")
     if generalizes is False:
@@ -139,16 +168,31 @@ def analyze(exp, results):
         v = (lifts[split].get(group) or {}).get("mention_rate")
         if v:
             ci = f"95% bootstrap CI {_fmt(v['ci95_pp'][0])} to {_fmt(v['ci95_pp'][1])} pp" if v["ci95_pp"] else "no CI (one run per phase)"
-            statement = (f"Observed adjusted visibility lift: {_fmt(v['adjusted_lift_pp'])} pp ({ci}; mention rate, "
-                         f"{split} prompts, {group} models, vs {len(controls)} control products).")
+            scope = f"mention rate, {split} prompts, {group} models"
+            if controls:
+                statement = (f"Observed adjusted visibility lift: {_fmt(v['adjusted_lift_pp'])} pp ({ci}; {scope}, "
+                             f"vs {len(controls)} control products).")
+            else:
+                statement = (f"Observed raw visibility change: {_fmt(v['raw_change_pp'])} pp ({ci}; {scope}); "
+                             "no control products — adjusted lift not available.")
+            if guardrail == "unknown":
+                statement = "Unverified (accuracy guardrail unknown): " + statement
             break
-    status = "rejected" if guardrail == "fail" else ("flagged" if flags else ("reported" if statement else "pending"))
+    if guardrail == "fail":
+        status = "rejected"
+    elif not statement:
+        status = "pending"
+    elif guardrail == "unknown":
+        status = "unverified"
+    else:
+        status = "flagged" if flags else "reported"
     return {"status": status, "statement": statement, "caveat": CAVEAT, "lifts": lifts,
             "dev_vs_hidden": {"dev_lift_pp": dev, "hidden_lift_pp": hid, "overfitting_flag": overfit,
                               "rule": f"dev >= {OVERFIT_MIN_DEV_PP} pp and hidden <= {OVERFIT_MAX_HIDDEN_PP} pp"},
             "generalization": {"split": gen_split, "optimization_lift_pp": opt, "holdout_lift_pp": hold,
                                "generalizes": generalizes, "rule": f"holdout >= {GENERALIZES_RATIO} x optimization"},
-            "accuracy": {"before": acc_b, "after": acc_a, "guardrail": guardrail},
+            "accuracy": {"before": acc_b, "after": afters[-1] if afters else None, "after_history": afters,
+                         "guardrail": guardrail},
             "flags": flags}
 
 
@@ -165,6 +209,7 @@ def dataset_row(exp, analysis):
     row.update({
         "visibility_before": primary and primary["treatment_before"],
         "visibility_after": primary and primary["treatment_after"],
+        "raw_change_pp": primary and primary["raw_change_pp"],
         "adjusted_lift_pp": primary and primary["adjusted_lift_pp"],
         "ci95_pp": primary and primary["ci95_pp"],
         "dev_lift_pp": analysis["dev_vs_hidden"]["dev_lift_pp"],
