@@ -201,6 +201,55 @@ class HarnessTests(unittest.TestCase):
             harness.make_adapter = orig
 
 
+class AnthropicTemperatureTests(unittest.TestCase):
+    """#112: SDKs/models that reject `temperature` must not break runs (fake SDK; no network, no key)."""
+
+    def adapter(self, reject):
+        import sys
+        import types
+        calls = []
+
+        class BadRequestError(Exception):
+            pass
+
+        def create(**kw):
+            calls.append(kw)
+            if "temperature" in kw and reject == "type":
+                raise TypeError("create() got an unexpected keyword argument 'temperature'")
+            if "temperature" in kw and reject == "bad":
+                raise BadRequestError("temperature is not supported for this model")
+            block = types.SimpleNamespace(type="text", text="ok")
+            usage = types.SimpleNamespace(input_tokens=1, output_tokens=1)
+            return types.SimpleNamespace(content=[block], model=kw["model"], usage=usage, model_dump=lambda mode: {})
+
+        client = types.SimpleNamespace(messages=types.SimpleNamespace(create=create))
+        fake = types.SimpleNamespace(Anthropic=lambda: client, BadRequestError=BadRequestError)
+        with mock.patch.dict(sys.modules, {"anthropic": fake}):
+            a = harness.AnthropicAdapter("claude-x")
+        return a, calls, BadRequestError
+
+    def test_type_error_retries_without_temperature_and_remembers(self):
+        a, calls, _ = self.adapter("type")
+        self.assertEqual(a.complete("s", "p", 0.7, 10)["text"], "ok")
+        self.assertEqual(["temperature" in c for c in calls], [True, False])
+        a.complete("s", "p", 0.7, 10)
+        self.assertNotIn("temperature", calls[-1])
+        self.assertEqual(len(calls), 3)
+
+    def test_bad_request_naming_temperature_retries(self):
+        a, calls, _ = self.adapter("bad")
+        self.assertEqual(a.complete("s", "p", 0.7, 10)["text"], "ok")
+        self.assertEqual(["temperature" in c for c in calls], [True, False])
+
+    def test_unrelated_errors_and_supported_temperature(self):
+        a, calls, _ = self.adapter(None)
+        a.complete("s", "p", 0.5, 10)
+        self.assertEqual(calls[0]["temperature"], 0.5)
+        a.client.messages.create = mock.Mock(side_effect=TypeError("bad messages"))
+        with self.assertRaises(TypeError):
+            a.complete("s", "p", 0.5, 10)
+
+
 class MetricTests(unittest.TestCase):
     def test_same_model_id_under_two_providers_stays_distinct(self):
         recs = [{"provider": p, "model": "x", "language": "en", "prompt_id": "q", "variant": "original",

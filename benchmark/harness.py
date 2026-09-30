@@ -83,11 +83,23 @@ class AnthropicAdapter:
     def __init__(self, model):
         import anthropic  # official SDK; reads ANTHROPIC_API_KEY from env
         self.model, self.client = model, anthropic.Anthropic()
+        self.bad_request, self.no_temperature = anthropic.BadRequestError, False
 
     def complete(self, system, prompt, temperature, max_tokens, seed=0):
-        kw = {} if temperature is None else {"temperature": temperature}
-        r = self.client.messages.create(model=self.model, system=system, max_tokens=max_tokens,
-                                        messages=[{"role": "user", "content": prompt}], **kw)
+        # Some SDK versions / models reject `temperature` (TypeError client-side, or a 400 naming it).
+        # Retry once without it and remember, so later calls skip it (#112).
+        base = dict(model=self.model, system=system, max_tokens=max_tokens,
+                    messages=[{"role": "user", "content": prompt}])
+        if temperature is None or self.no_temperature:
+            r = self.client.messages.create(**base)
+        else:
+            try:
+                r = self.client.messages.create(**base, temperature=temperature)
+            except (TypeError, self.bad_request) as e:
+                if "temperature" not in str(e):
+                    raise
+                self.no_temperature = True
+                r = self.client.messages.create(**base)
         text = "".join(b.text for b in r.content if b.type == "text")
         return {"text": text, "model_version": r.model, "input_tokens": r.usage.input_tokens,
                 "output_tokens": r.usage.output_tokens, "raw": r.model_dump(mode="json")}

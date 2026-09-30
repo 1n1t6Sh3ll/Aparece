@@ -1,0 +1,3575 @@
+{
+  "label": "Controlled evaluation (simulated shopping context); not proof of real-world ranking.",
+  "sample": false,
+  "generated_at": "2026-09-30T04:30:06+00:00",
+  "setup": {
+    "products": 5,
+    "languages": [
+      "en",
+      "es"
+    ],
+    "generators": [
+      "original",
+      "productlens",
+      "productlens@openai:gpt-4o-mini",
+      "openai:gpt-4o-mini",
+      "anthropic:claude-haiku-4-5-20251001"
+    ],
+    "judges": [
+      "openai:gpt-4o-mini",
+      "anthropic:claude-haiku-4-5-20251001"
+    ],
+    "holdout_judge": "anthropic:claude-haiku-4-5-20251001",
+    "prompts_per_product": 6,
+    "repeats": 1,
+    "splits": [
+      "dev",
+      "val"
+    ],
+    "competitors_per_context": 4,
+    "primary_metric": "mrr",
+    "bootstrap": 1000,
+    "judge_temperature": 0.7,
+    "gen_temperature": 0.0,
+    "free_providers": [
+      "mock",
+      "qwen"
+    ],
+    "instructions": "optimizer/fix.py SYSTEM + _prompt (LLMs also asked for tags)"
+  },
+  "overall": {
+    "ranking": [
+      "productlens",
+      "productlens@openai:gpt-4o-mini"
+    ],
+    "winner": "productlens",
+    "runner_up": "productlens@openai:gpt-4o-mini",
+    "diff_vs_runner_up": {
+      "metric": "mrr",
+      "value": 0.0128,
+      "lo": -0.0889,
+      "hi": 0.1155,
+      "units": 30
+    },
+    "decisive": false,
+    "holdout_judge": {
+      "judge": "anthropic:claude-haiku-4-5-20251001",
+      "winner": "productlens@openai:gpt-4o-mini",
+      "agrees": false
+    },
+    "by_language": {
+      "en": "productlens@openai:gpt-4o-mini",
+      "es": "productlens"
+    },
+    "parts": {
+      "title": {
+        "wins": {
+          "productlens": 4,
+          "openai:gpt-4o-mini": 1
+        },
+        "winner": "productlens"
+      },
+      "tags": {
+        "wins": {
+          "openai:gpt-4o-mini": 1,
+          "productlens": 3,
+          "anthropic:claude-haiku-4-5-20251001": 1
+        },
+        "winner": "productlens"
+      },
+      "description": {
+        "wins": {
+          "productlens@openai:gpt-4o-mini": 2,
+          "productlens": 3
+        },
+        "winner": "productlens"
+      }
+    }
+  },
+  "generators": {
+    "original": {
+      "candidates": 5,
+      "qualified_products": 0,
+      "qualified": false,
+      "flagged": 27,
+      "unsupported_claims": 21,
+      "title": {
+        "score": 0.53,
+        "chars": 44.2,
+        "passes": 5
+      },
+      "tags": {
+        "score": 0.0,
+        "n": 0.0,
+        "false": 0,
+        "duplicates": 0,
+        "language_match": null
+      },
+      "description": {
+        "attribute_coverage": 0.6162,
+        "intent_coverage": 0.1417,
+        "readability": 61.72,
+        "words": 85.4,
+        "jsonld_completeness": null,
+        "passes": 0
+      },
+      "visibility": {
+        "n": 30,
+        "units": 30,
+        "mention_rate": {
+          "value": 0.7,
+          "lo": 0.5333,
+          "hi": 0.8667
+        },
+        "top3_rate": {
+          "value": 0.7,
+          "lo": 0.5333,
+          "hi": 0.8667
+        },
+        "mrr": {
+          "value": 0.4222,
+          "lo": 0.3056,
+          "hi": 0.5556
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 18,
+          "units": 18,
+          "mention_rate": {
+            "value": 0.6111,
+            "lo": 0.3889,
+            "hi": 0.8333
+          },
+          "top3_rate": {
+            "value": 0.6111,
+            "lo": 0.3889,
+            "hi": 0.8333
+          },
+          "mrr": {
+            "value": 0.3241,
+            "lo": 0.1944,
+            "hi": 0.4907
+          }
+        },
+        "es": {
+          "n": 12,
+          "units": 12,
+          "mention_rate": {
+            "value": 0.8333,
+            "lo": 0.5833,
+            "hi": 1.0
+          },
+          "top3_rate": {
+            "value": 0.8333,
+            "lo": 0.5833,
+            "hi": 1.0
+          },
+          "mrr": {
+            "value": 0.5694,
+            "lo": 0.3611,
+            "hi": 0.75
+          }
+        }
+      },
+      "by_judge": {
+        "openai:gpt-4o-mini": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.7,
+            "lo": 0.5333,
+            "hi": 0.8667
+          },
+          "top3_rate": {
+            "value": 0.7,
+            "lo": 0.5333,
+            "hi": 0.8667
+          },
+          "mrr": {
+            "value": 0.4222,
+            "lo": 0.3056,
+            "hi": 0.5556
+          }
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.4667,
+            "lo": 0.3,
+            "hi": 0.6333
+          },
+          "top3_rate": {
+            "value": 0.4333,
+            "lo": 0.2333,
+            "hi": 0.6
+          },
+          "mrr": {
+            "value": 0.3289,
+            "lo": 0.1844,
+            "hi": 0.4833
+          }
+        }
+      }
+    },
+    "productlens": {
+      "candidates": 5,
+      "qualified_products": 5,
+      "qualified": true,
+      "flagged": 0,
+      "unsupported_claims": 0,
+      "title": {
+        "score": 0.86,
+        "chars": 61.6,
+        "passes": 5
+      },
+      "tags": {
+        "score": 0.9067,
+        "n": 6.8,
+        "false": 0,
+        "duplicates": 0,
+        "language_match": 1.0
+      },
+      "description": {
+        "attribute_coverage": 1.0,
+        "intent_coverage": 0.0312,
+        "readability": 64.2,
+        "words": 30.2,
+        "jsonld_completeness": 0.5556,
+        "passes": 5
+      },
+      "visibility": {
+        "n": 30,
+        "units": 30,
+        "mention_rate": {
+          "value": 0.6333,
+          "lo": 0.4667,
+          "hi": 0.8
+        },
+        "top3_rate": {
+          "value": 0.5333,
+          "lo": 0.3667,
+          "hi": 0.7
+        },
+        "mrr": {
+          "value": 0.3956,
+          "lo": 0.2528,
+          "hi": 0.5372
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 18,
+          "units": 18,
+          "mention_rate": {
+            "value": 0.4444,
+            "lo": 0.2222,
+            "hi": 0.6667
+          },
+          "top3_rate": {
+            "value": 0.2778,
+            "lo": 0.1111,
+            "hi": 0.5
+          },
+          "mrr": {
+            "value": 0.1963,
+            "lo": 0.087,
+            "hi": 0.3333
+          }
+        },
+        "es": {
+          "n": 12,
+          "units": 12,
+          "mention_rate": {
+            "value": 0.9167,
+            "lo": 0.75,
+            "hi": 1.0
+          },
+          "top3_rate": {
+            "value": 0.9167,
+            "lo": 0.75,
+            "hi": 1.0
+          },
+          "mrr": {
+            "value": 0.6944,
+            "lo": 0.5,
+            "hi": 0.875
+          }
+        }
+      },
+      "by_judge": {
+        "openai:gpt-4o-mini": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.6333,
+            "lo": 0.4667,
+            "hi": 0.8
+          },
+          "top3_rate": {
+            "value": 0.5333,
+            "lo": 0.3667,
+            "hi": 0.7
+          },
+          "mrr": {
+            "value": 0.3956,
+            "lo": 0.2528,
+            "hi": 0.5372
+          }
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.2333,
+            "lo": 0.1,
+            "hi": 0.4
+          },
+          "top3_rate": {
+            "value": 0.2333,
+            "lo": 0.1,
+            "hi": 0.4
+          },
+          "mrr": {
+            "value": 0.2167,
+            "lo": 0.0833,
+            "hi": 0.3667
+          }
+        }
+      }
+    },
+    "productlens@openai:gpt-4o-mini": {
+      "candidates": 5,
+      "qualified_products": 5,
+      "qualified": true,
+      "flagged": 0,
+      "unsupported_claims": 0,
+      "title": {
+        "score": 0.82,
+        "chars": 60.4,
+        "passes": 5
+      },
+      "tags": {
+        "score": 0.9067,
+        "n": 6.8,
+        "false": 0,
+        "duplicates": 0,
+        "language_match": 1.0
+      },
+      "description": {
+        "attribute_coverage": 0.6191,
+        "intent_coverage": 0.0417,
+        "readability": 86.72,
+        "words": 19.6,
+        "jsonld_completeness": 0.5556,
+        "passes": 5
+      },
+      "visibility": {
+        "n": 30,
+        "units": 30,
+        "mention_rate": {
+          "value": 0.6667,
+          "lo": 0.5,
+          "hi": 0.8333
+        },
+        "top3_rate": {
+          "value": 0.5667,
+          "lo": 0.4,
+          "hi": 0.7333
+        },
+        "mrr": {
+          "value": 0.3828,
+          "lo": 0.26,
+          "hi": 0.5222
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 18,
+          "units": 18,
+          "mention_rate": {
+            "value": 0.4444,
+            "lo": 0.2222,
+            "hi": 0.6667
+          },
+          "top3_rate": {
+            "value": 0.3889,
+            "lo": 0.1667,
+            "hi": 0.6111
+          },
+          "mrr": {
+            "value": 0.2333,
+            "lo": 0.1037,
+            "hi": 0.4185
+          }
+        },
+        "es": {
+          "n": 12,
+          "units": 12,
+          "mention_rate": {
+            "value": 1.0,
+            "lo": 1.0,
+            "hi": 1.0
+          },
+          "top3_rate": {
+            "value": 0.8333,
+            "lo": 0.5833,
+            "hi": 1.0
+          },
+          "mrr": {
+            "value": 0.6069,
+            "lo": 0.4458,
+            "hi": 0.7778
+          }
+        }
+      },
+      "by_judge": {
+        "openai:gpt-4o-mini": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.6667,
+            "lo": 0.5,
+            "hi": 0.8333
+          },
+          "top3_rate": {
+            "value": 0.5667,
+            "lo": 0.4,
+            "hi": 0.7333
+          },
+          "mrr": {
+            "value": 0.3828,
+            "lo": 0.26,
+            "hi": 0.5222
+          }
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.3333,
+            "lo": 0.1667,
+            "hi": 0.5
+          },
+          "top3_rate": {
+            "value": 0.2667,
+            "lo": 0.1,
+            "hi": 0.4333
+          },
+          "mrr": {
+            "value": 0.2317,
+            "lo": 0.1067,
+            "hi": 0.3667
+          }
+        }
+      }
+    },
+    "openai:gpt-4o-mini": {
+      "candidates": 5,
+      "qualified_products": 0,
+      "qualified": false,
+      "flagged": 19,
+      "unsupported_claims": 1,
+      "title": {
+        "score": 0.81,
+        "chars": 58.6,
+        "passes": 4
+      },
+      "tags": {
+        "score": 0.7675,
+        "n": 6.4,
+        "false": 5,
+        "duplicates": 0,
+        "language_match": 1.0
+      },
+      "description": {
+        "attribute_coverage": 0.8229,
+        "intent_coverage": 0.0771,
+        "readability": 57.92,
+        "words": 49.0,
+        "jsonld_completeness": null,
+        "passes": 0
+      },
+      "visibility": {
+        "n": 30,
+        "units": 30,
+        "mention_rate": {
+          "value": 0.7,
+          "lo": 0.5333,
+          "hi": 0.8667
+        },
+        "top3_rate": {
+          "value": 0.6333,
+          "lo": 0.4667,
+          "hi": 0.8
+        },
+        "mrr": {
+          "value": 0.4261,
+          "lo": 0.3022,
+          "hi": 0.5594
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 18,
+          "units": 18,
+          "mention_rate": {
+            "value": 0.5,
+            "lo": 0.2778,
+            "hi": 0.7222
+          },
+          "top3_rate": {
+            "value": 0.5,
+            "lo": 0.2778,
+            "hi": 0.7222
+          },
+          "mrr": {
+            "value": 0.2778,
+            "lo": 0.1481,
+            "hi": 0.4352
+          }
+        },
+        "es": {
+          "n": 12,
+          "units": 12,
+          "mention_rate": {
+            "value": 1.0,
+            "lo": 1.0,
+            "hi": 1.0
+          },
+          "top3_rate": {
+            "value": 0.8333,
+            "lo": 0.5833,
+            "hi": 1.0
+          },
+          "mrr": {
+            "value": 0.6486,
+            "lo": 0.4778,
+            "hi": 0.8194
+          }
+        }
+      },
+      "by_judge": {
+        "openai:gpt-4o-mini": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.7,
+            "lo": 0.5333,
+            "hi": 0.8667
+          },
+          "top3_rate": {
+            "value": 0.6333,
+            "lo": 0.4667,
+            "hi": 0.8
+          },
+          "mrr": {
+            "value": 0.4261,
+            "lo": 0.3022,
+            "hi": 0.5594
+          }
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.4,
+            "lo": 0.2333,
+            "hi": 0.6
+          },
+          "top3_rate": {
+            "value": 0.4,
+            "lo": 0.2333,
+            "hi": 0.6
+          },
+          "mrr": {
+            "value": 0.3,
+            "lo": 0.1611,
+            "hi": 0.45
+          }
+        }
+      }
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+      "candidates": 5,
+      "qualified_products": 0,
+      "qualified": false,
+      "flagged": 15,
+      "unsupported_claims": 2,
+      "title": {
+        "score": 0.81,
+        "chars": 55.2,
+        "passes": 3
+      },
+      "tags": {
+        "score": 0.889,
+        "n": 6.0,
+        "false": 1,
+        "duplicates": 0,
+        "language_match": 1.0
+      },
+      "description": {
+        "attribute_coverage": 0.96,
+        "intent_coverage": 0.0875,
+        "readability": 60.18,
+        "words": 37.4,
+        "jsonld_completeness": null,
+        "passes": 0
+      },
+      "visibility": {
+        "n": 30,
+        "units": 30,
+        "mention_rate": {
+          "value": 0.7667,
+          "lo": 0.6,
+          "hi": 0.9
+        },
+        "top3_rate": {
+          "value": 0.6667,
+          "lo": 0.5,
+          "hi": 0.8333
+        },
+        "mrr": {
+          "value": 0.4717,
+          "lo": 0.3422,
+          "hi": 0.5956
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 18,
+          "units": 18,
+          "mention_rate": {
+            "value": 0.6111,
+            "lo": 0.3889,
+            "hi": 0.8333
+          },
+          "top3_rate": {
+            "value": 0.5,
+            "lo": 0.2778,
+            "hi": 0.7222
+          },
+          "mrr": {
+            "value": 0.3028,
+            "lo": 0.1731,
+            "hi": 0.4491
+          }
+        },
+        "es": {
+          "n": 12,
+          "units": 12,
+          "mention_rate": {
+            "value": 1.0,
+            "lo": 1.0,
+            "hi": 1.0
+          },
+          "top3_rate": {
+            "value": 0.9167,
+            "lo": 0.75,
+            "hi": 1.0
+          },
+          "mrr": {
+            "value": 0.725,
+            "lo": 0.5667,
+            "hi": 0.875
+          }
+        }
+      },
+      "by_judge": {
+        "openai:gpt-4o-mini": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.7667,
+            "lo": 0.6,
+            "hi": 0.9
+          },
+          "top3_rate": {
+            "value": 0.6667,
+            "lo": 0.5,
+            "hi": 0.8333
+          },
+          "mrr": {
+            "value": 0.4717,
+            "lo": 0.3422,
+            "hi": 0.5956
+          }
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "n": 30,
+          "units": 30,
+          "mention_rate": {
+            "value": 0.5667,
+            "lo": 0.4,
+            "hi": 0.7333
+          },
+          "top3_rate": {
+            "value": 0.5,
+            "lo": 0.3333,
+            "hi": 0.7
+          },
+          "mrr": {
+            "value": 0.3817,
+            "lo": 0.2483,
+            "hi": 0.5317
+          }
+        }
+      }
+    }
+  },
+  "products": [
+    {
+      "group": "g01",
+      "product_id": "p_6e17d9bce1d8a817",
+      "language": "en",
+      "brand": "Merch Monger",
+      "name": "Green Line Short-Sleeve Unisex T-Shirt",
+      "url": "https://merchmonger.com/products/green-line-short-sleeve-unisex-t-shirt",
+      "verified_facts": 6,
+      "prompts": [
+        "INTENT_003_en",
+        "INTENT_009_en",
+        "INTENT_015_en",
+        "INTENT_021_en",
+        "INTENT_034_en",
+        "INTENT_071_en"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 38,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": false,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.5
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 6,
+              "unsupported_claims": 7,
+              "accuracy": 0.1875,
+              "flagged": [
+                {
+                  "sentence": "Inspired by the Chicago L Transit System, this t-shirt is everything you need to rep your city and Irish pride!",
+                  "problems": [
+                    "words not grounded in Product Truth: inspired, chicago, l, transit, system, everything, you, need, rep, your, city, irish, pride"
+                  ]
+                },
+                {
+                  "sentence": "We all ride the Green Line on St.",
+                  "problems": [
+                    "words not grounded in Product Truth: we, ride, line, st"
+                  ]
+                },
+                {
+                  "sentence": "Patrick's Day!",
+                  "problems": [
+                    "words not grounded in Product Truth: patrick's, day"
+                  ]
+                },
+                {
+                  "sentence": "It feels soft and lightweight, with the right amount of stretch.",
+                  "problems": [
+                    "words not grounded in Product Truth: feels, soft, lightweight, right, amount"
+                  ]
+                },
+                {
+                  "sentence": "It's comfortable and flattering for both men and women.",
+                  "problems": [
+                    "words not grounded in Product Truth: it's, comfortable, flattering, men, women"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.6,
+            "intent_coverage": 0.1979,
+            "readability": 60.9,
+            "words": 106,
+            "chars": 566,
+            "jsonld_completeness": null
+          },
+          "flagged": 6,
+          "unsupported_claims": 7,
+          "qualified": false,
+          "raw": {
+            "title": "Green Line Short-Sleeve Unisex T-Shirt",
+            "tags": [],
+            "text": "Inspired by the Chicago L Transit System, this t-shirt is everything you need to rep your city and Irish pride! We all ride the Green Line on St. Patrick's Day! It feels soft and lightweight, with the right amount of stretch. It's comfortable and flattering for both men and women. • 100% combed and ring-spun cotton (heather colors contain polyester) • Fabric weight: 4.2 oz (142 g/m2) • Pre-shrunk fabric • Shoulder-to-shoulder taping • Side-seamed Size guide XS S M L XL 2XL 3XL 4XL Length (inches) 27 28 29 30 31 32 33 34 Width (inches) 16 ½ 18 20 22 24 26 28 30",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.5,
+              "lo": 0.25,
+              "hi": 0.75
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 65,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 6,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "cotton",
+              "short sleeves",
+              "unisex",
+              "green",
+              "142 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.8333,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.9444
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0104,
+            "readability": 56.8,
+            "words": 14,
+            "chars": 100,
+            "jsonld_completeness": 0.6667
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% cotton",
+            "tags": [
+              "t-shirt",
+              "cotton",
+              "short sleeves",
+              "unisex",
+              "green",
+              "142 gsm"
+            ],
+            "text": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Colors: green.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.3333,
+              "lo": 0.0,
+              "hi": 0.6667
+            },
+            "mrr": {
+              "value": 0.2417,
+              "lo": 0.0833,
+              "hi": 0.4167
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens@openai:gpt-4o-mini": {
+          "title": {
+            "chars": 65,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 6,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "cotton",
+              "short sleeves",
+              "unisex",
+              "green",
+              "142 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.8333,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.9444
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0938,
+            "readability": 70.3,
+            "words": 25,
+            "chars": 136,
+            "jsonld_completeness": 0.6667
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% Cotton",
+            "tags": [
+              "t-shirt",
+              "cotton",
+              "short sleeves",
+              "unisex",
+              "green",
+              "142 gsm"
+            ],
+            "text": "This unisex t-shirt features short sleeves and is made from 100% cotton. It is available in a green color. The fabric weight is 142 gsm.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.5,
+              "lo": 0.1667,
+              "hi": 0.8333
+            },
+            "mrr": {
+              "value": 0.3389,
+              "lo": 0.1,
+              "hi": 0.6389
+            }
+          },
+          "cost_usd": 0.00049
+        },
+        "openai:gpt-4o-mini": {
+          "title": {
+            "chars": 51,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": false,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 5,
+            "duplicates": 0,
+            "passing": [
+              "unisex t-shirt",
+              "green t-shirt",
+              "short sleeve",
+              "cotton t-shirt",
+              "Merch Monger"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 1.0,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 1.0
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 2,
+              "unsupported_claims": 0,
+              "accuracy": 0.6667,
+              "flagged": [
+                {
+                  "sentence": "This t-shirt features short sleeves and a stretch fabric for comfort.",
+                  "problems": [
+                    "words not grounded in Product Truth: comfort"
+                  ]
+                },
+                {
+                  "sentence": "Available in a vibrant green color, it is designed to fit all genders.",
+                  "problems": [
+                    "words not grounded in Product Truth: vibrant, designed, genders"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.1146,
+            "readability": 64.4,
+            "words": 45,
+            "chars": 257,
+            "jsonld_completeness": null
+          },
+          "flagged": 2,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt",
+            "tags": [
+              "unisex t-shirt",
+              "green t-shirt",
+              "short sleeve",
+              "cotton t-shirt",
+              "Merch Monger"
+            ],
+            "text": "The Green Line Short-Sleeve Unisex T-Shirt by Merch Monger is made from 100% cotton with a fabric weight of 142 gsm. This t-shirt features short sleeves and a stretch fabric for comfort. Available in a vibrant green color, it is designed to fit all genders.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.3889,
+              "lo": 0.1389,
+              "hi": 0.6667
+            }
+          },
+          "cost_usd": 0.000103
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "title": {
+            "chars": 51,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": false,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 5,
+            "duplicates": 0,
+            "passing": [
+              "unisex t-shirt",
+              "cotton t-shirt",
+              "short sleeve",
+              "green shirt",
+              "stretch fabric"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 1.0,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 1.0
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 2,
+              "unsupported_claims": 1,
+              "accuracy": 0.625,
+              "flagged": [
+                {
+                  "sentence": "This unisex t-shirt features 100% cotton construction with a 142 gsm fabric weight.",
+                  "problems": [
+                    "words not grounded in Product Truth: construction"
+                  ]
+                },
+                {
+                  "sentence": "The stretch fabric provides comfort and flexibility, while the short sleeves offer a classic fit.",
+                  "problems": [
+                    "fit_and_style.fit='regular' is unverifiable against Product Truth",
+                    "words not grounded in Product Truth: provides, comfort, flexibility, while, classic"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.125,
+            "readability": 45.3,
+            "words": 31,
+            "chars": 201,
+            "jsonld_completeness": null
+          },
+          "flagged": 2,
+          "unsupported_claims": 1,
+          "qualified": false,
+          "raw": {
+            "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt",
+            "tags": [
+              "unisex t-shirt",
+              "cotton t-shirt",
+              "short sleeve",
+              "green shirt",
+              "stretch fabric"
+            ],
+            "text": "This unisex t-shirt features 100% cotton construction with a 142 gsm fabric weight. The stretch fabric provides comfort and flexibility, while the short sleeves offer a classic fit. Available in green.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.3333,
+              "lo": 0.0,
+              "hi": 0.6667
+            },
+            "mrr": {
+              "value": 0.2417,
+              "lo": 0.0833,
+              "hi": 0.4167
+            }
+          },
+          "cost_usd": 0.000862
+        }
+      },
+      "part_winners": {
+        "title": "productlens",
+        "tags": "openai:gpt-4o-mini",
+        "description": "productlens@openai:gpt-4o-mini"
+      },
+      "visibility_winner": "productlens@openai:gpt-4o-mini",
+      "recommended": {
+        "title": {
+          "text": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% cotton",
+          "from": "productlens"
+        },
+        "tags": {
+          "list": [
+            "unisex t-shirt",
+            "green t-shirt",
+            "short sleeve",
+            "cotton t-shirt",
+            "Merch Monger",
+            "t-shirt",
+            "cotton",
+            "short sleeves"
+          ],
+          "from": [
+            "openai:gpt-4o-mini",
+            "productlens"
+          ]
+        },
+        "description": {
+          "text": "This unisex t-shirt features short sleeves and is made from 100% cotton. It is available in a green color. The fabric weight is 142 gsm.",
+          "from": "productlens@openai:gpt-4o-mini"
+        }
+      }
+    },
+    {
+      "group": "g02",
+      "product_id": "p_7606b0d8b0a4cb9b",
+      "language": "en",
+      "brand": "Mercharoo",
+      "name": "Kawartha short sleeve women's organic V-neck t-shirt - 38017",
+      "url": "https://mercharoo.com/products/kawartha-short-sleeve-womens-organic-v-neck-t-shirt-38017",
+      "verified_facts": 6,
+      "prompts": [
+        "INTENT_012_en",
+        "INTENT_024_en",
+        "INTENT_032_en",
+        "INTENT_063_en",
+        "INTENT_095_en",
+        "INTENT_117_en"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 60,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 8,
+              "flagged_sentences": 6,
+              "unsupported_claims": 11,
+              "accuracy": 0.2609,
+              "flagged": [
+                {
+                  "sentence": "The Kawartha short sleeve women's organic V-neck t-shirt is a stylish and sustainable choice.",
+                  "problems": [
+                    "words not grounded in Product Truth: kawartha, women's, stylish, sustainable"
+                  ]
+                },
+                {
+                  "sentence": "With its V-neck and short sleeves this t-shirt is both sustainable and modern.Available in sizes XS-2XL.",
+                  "problems": [
+                    "variants.sizes='XS' is unverifiable against Product Truth",
+                    "variants.sizes='S' is unverifiable against Product Truth",
+                    "variants.sizes='M' is unverifiable against Product Truth",
+                    "variants.sizes='L' is unverifiable against Product Truth",
+                    "variants.sizes='XL' is unverifiable against Product Truth",
+                    "variants.sizes='XXL' is unverifiable against Product Truth",
+                    "number 2 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: sustainable, modern, xs, xl"
+                  ]
+                },
+                {
+                  "sentence": "Qty 10 25 50 100 Price £13.37 £12.93 £12.44 £12.07 Prices based on basic printing method.",
+                  "problems": [
+                    "commerce.price=(13.37, ['GBP']) is unverifiable against Product Truth",
+                    "commerce.price=(12.93, ['GBP']) is unverifiable against Product Truth",
+                    "commerce.price=(12.44, ['GBP']) is unverifiable against Product Truth",
+                    "commerce.price=(12.07, ['GBP']) is unverifiable against Product Truth",
+                    "number 10 is not the verified value of the field it describes",
+                    "number 25 is not the verified value of the field it describes",
+                    "number 50 is not the verified value of the field it describes",
+                    "number 100 is not the verified value of the field it describes",
+                    "number 13.37 is not the verified value of the field it describes",
+                    "number 12.93 is not the verified value of the field it describes",
+                    "number 12.44 is not the verified value of the field it describes",
+                    "number 12.07 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: qty, prices, based, basic, printing, method"
+                  ]
+                },
+                {
+                  "sentence": "Includes printing setup charge of £22.50.",
+                  "problems": [
+                    "commerce.price=(22.5, ['GBP']) is unverifiable against Product Truth",
+                    "number 22.50 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: includes, printing, setup, charge"
+                  ]
+                },
+                {
+                  "sentence": "Excludes shipping costs; the cost of shipping will be included on the final quotation.",
+                  "problems": [
+                    "words not grounded in Product Truth: excludes, shipping, costs, cost, will, included, final, quotation"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.2396,
+            "readability": 55.4,
+            "words": 108,
+            "chars": 647,
+            "jsonld_completeness": null
+          },
+          "flagged": 6,
+          "unsupported_claims": 11,
+          "qualified": false,
+          "raw": {
+            "title": "Kawartha short sleeve women's organic V-neck t-shirt - 38017",
+            "tags": [],
+            "text": "The Kawartha short sleeve women's organic V-neck t-shirt is a stylish and sustainable choice. Made from 95% organic cotton, with a fabric weight of 200 g/m², this t-shirt is not only good for the environment, but also soft and comfortable to wear. The 5% elastane ensures a soft and stretchy fit. With its V-neck and short sleeves this t-shirt is both sustainable and modern.Available in sizes XS-2XL. Qty 10 25 50 100 Price £13.37 £12.93 £12.44 £12.07 Prices based on basic printing method. Includes printing setup charge of £22.50. Excludes shipping costs; the cost of shipping will be included on the final quotation. Minimum order of 10 items.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.3611,
+              "lo": 0.1111,
+              "hi": 0.6389
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 70,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "organic cotton",
+              "elastane",
+              "short sleeves",
+              "v-neck",
+              "for women",
+              "200 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.5714,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.8571
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0625,
+            "readability": 47.4,
+            "words": 17,
+            "chars": 116,
+            "jsonld_completeness": 0.5556
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Mercharoo Kawartha short sleeve women's organic V-neck t-shirt - 38017",
+            "tags": [
+              "t-shirt",
+              "organic cotton",
+              "elastane",
+              "short sleeves",
+              "v-neck",
+              "for women",
+              "200 gsm"
+            ],
+            "text": "Material: 95% organic cotton, 5% elastane. Fabric weight: 200 gsm. Stretch fabric. Short sleeves. V-neck. For women.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.5,
+              "lo": 0.1667,
+              "hi": 0.8333
+            },
+            "top3_rate": {
+              "value": 0.5,
+              "lo": 0.1667,
+              "hi": 0.8333
+            },
+            "mrr": {
+              "value": 0.3056,
+              "lo": 0.0556,
+              "hi": 0.6389
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens@openai:gpt-4o-mini": {
+          "title": {
+            "chars": 70,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "organic cotton",
+              "elastane",
+              "short sleeves",
+              "v-neck",
+              "for women",
+              "200 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.5714,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.8571
+          },
+          "description": {
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 0.2,
+            "intent_coverage": 0.0,
+            "readability": 100.2,
+            "words": 6,
+            "chars": 29,
+            "jsonld_completeness": 0.5556
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Mercharoo Kawartha short sleeve women's organic V-neck t-shirt - 38017",
+            "tags": [
+              "t-shirt",
+              "organic cotton",
+              "elastane",
+              "short sleeves",
+              "v-neck",
+              "for women",
+              "200 gsm"
+            ],
+            "text": "The fabric weight is 200 gsm.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.5,
+              "lo": 0.1667,
+              "hi": 0.8333
+            },
+            "top3_rate": {
+              "value": 0.5,
+              "lo": 0.1667,
+              "hi": 0.8333
+            },
+            "mrr": {
+              "value": 0.2778,
+              "lo": 0.0556,
+              "hi": 0.6111
+            }
+          },
+          "cost_usd": 0.000827
+        },
+        "openai:gpt-4o-mini": {
+          "title": {
+            "chars": 64,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 1,
+              "unsupported_claims": 0,
+              "accuracy": 0.75,
+              "flagged": [
+                {
+                  "sentence": "Mercharoo Kawartha Women's Organic V-Neck T-Shirt - Short Sleeve",
+                  "problems": [
+                    "words not grounded in Product Truth: kawartha, women's"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 6,
+            "duplicates": 0,
+            "passing": [
+              "organic cotton",
+              "V-neck",
+              "short sleeve",
+              "Mercharoo"
+            ],
+            "false": [
+              "women's t-shirt",
+              "casual wear"
+            ],
+            "fact_relevance": 0.8333,
+            "intent_relevance": 0.8333,
+            "language_match": 1.0,
+            "passes": false,
+            "score": 0.5926
+          },
+          "description": {
+            "guard": {
+              "sentences": 2,
+              "flagged_sentences": 2,
+              "unsupported_claims": 0,
+              "accuracy": 0.75,
+              "flagged": [
+                {
+                  "sentence": "The Mercharoo Kawartha short sleeve women's organic V-neck t-shirt is made from 95% organic cotton and 5% elastane, providing a comfortable fit with stretch fabric.",
+                  "problems": [
+                    "words not grounded in Product Truth: kawartha, women's, providing"
+                  ]
+                },
+                {
+                  "sentence": "It features short sleeves and a stylish V-neck design, making it a versatile addition to any wardrobe.",
+                  "problems": [
+                    "words not grounded in Product Truth: stylish, design, making, versatile, addition, any, wardrobe"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.1458,
+            "readability": 27.9,
+            "words": 42,
+            "chars": 267,
+            "jsonld_completeness": null
+          },
+          "flagged": 5,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Mercharoo Kawartha Women's Organic V-Neck T-Shirt - Short Sleeve",
+            "tags": [
+              "women's t-shirt",
+              "organic cotton",
+              "V-neck",
+              "short sleeve",
+              "Mercharoo",
+              "casual wear"
+            ],
+            "text": "The Mercharoo Kawartha short sleeve women's organic V-neck t-shirt is made from 95% organic cotton and 5% elastane, providing a comfortable fit with stretch fabric. It features short sleeves and a stylish V-neck design, making it a versatile addition to any wardrobe.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.4444,
+              "lo": 0.2222,
+              "hi": 0.6944
+            }
+          },
+          "cost_usd": 9.8e-05
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "title": {
+            "chars": 62,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": null
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 1,
+              "unsupported_claims": 0,
+              "accuracy": 0.75,
+              "flagged": [
+                {
+                  "sentence": "Mercharoo Kawartha Short Sleeve Women's Organic V-Neck T-Shirt",
+                  "problems": [
+                    "words not grounded in Product Truth: kawartha, women's"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "score": 1.0
+          },
+          "tags": {
+            "n": 5,
+            "duplicates": 0,
+            "passing": [
+              "organic cotton",
+              "v-neck",
+              "short sleeve",
+              "stretch fabric"
+            ],
+            "false": [
+              "women's t-shirt"
+            ],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.8,
+            "language_match": 1.0,
+            "passes": false,
+            "score": 0.7467
+          },
+          "description": {
+            "guard": {
+              "sentences": 2,
+              "flagged_sentences": 2,
+              "unsupported_claims": 0,
+              "accuracy": 0.7143,
+              "flagged": [
+                {
+                  "sentence": "Women's short sleeve t-shirt made from 95% organic cotton and 5% elastane with a 200 gsm fabric weight.",
+                  "problems": [
+                    "words not grounded in Product Truth: women's"
+                  ]
+                },
+                {
+                  "sentence": "Features a V-neck design and stretch fabric for comfort and flexibility.",
+                  "problems": [
+                    "words not grounded in Product Truth: design, comfort, flexibility"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.1458,
+            "readability": 47.2,
+            "words": 29,
+            "chars": 176,
+            "jsonld_completeness": null
+          },
+          "flagged": 4,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Mercharoo Kawartha Short Sleeve Women's Organic V-Neck T-Shirt",
+            "tags": [
+              "women's t-shirt",
+              "organic cotton",
+              "v-neck",
+              "short sleeve",
+              "stretch fabric"
+            ],
+            "text": "Women's short sleeve t-shirt made from 95% organic cotton and 5% elastane with a 200 gsm fabric weight. Features a V-neck design and stretch fabric for comfort and flexibility.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.6111,
+              "lo": 0.3889,
+              "hi": 0.8333
+            }
+          },
+          "cost_usd": 0.000868
+        }
+      },
+      "part_winners": {
+        "title": "productlens",
+        "tags": "productlens",
+        "description": "productlens"
+      },
+      "visibility_winner": "productlens",
+      "recommended": {
+        "title": {
+          "text": "Mercharoo Kawartha short sleeve women's organic V-neck t-shirt - 38017",
+          "from": "productlens"
+        },
+        "tags": {
+          "list": [
+            "t-shirt",
+            "organic cotton",
+            "elastane",
+            "short sleeves",
+            "v-neck",
+            "for women",
+            "200 gsm",
+            "short sleeve"
+          ],
+          "from": [
+            "productlens",
+            "openai:gpt-4o-mini"
+          ]
+        },
+        "description": {
+          "text": "Material: 95% organic cotton, 5% elastane. Fabric weight: 200 gsm. Stretch fabric. Short sleeves. V-neck. For women.",
+          "from": "productlens"
+        }
+      }
+    },
+    {
+      "group": "g11",
+      "product_id": "p_5528ff089b3f1d0b",
+      "language": "en",
+      "brand": "Chimmi",
+      "name": "Children of Immigrants T-Shirt - Midnight Black",
+      "url": "https://wearechimmi.com/products/children-of-immigrants-t-shirt-midnight-black",
+      "verified_facts": 6,
+      "prompts": [
+        "INTENT_020_en",
+        "INTENT_023_en",
+        "INTENT_027_en",
+        "INTENT_038_en",
+        "INTENT_111_en",
+        "INTENT_118_en"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 47,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.5
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 6,
+              "unsupported_claims": 3,
+              "accuracy": 0.3077,
+              "flagged": [
+                {
+                  "sentence": "Say it loud and say it proud.",
+                  "problems": [
+                    "words not grounded in Product Truth: say, loud, proud"
+                  ]
+                },
+                {
+                  "sentence": "This genderless t-shirt is dedicated to those who came before us.",
+                  "problems": [
+                    "words not grounded in Product Truth: genderless, dedicated, those, who, came, before, us"
+                  ]
+                },
+                {
+                  "sentence": "Made with 100% cotton with \"Children of Immigrants\" screen printed on the center chest.",
+                  "problems": [
+                    "materials.material_percentages={'cotton': 100} is unverifiable against Product Truth",
+                    "number 100 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: cotton, children, immigrants, center, chest"
+                  ]
+                },
+                {
+                  "sentence": "It features a ribbed crew neck, short sleeves, and is meant to be worn oversized.",
+                  "problems": [
+                    "words not grounded in Product Truth: ribbed, meant, worn"
+                  ]
+                },
+                {
+                  "sentence": "Fits like a men's t-shirt.",
+                  "problems": [
+                    "identity.audience='men' is unverifiable against Product Truth",
+                    "words not grounded in Product Truth: fits, like, men's"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.1771,
+            "readability": 67.3,
+            "words": 76,
+            "chars": 426,
+            "jsonld_completeness": null
+          },
+          "flagged": 6,
+          "unsupported_claims": 3,
+          "qualified": false,
+          "raw": {
+            "title": "Children of Immigrants T-Shirt - Midnight Black",
+            "tags": [],
+            "text": "Say it loud and say it proud. This genderless t-shirt is dedicated to those who came before us. Made with 100% cotton with \"Children of Immigrants\" screen printed on the center chest. It features a ribbed crew neck, short sleeves, and is meant to be worn oversized. Fits like a men's t-shirt. Preshrunk 100% cotton Made in India Screen printed Female Model: 5 ft 9 in (175.3 cm) height, wearing size Small See size chart below",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.3333,
+              "lo": 0.0,
+              "hi": 0.6667
+            },
+            "top3_rate": {
+              "value": 0.3333,
+              "lo": 0.0,
+              "hi": 0.6667
+            },
+            "mrr": {
+              "value": 0.1111,
+              "lo": 0.0,
+              "hi": 0.2222
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 54,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 6,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "oversized fit",
+              "short sleeves",
+              "crew neck",
+              "printed",
+              "black"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 1.0,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 1.0
+          },
+          "description": {
+            "guard": {
+              "sentences": 6,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0104,
+            "readability": 68.0,
+            "words": 13,
+            "chars": 86,
+            "jsonld_completeness": 0.3333
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black",
+            "tags": [
+              "t-shirt",
+              "oversized fit",
+              "short sleeves",
+              "crew neck",
+              "printed",
+              "black"
+            ],
+            "text": "Oversized fit. Short sleeves. Crew neck. Printed. Colors: black. Made in India Screen.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.1667,
+              "lo": 0.0,
+              "hi": 0.5
+            },
+            "top3_rate": {
+              "value": 0.0,
+              "lo": 0.0,
+              "hi": 0.0
+            },
+            "mrr": {
+              "value": 0.0417,
+              "lo": 0.0,
+              "hi": 0.125
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens@openai:gpt-4o-mini": {
+          "title": {
+            "chars": 54,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 6,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "oversized fit",
+              "short sleeves",
+              "crew neck",
+              "printed",
+              "black"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 1.0,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 1.0
+          },
+          "description": {
+            "guard": {
+              "sentences": 2,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.0521,
+            "readability": 80.2,
+            "words": 18,
+            "chars": 98,
+            "jsonld_completeness": 0.3333
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black",
+            "tags": [
+              "t-shirt",
+              "oversized fit",
+              "short sleeves",
+              "crew neck",
+              "printed",
+              "black"
+            ],
+            "text": "This t-shirt features an oversized fit with short sleeves and a crew neck. It is printed in black.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.1667,
+              "lo": 0.0,
+              "hi": 0.5
+            },
+            "top3_rate": {
+              "value": 0.1667,
+              "lo": 0.0,
+              "hi": 0.5
+            },
+            "mrr": {
+              "value": 0.0833,
+              "lo": 0.0,
+              "hi": 0.25
+            }
+          },
+          "cost_usd": 0.000636
+        },
+        "openai:gpt-4o-mini": {
+          "title": {
+            "chars": 54,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "Chimmi",
+              "t-shirt",
+              "oversized fit",
+              "black t-shirt",
+              "short sleeves",
+              "crew neck"
+            ],
+            "false": [
+              "children's clothing"
+            ],
+            "fact_relevance": 0.8571,
+            "intent_relevance": 0.7143,
+            "language_match": 1.0,
+            "passes": false,
+            "score": 0.7347
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 3,
+              "unsupported_claims": 1,
+              "accuracy": 0.5714,
+              "flagged": [
+                {
+                  "sentence": "The Chimmi Children of Immigrants T-Shirt features an oversized fit with short sleeves and a classic crew neck.",
+                  "problems": [
+                    "words not grounded in Product Truth: children, immigrants, classic"
+                  ]
+                },
+                {
+                  "sentence": "It is printed in a midnight black color, making it a versatile addition to any child's wardrobe.",
+                  "problems": [
+                    "words not grounded in Product Truth: midnight, making, versatile, addition, any, child's, wardrobe"
+                  ]
+                },
+                {
+                  "sentence": "This t-shirt is made in India.",
+                  "problems": [
+                    "origin='india' is contradicted against Product Truth"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.0521,
+            "readability": 56.8,
+            "words": 41,
+            "chars": 239,
+            "jsonld_completeness": null
+          },
+          "flagged": 4,
+          "unsupported_claims": 1,
+          "qualified": false,
+          "raw": {
+            "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black",
+            "tags": [
+              "Chimmi",
+              "t-shirt",
+              "children's clothing",
+              "oversized fit",
+              "black t-shirt",
+              "short sleeves",
+              "crew neck"
+            ],
+            "text": "The Chimmi Children of Immigrants T-Shirt features an oversized fit with short sleeves and a classic crew neck. It is printed in a midnight black color, making it a versatile addition to any child's wardrobe. This t-shirt is made in India.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.0,
+              "lo": 0.0,
+              "hi": 0.0
+            },
+            "top3_rate": {
+              "value": 0.0,
+              "lo": 0.0,
+              "hi": 0.0
+            },
+            "mrr": {
+              "value": 0.0,
+              "lo": 0.0,
+              "hi": 0.0
+            }
+          },
+          "cost_usd": 9.6e-05
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "title": {
+            "chars": 54,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "t-shirt",
+              "oversized",
+              "black",
+              "crew neck",
+              "short sleeve",
+              "printed",
+              "Chimmi"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.8571,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.9524
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 3,
+              "unsupported_claims": 1,
+              "accuracy": 0.5714,
+              "flagged": [
+                {
+                  "sentence": "Oversized fit t-shirt in midnight black with short sleeves and crew neck.",
+                  "problems": [
+                    "words not grounded in Product Truth: midnight"
+                  ]
+                },
+                {
+                  "sentence": "Features printed design.",
+                  "problems": [
+                    "words not grounded in Product Truth: design"
+                  ]
+                },
+                {
+                  "sentence": "Made in India.",
+                  "problems": [
+                    "origin='india' is contradicted against Product Truth"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.8,
+            "intent_coverage": 0.0625,
+            "readability": 64.4,
+            "words": 18,
+            "chars": 113,
+            "jsonld_completeness": null
+          },
+          "flagged": 3,
+          "unsupported_claims": 1,
+          "qualified": false,
+          "raw": {
+            "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black",
+            "tags": [
+              "t-shirt",
+              "oversized",
+              "black",
+              "crew neck",
+              "short sleeve",
+              "printed",
+              "Chimmi"
+            ],
+            "text": "Oversized fit t-shirt in midnight black with short sleeves and crew neck. Features printed design. Made in India.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.1667,
+              "lo": 0.0,
+              "hi": 0.5
+            },
+            "top3_rate": {
+              "value": 0.1667,
+              "lo": 0.0,
+              "hi": 0.5
+            },
+            "mrr": {
+              "value": 0.0556,
+              "lo": 0.0,
+              "hi": 0.1667
+            }
+          },
+          "cost_usd": 0.000728
+        }
+      },
+      "part_winners": {
+        "title": "productlens",
+        "tags": "productlens",
+        "description": "productlens@openai:gpt-4o-mini"
+      },
+      "visibility_winner": "productlens@openai:gpt-4o-mini",
+      "recommended": {
+        "title": {
+          "text": "Chimmi Children of Immigrants T-Shirt - Midnight Black",
+          "from": "productlens"
+        },
+        "tags": {
+          "list": [
+            "t-shirt",
+            "oversized fit",
+            "short sleeves",
+            "crew neck",
+            "printed",
+            "black",
+            "Chimmi",
+            "black t-shirt"
+          ],
+          "from": [
+            "productlens",
+            "openai:gpt-4o-mini"
+          ]
+        },
+        "description": {
+          "text": "This t-shirt features an oversized fit with short sleeves and a crew neck. It is printed in black.",
+          "from": "productlens@openai:gpt-4o-mini"
+        }
+      }
+    },
+    {
+      "group": "g20",
+      "product_id": "p_c510d6fc5a1bf5b0",
+      "language": "es",
+      "brand": "Thinking MU",
+      "name": "Camiseta Esqué Aaron",
+      "url": "https://thinkingmu.com/products/esque-blue-aaron-tee",
+      "verified_facts": 13,
+      "prompts": [
+        "INTENT_003_es",
+        "INTENT_007_es",
+        "INTENT_035_es",
+        "INTENT_041_es",
+        "INTENT_086_es",
+        "INTENT_109_es"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 20,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": false,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.4
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 9,
+              "flagged_sentences": 6,
+              "unsupported_claims": 0,
+              "accuracy": 0.4545,
+              "flagged": [
+                {
+                  "sentence": "Camiseta Esqué Aaron hecha de algodón orgánico diseñada en colaboración con la artista y diseñadora Júlia Esqué, que ha creado distintos estampados inspirados en la cestería y el trabajo artesanal, a partir de papeles de colores.",
+                  "problems": [
+                    "words not grounded in Product Truth: disenada, colaboracion, artista, disenadora, julia, esque, ha, creado, distintos, estampados, inspirados, cesteria, trabajo, artesanal, partir, papeles"
+                  ]
+                },
+                {
+                  "sentence": "→ Tejido: algodón orgánico, gramaje 180 gsm (Grosor medio)",
+                  "problems": [
+                    "words not grounded in Product Truth: grosor, medio"
+                  ]
+                },
+                {
+                  "sentence": "→ Detalles de la prenda: diseño delantero estampado",
+                  "problems": [
+                    "words not grounded in Product Truth: detalles, diseno, delantero"
+                  ]
+                },
+                {
+                  "sentence": "→ Largo de la prenda: regular",
+                  "problems": [
+                    "words not grounded in Product Truth: largo, regular"
+                  ]
+                },
+                {
+                  "sentence": "Ref: MTS00455",
+                  "problems": [
+                    "number 00455 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: ref, mts"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.7143,
+            "intent_coverage": 0.0833,
+            "readability": 70.9,
+            "words": 94,
+            "chars": 537,
+            "jsonld_completeness": null
+          },
+          "flagged": 6,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Camiseta Esqué Aaron",
+            "tags": [],
+            "text": "Camiseta Esqué Aaron hecha de algodón orgánico diseñada en colaboración con la artista y diseñadora Júlia Esqué, que ha creado distintos estampados inspirados en la cestería y el trabajo artesanal, a partir de papeles de colores.\n→ Cuello redondo\n→ Manga corta\n→ Fit relaxed\n→ Tejido: algodón orgánico, gramaje 180 gsm (Grosor medio)\n→ Detalles de la prenda: diseño delantero estampado\n→ Largo de la prenda: regular\nRef: MTS00455\nMedidas en talla M: 73 cm largo total, 58 cm ancho pecho y 53 cm ancho de espalda con 22 cm largo de manga.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.5556,
+              "lo": 0.4167,
+              "hi": 0.75
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 56,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.8
+          },
+          "tags": {
+            "n": 8,
+            "duplicates": 0,
+            "passing": [
+              "camiseta",
+              "algodón orgánico",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "estampado",
+              "para hombre",
+              "180 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.625,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.875
+          },
+          "description": {
+            "guard": {
+              "sentences": 13,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0729,
+            "readability": 69.9,
+            "words": 53,
+            "chars": 344,
+            "jsonld_completeness": 0.6667
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico",
+            "tags": [
+              "camiseta",
+              "algodón orgánico",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "estampado",
+              "para hombre",
+              "180 gsm"
+            ],
+            "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidado: NO USAR LEJIA. Cuidado: NO USAR SECADORA. Cuidado: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidado: PERMITE LIMPIEZA EN SECO.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.75,
+              "lo": 0.5833,
+              "hi": 0.9167
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens@openai:gpt-4o-mini": {
+          "title": {
+            "chars": 47,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": false,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.6
+          },
+          "tags": {
+            "n": 8,
+            "duplicates": 0,
+            "passing": [
+              "camiseta",
+              "algodón orgánico",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "estampado",
+              "para hombre",
+              "180 gsm"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.625,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.875
+          },
+          "description": {
+            "guard": {
+              "sentences": 2,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 0.4286,
+            "intent_coverage": 0.0625,
+            "readability": 88.6,
+            "words": 31,
+            "chars": 154,
+            "jsonld_completeness": 0.6667
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Camiseta Esqué Aaron de Thinking MU para Hombre",
+            "tags": [
+              "camiseta",
+              "algodón orgánico",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "estampado",
+              "para hombre",
+              "180 gsm"
+            ],
+            "text": "La Camiseta Esqué Aaron de Thinking MU está hecha de 100% algodón orgánico y tiene un gramaje de 180 gsm. Está disponible en tallas XS, S, M, L, XL y XXL.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.625,
+              "lo": 0.4167,
+              "hi": 0.8333
+            }
+          },
+          "cost_usd": 0.001306
+        },
+        "openai:gpt-4o-mini": {
+          "title": {
+            "chars": 59,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.8
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "Camiseta",
+              "Thinking MU",
+              "Algodón orgánico",
+              "Estampado",
+              "Corte holgado",
+              "Manga corta"
+            ],
+            "false": [
+              "Ropa de hombre"
+            ],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.5714,
+            "language_match": 1.0,
+            "passes": false,
+            "score": 0.7347
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 3,
+              "unsupported_claims": 0,
+              "accuracy": 0.7692,
+              "flagged": [
+                {
+                  "sentence": "La Camiseta Esqué Aaron de Thinking MU está confeccionada en 100% algodón orgánico y presenta un corte holgado con manga corta y cuello redondo.",
+                  "problems": [
+                    "words not grounded in Product Truth: confeccionada, presenta"
+                  ]
+                },
+                {
+                  "sentence": "Disponible en tallas XS, S, M, L, XL y XXL, esta camiseta cuenta con un estampado distintivo.",
+                  "problems": [
+                    "words not grounded in Product Truth: cuenta, distintivo"
+                  ]
+                },
+                {
+                  "sentence": "Se recomienda lavarla a máquina a 30º con acción mecánica reducida y planchar del revés a baja temperatura.",
+                  "problems": [
+                    "number 30 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: recomienda, lavarla"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.7143,
+            "intent_coverage": 0.0729,
+            "readability": 63.0,
+            "words": 59,
+            "chars": 346,
+            "jsonld_completeness": null
+          },
+          "flagged": 4,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Camiseta Esqué Aaron de Thinking MU - 100% algodón orgánico",
+            "tags": [
+              "Camiseta",
+              "Thinking MU",
+              "Algodón orgánico",
+              "Estampado",
+              "Ropa de hombre",
+              "Corte holgado",
+              "Manga corta"
+            ],
+            "text": "La Camiseta Esqué Aaron de Thinking MU está confeccionada en 100% algodón orgánico y presenta un corte holgado con manga corta y cuello redondo. Disponible en tallas XS, S, M, L, XL y XXL, esta camiseta cuenta con un estampado distintivo. Se recomienda lavarla a máquina a 30º con acción mecánica reducida y planchar del revés a baja temperatura.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.625,
+              "lo": 0.4167,
+              "hi": 0.8333
+            }
+          },
+          "cost_usd": 0.000135
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "title": {
+            "chars": 56,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": true,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.8
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "camiseta hombre",
+              "algodón orgánico",
+              "corte holgado",
+              "manga corta",
+              "Thinking MU",
+              "talla XS a XXL",
+              "estampado"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.5714,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.8571
+          },
+          "description": {
+            "guard": {
+              "sentences": 4,
+              "flagged_sentences": 3,
+              "unsupported_claims": 0,
+              "accuracy": 0.8,
+              "flagged": [
+                {
+                  "sentence": "Camiseta para hombre de Thinking MU confeccionada en 100% algodón orgánico con gramaje de 180 gsm.",
+                  "problems": [
+                    "words not grounded in Product Truth: confeccionada"
+                  ]
+                },
+                {
+                  "sentence": "Presenta corte holgado, manga corta, cuello redondo y estampado.",
+                  "problems": [
+                    "words not grounded in Product Truth: presenta"
+                  ]
+                },
+                {
+                  "sentence": "Lavar a máquina a 30° con acción mecánica reducida, no usar lejía ni secadora, planchar del revés a baja temperatura o permitir limpieza en seco.",
+                  "problems": [
+                    "number 30 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: lavar, ni, permitir"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0938,
+            "readability": 68.1,
+            "words": 60,
+            "chars": 353,
+            "jsonld_completeness": null
+          },
+          "flagged": 3,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Thinking MU Camiseta Esqué Aaron - 100% Algodón Orgánico",
+            "tags": [
+              "camiseta hombre",
+              "algodón orgánico",
+              "corte holgado",
+              "manga corta",
+              "Thinking MU",
+              "talla XS a XXL",
+              "estampado"
+            ],
+            "text": "Camiseta para hombre de Thinking MU confeccionada en 100% algodón orgánico con gramaje de 180 gsm. Presenta corte holgado, manga corta, cuello redondo y estampado. Disponible en tallas XS, S, M, L, XL y XXL. Lavar a máquina a 30° con acción mecánica reducida, no usar lejía ni secadora, planchar del revés a baja temperatura o permitir limpieza en seco.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.75,
+              "lo": 0.5833,
+              "hi": 0.9167
+            }
+          },
+          "cost_usd": 0.001513
+        }
+      },
+      "part_winners": {
+        "title": "openai:gpt-4o-mini",
+        "tags": "productlens",
+        "description": "productlens"
+      },
+      "visibility_winner": "productlens",
+      "recommended": {
+        "title": {
+          "text": "Camiseta Esqué Aaron de Thinking MU - 100% algodón orgánico",
+          "from": "openai:gpt-4o-mini"
+        },
+        "tags": {
+          "list": [
+            "camiseta",
+            "algodón orgánico",
+            "corte holgado",
+            "manga corta",
+            "cuello redondo",
+            "estampado",
+            "para hombre",
+            "180 gsm"
+          ],
+          "from": [
+            "productlens"
+          ]
+        },
+        "description": {
+          "text": "Material: 100% algodón orgánico. Gramaje: 180 gsm. Corte holgado. Manga corta. Cuello redondo. Estampado. Para hombre. Tallas: XS, S, M, L, XL, XXL. Cuidado: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidado: NO USAR LEJIA. Cuidado: NO USAR SECADORA. Cuidado: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidado: PERMITE LIMPIEZA EN SECO.",
+          "from": "productlens"
+        }
+      }
+    },
+    {
+      "group": "g21",
+      "product_id": "p_a74337767f05936a",
+      "language": "es",
+      "brand": "Sepiia",
+      "name": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
+      "url": "https://sepiia.com/products/camiseta-hombre-cuello-redondo-estampado-rayas-rosa-palo-soft",
+      "verified_facts": 11,
+      "prompts": [
+        "INTENT_011_es",
+        "INTENT_059_es",
+        "INTENT_081_es",
+        "INTENT_092_es",
+        "INTENT_105_es",
+        "INTENT_110_es"
+      ],
+      "candidates": {
+        "original": {
+          "title": {
+            "chars": 56,
+            "length_ok": true,
+            "has": {
+              "brand": false,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.5
+          },
+          "tags": {
+            "n": 0,
+            "passes": false,
+            "score": 0.0,
+            "passing": [],
+            "false": [],
+            "duplicates": 0,
+            "fact_relevance": null,
+            "intent_relevance": null,
+            "language_match": null
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 3,
+              "unsupported_claims": 0,
+              "accuracy": 0.25,
+              "flagged": [
+                {
+                  "sentence": "Camiseta de cuello redondo con diseño limpio y volumen equilibrado.",
+                  "problems": [
+                    "words not grounded in Product Truth: diseno, limpio, volumen, equilibrado"
+                  ]
+                },
+                {
+                  "sentence": "Su tacto suave y natural aporta comodidad durante todo el día, manteniendo una silueta estable.",
+                  "problems": [
+                    "words not grounded in Product Truth: tacto, suave, natural, aporta, comodidad, durante, todo, dia, manteniendo, silueta, estable"
+                  ]
+                },
+                {
+                  "sentence": "Funciona con chino, denim o bajo una chaqueta ligera para jornadas largas, fines de semana y capas interiores.",
+                  "problems": [
+                    "words not grounded in Product Truth: funciona, chino, denim, bajo, chaqueta, ligera, jornadas, largas, fines, semana, capas, interiores"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 0.1667,
+            "intent_coverage": 0.0104,
+            "readability": 54.1,
+            "words": 43,
+            "chars": 274,
+            "jsonld_completeness": null
+          },
+          "flagged": 3,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
+            "tags": [],
+            "text": "Camiseta de cuello redondo con diseño limpio y volumen equilibrado. Su tacto suave y natural aporta comodidad durante todo el día, manteniendo una silueta estable.\nFunciona con chino, denim o bajo una chaqueta ligera para jornadas largas, fines de semana y capas interiores.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.6667,
+              "lo": 0.3333,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.5833,
+              "lo": 0.25,
+              "hi": 0.9167
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens": {
+          "title": {
+            "chars": 63,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "camiseta",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "de rayas",
+              "para hombre",
+              "rosa"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.5714,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.8571
+          },
+          "description": {
+            "guard": {
+              "sentences": 12,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0,
+            "readability": 78.9,
+            "words": 54,
+            "chars": 344,
+            "jsonld_completeness": 0.5556
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
+            "tags": [
+              "camiseta",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "de rayas",
+              "para hombre",
+              "rosa"
+            ],
+            "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Cuidado: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidado: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidado: LAVAR EN FRÍO O MÁX 30º. Cuidado: LAVAR Y COLGAR.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.6389,
+              "lo": 0.3056,
+              "hi": 0.9167
+            }
+          },
+          "cost_usd": 0
+        },
+        "productlens@openai:gpt-4o-mini": {
+          "title": {
+            "chars": 66,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "camiseta",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "de rayas",
+              "para hombre",
+              "rosa"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.5714,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.8571
+          },
+          "description": {
+            "guard": {
+              "sentences": 2,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "attribute_coverage": 0.6667,
+            "intent_coverage": 0.0,
+            "readability": 94.3,
+            "words": 18,
+            "chars": 91,
+            "jsonld_completeness": 0.5556
+          },
+          "flagged": 0,
+          "unsupported_claims": 0,
+          "qualified": true,
+          "raw": {
+            "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft de Sepiia",
+            "tags": [
+              "camiseta",
+              "corte holgado",
+              "manga corta",
+              "cuello redondo",
+              "de rayas",
+              "para hombre",
+              "rosa"
+            ],
+            "text": "Camiseta de hombre con corte holgado y manga corta. Disponible en tallas S, M, L, XL y 2XL.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.5889,
+              "lo": 0.35,
+              "hi": 0.8333
+            }
+          },
+          "cost_usd": 0.001107
+        },
+        "openai:gpt-4o-mini": {
+          "title": {
+            "chars": 65,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 0,
+              "unsupported_claims": 0,
+              "accuracy": 1.0,
+              "flagged": []
+            },
+            "passes": true,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 7,
+            "duplicates": 0,
+            "passing": [
+              "Camiseta hombre",
+              "Cuello redondo",
+              "Corte holgado",
+              "Rosa",
+              "Manga corta",
+              "Fácil mantenimiento"
+            ],
+            "false": [
+              "Estampado rayas"
+            ],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.7143,
+            "language_match": 1.0,
+            "passes": false,
+            "score": 0.7755
+          },
+          "description": {
+            "guard": {
+              "sentences": 3,
+              "flagged_sentences": 3,
+              "unsupported_claims": 0,
+              "accuracy": 0.7692,
+              "flagged": [
+                {
+                  "sentence": "Camiseta de hombre con corte holgado y manga corta, diseñada con un estampado de rayas en color rosa.",
+                  "problems": [
+                    "words not grounded in Product Truth: disenada, estampado"
+                  ]
+                },
+                {
+                  "sentence": "Presenta un cuello redondo y está disponible en tallas S, M, L, XL y 2XL.",
+                  "problems": [
+                    "words not grounded in Product Truth: presenta"
+                  ]
+                },
+                {
+                  "sentence": "Su fácil mantenimiento permite un lavado en frío o a un máximo de 30º, y no requiere plancha, lo que simplifica su cuidado entre usos.",
+                  "problems": [
+                    "number 30 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: permite, lavado, maximo"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0,
+            "readability": 77.5,
+            "words": 58,
+            "chars": 310,
+            "jsonld_completeness": null
+          },
+          "flagged": 4,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft - Sepiia",
+            "tags": [
+              "Camiseta hombre",
+              "Cuello redondo",
+              "Estampado rayas",
+              "Corte holgado",
+              "Rosa",
+              "Manga corta",
+              "Fácil mantenimiento"
+            ],
+            "text": "Camiseta de hombre con corte holgado y manga corta, diseñada con un estampado de rayas en color rosa. Presenta un cuello redondo y está disponible en tallas S, M, L, XL y 2XL. Su fácil mantenimiento permite un lavado en frío o a un máximo de 30º, y no requiere plancha, lo que simplifica su cuidado entre usos.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.6722,
+              "lo": 0.4,
+              "hi": 0.9167
+            }
+          },
+          "cost_usd": 0.000138
+        },
+        "anthropic:claude-haiku-4-5-20251001": {
+          "title": {
+            "chars": 53,
+            "length_ok": true,
+            "has": {
+              "brand": true,
+              "type": true,
+              "material": null,
+              "fit": false
+            },
+            "guard": {
+              "sentences": 1,
+              "flagged_sentences": 1,
+              "unsupported_claims": 0,
+              "accuracy": 0.75,
+              "flagged": [
+                {
+                  "sentence": "Sepiia Camiseta Hombre Cuello Redondo Rayas Rosa Soft",
+                  "problems": [
+                    "words not grounded in Product Truth: soft"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "score": 0.75
+          },
+          "tags": {
+            "n": 6,
+            "duplicates": 0,
+            "passing": [
+              "camiseta hombre",
+              "cuello redondo",
+              "rayas rosa",
+              "manga corta",
+              "fácil cuidado",
+              "talla S M L XL 2XL"
+            ],
+            "false": [],
+            "fact_relevance": 1.0,
+            "intent_relevance": 0.6667,
+            "language_match": 1.0,
+            "passes": true,
+            "score": 0.8889
+          },
+          "description": {
+            "guard": {
+              "sentences": 4,
+              "flagged_sentences": 2,
+              "unsupported_claims": 0,
+              "accuracy": 0.8333,
+              "flagged": [
+                {
+                  "sentence": "Camiseta para hombre con corte holgado, manga corta y cuello redondo, diseñada con estampado de rayas en color rosa.",
+                  "problems": [
+                    "words not grounded in Product Truth: disenada, estampado"
+                  ]
+                },
+                {
+                  "sentence": "Lavar en frío o máximo 30° y colgar para secar.",
+                  "problems": [
+                    "number 30 is not the verified value of the field it describes",
+                    "words not grounded in Product Truth: maximo, secar"
+                  ]
+                }
+              ]
+            },
+            "passes": false,
+            "attribute_coverage": 1.0,
+            "intent_coverage": 0.0104,
+            "readability": 75.9,
+            "words": 49,
+            "chars": 282,
+            "jsonld_completeness": null
+          },
+          "flagged": 3,
+          "unsupported_claims": 0,
+          "qualified": false,
+          "raw": {
+            "title": "Sepiia Camiseta Hombre Cuello Redondo Rayas Rosa Soft",
+            "tags": [
+              "camiseta hombre",
+              "cuello redondo",
+              "rayas rosa",
+              "manga corta",
+              "fácil cuidado",
+              "talla S M L XL 2XL"
+            ],
+            "text": "Camiseta para hombre con corte holgado, manga corta y cuello redondo, diseñada con estampado de rayas en color rosa. Disponible en tallas S, M, L, XL y 2XL. Fácil mantenimiento: no requiere plancha, se arruga menos y seca rápidamente. Lavar en frío o máximo 30° y colgar para secar.",
+            "error": null
+          },
+          "visibility": {
+            "n": 6,
+            "units": 6,
+            "mention_rate": {
+              "value": 1.0,
+              "lo": 1.0,
+              "hi": 1.0
+            },
+            "top3_rate": {
+              "value": 0.8333,
+              "lo": 0.5,
+              "hi": 1.0
+            },
+            "mrr": {
+              "value": 0.7,
+              "lo": 0.4333,
+              "hi": 0.9167
+            }
+          },
+          "cost_usd": 0.001368
+        }
+      },
+      "part_winners": {
+        "title": "productlens",
+        "tags": "anthropic:claude-haiku-4-5-20251001",
+        "description": "productlens"
+      },
+      "visibility_winner": "productlens",
+      "recommended": {
+        "title": {
+          "text": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
+          "from": "productlens"
+        },
+        "tags": {
+          "list": [
+            "camiseta hombre",
+            "cuello redondo",
+            "rayas rosa",
+            "manga corta",
+            "fácil cuidado",
+            "talla S M L XL 2XL",
+            "camiseta",
+            "corte holgado"
+          ],
+          "from": [
+            "anthropic:claude-haiku-4-5-20251001",
+            "productlens"
+          ]
+        },
+        "description": {
+          "text": "Corte holgado. Manga corta. Cuello redondo. De rayas. Para hombre. Colores: rosa. Tallas: S, M, L, XL, 2XL. Cuidado: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidado: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidado: LAVAR EN FRÍO O MÁX 30º. Cuidado: LAVAR Y COLGAR.",
+          "from": "productlens"
+        }
+      }
+    }
+  ],
+  "cost": {
+    "judge_calls": 300,
+    "judge_usd": 0.4264,
+    "generation_usd": 0.0103
+  },
+  "caveats": [
+    "Simulated context: 5 product pages chosen by us, not a real search index or live assistant.",
+    "Small n: 5 products x 6 prompts x 1 repeats; CIs are cluster bootstrap over (product, prompt).",
+    "Judges are from the same model families as the AI generators (OpenAI, Anthropic); self-preference is possible.",
+    "Winner chosen on judges other than the held-out one (anthropic:claude-haiku-4-5-20251001); nothing was tuned on these results.",
+    "Guardrail is a strict allowlist: harmless paraphrases can be flagged, which disqualifies that part.",
+    "Title and tag winners are deterministic audit scores, not measured visibility.",
+    "The merchant original is judged against the same Product Truth; the dataset has no merchant tags."
+  ]
+}
