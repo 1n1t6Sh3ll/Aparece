@@ -24,6 +24,14 @@ Run: `docker compose up --build` (port 8000 on localhost) or `pip install -r api
 ## Chrome extension
 `extension/` is a no-build MV3 popup that audits the current product page via `POST /v1/extract`. See `extension/README.md` to load it unpacked or preview it with mock data.
 
+## AI-visibility benchmark
+`benchmark/` sends the same prompts + system instructions to `mock`, `anthropic`, `openai` (official SDKs; keys only from `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`), stores raw responses in resumable JSONL, then matches mentions to catalog products (URL, alias, brand+name; country-TLD sites distinct) and reports mention rate, top-k, MRR, citation rate, stability per model/language/site. Hidden split is excluded unless `--splits` names it. Always `--dry-run` first; paid runs need `--max-usd` and a price in `benchmark/prices.json` (unverified placeholders — check sources).
+```
+python -m benchmark.harness run --prompts benchmark/examples/prompts.example.jsonl --models mock:mock-1 --catalog benchmark/examples/catalog.example.jsonl --out runs.jsonl [--repeats 3 --shuffle --dry-run --max-usd 5]
+python -m benchmark.harness report --results runs.jsonl --catalog benchmark/examples/catalog.example.jsonl --out-dir reports/
+python -m unittest discover -s benchmark/tests -t .
+```
+
 ## Checks
 CI (`ci / check`) runs `python -m unittest discover -s dataset/tests`, compiles `train/`, and runs `api/tests`.
 

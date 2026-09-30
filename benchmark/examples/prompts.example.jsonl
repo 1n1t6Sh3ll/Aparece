@@ -1,0 +1,10 @@
+{"id": "q01", "text": "What are the best organic cotton white t-shirts for men?", "language": "en", "market": "US", "canonical_intent": "organic_white_tee_men", "split": "dev"}
+{"id": "q02", "text": "Recommend a sustainable plain t-shirt under $40.", "language": "en", "market": "US", "canonical_intent": "sustainable_tee_budget", "split": "dev"}
+{"id": "q03", "text": "Which heavyweight t-shirt brands hold their shape after washing?", "language": "en", "market": "US", "canonical_intent": "heavyweight_tee_durable", "split": "dev"}
+{"id": "q04", "text": "Best linen or hemp t-shirts for hot weather?", "language": "en", "market": "GB", "canonical_intent": "breathable_tee_summer", "split": "dev"}
+{"id": "q05", "text": "Which of these t-shirts would you recommend for everyday wear: {candidates}?", "language": "en", "market": "US", "canonical_intent": "compare_candidates", "split": "val", "candidates": ["Northwind Tees Classic Organic Tee", "Solana Basics Heavy Tee", "Solana Basics Hemp Summer Tee"]}
+{"id": "q06", "text": "¿Cuáles son las mejores camisetas blancas de algodón orgánico para hombre?", "language": "es", "market": "ES", "canonical_intent": "organic_white_tee_men", "split": "dev"}
+{"id": "q07", "text": "Recomiéndame una camiseta básica sostenible por menos de 40 euros.", "language": "es", "market": "ES", "canonical_intent": "sustainable_tee_budget", "split": "dev"}
+{"id": "q08", "text": "¿Qué marcas de camisetas gruesas mantienen la forma después de lavarlas?", "language": "es", "market": "ES", "canonical_intent": "heavyweight_tee_durable", "split": "val"}
+{"id": "q09", "text": "Best oversized black t-shirt for women?", "language": "en", "market": "US", "canonical_intent": "oversized_black_tee_women", "split": "hidden"}
+{"id": "q10", "text": "¿Qué camiseta de cáñamo es buena para el verano?", "language": "es", "market": "MX", "canonical_intent": "breathable_tee_summer", "split": "hidden"}
