@@ -29,6 +29,7 @@ Environment variables (all optional; see `.env.example`):
 | `PRODUCTLENS_DATA`, `PRODUCTLENS_SIGNALS`, `PRODUCTLENS_VISIBILITY`, `PRODUCTLENS_EVAL` | Dashboard/audit data files (dataset JSONL, signals, benchmark report, extraction eval) |
 | `PRODUCTLENS_COMPARISON` | Model comparison JSON for `#/models` (default `train/runs/comparison.json`) |
 | `PRODUCTLENS_SHOOTOUT`, `PRODUCTLENS_SHOOTOUT_REAL`, `PRODUCTLENS_SHOOTOUT_SAMPLE` | AI comparison report: this path, else `benchmark/shootout/out/report.json`, else the committed real run, else the bundled mock sample (the API serves it marked `sample`; the web page shows "Not run yet" instead of mock numbers) |
+| `VISIBILITY_LIVE_MAX_USD`, `VISIBILITY_LIVE_DAILY_USD`, `VISIBILITY_LIVE_RATE_LIMIT` | Live AI visibility check caps: per request (default 0.05 USD), per process per day (default 1 USD), requests per minute per client (default 3) |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `QWEN_API_KEY` | Paid/local model access; paid runs also need a spend cap (`--max-usd`, `BENCHMARK_MAX_USD`) |
 | `MONITOR_ENABLED`, `MONITOR_DB`, `MONITOR_DELAY` | Scheduler and snapshot store |
 | `GOVERNANCE_DB`, `GOVERNANCE_TOKEN`, `GOVERNANCE_ADMIN_TOKEN` | Audit log; enables `POST /v1/approvals`; admin view of the full log |
@@ -55,6 +56,8 @@ All under `/v1` (OpenAPI at `/docs` and `/openapi.json`). `X-Manage-Token` is re
 | Generate Fix | `POST /optimize` | none |
 | | `POST /optimize/publish` | Merchant approval (`publish_suggestions`, `approval_id`) |
 | AI comparison | `GET /shootout` | none |
+| | `POST /shootout/live` (`{product, language}`, capped by `SHOOTOUT_LIVE_MAX_USD`, `SHOOTOUT_LIVE_DAILY_USD`, `SHOOTOUT_LIVE_RATE_LIMIT`) | none |
+| AI visibility (live) | `POST /visibility/live` (`{product, language}`: asks GPT and Claude 6 shopping questions each, returns per-model `asked`, `mentioned`, `mention_rate`, `top3`, `best_position`, `brands_named_instead`, plus `questions_used`, `cost_usd`, `caveats`; `available: false, reason: no_api_key` without keys; partial results at a spend cap; 24 h in-memory cache) | none; `VISIBILITY_LIVE_MAX_USD` (0.05), `VISIBILITY_LIVE_DAILY_USD` (1), `VISIBILITY_LIVE_RATE_LIMIT` (3/min) |
 | Experiments | `POST /experiments`, `GET /experiments/{id}`, `POST /experiments/{id}/results` | none |
 | Webhooks | `GET /webhooks/events` | none |
 | | `POST /webhooks`, `GET /webhooks`, `DELETE /webhooks/{id}`, `POST /webhooks/{id}/test`, `GET /webhooks/{id}/deliveries` | `X-Manage-Token` |

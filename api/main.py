@@ -59,6 +59,11 @@ try:  # TEAM-47 shoot-out report route; optional like the others
     app.include_router(shootout_api.router)
 except ModuleNotFoundError:
     pass
+try:  # live AI-assistant visibility check (needs benchmark/; optional like the others)
+    import visibility_live_api  # noqa: E402
+    app.include_router(visibility_live_api.router)
+except ModuleNotFoundError:
+    pass
 try:  # TEAM-51 outgoing webhooks; webhooks/ may be missing from older images
     import webhooks_api  # noqa: E402
     app.include_router(webhooks_api.router)

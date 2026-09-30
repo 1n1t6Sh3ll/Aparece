@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  BellRing, Bookmark, Link2, Radar, Check, ChevronDown, CircleHelp, ExternalLink, EyeOff, Gauge, ListChecks, Pencil, Printer,
+  BellRing, Bookmark, Bot, Link2, Radar, Check, ChevronDown, CircleHelp, ExternalLink, EyeOff, Gauge, ListChecks, Pencil, Printer,
   Quote, RotateCcw, ScanSearch, ShieldCheck, Shirt, Tag, Trophy, PenLine,
 } from "lucide-react";
 import { api, cap, errorText, tn, fieldLabel, fmtField, fmtValue, money, saveManageToken, store, useI18n, type Lang, type T } from "../lib";
@@ -12,6 +12,7 @@ import { PriceChart, RankChart, ScoreBreakdown } from "./Charts";
 import { CompareTable, Tip } from "./RankParts";
 import FixPanel, { type FixDecision } from "./FixPanel";
 import { factCount } from "../facts";
+import { liveModelName, type LiveVisibility } from "../visLive";
 import { descStats } from "../description";
 import { CompareLink } from "../pages/AiComparison";
 
@@ -398,6 +399,7 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
             {audit.visibility.available ? <VisibilityFacts v={audit.visibility} /> : <p className="text-sm muted">{t("vis.empty")}</p>}
             <a href="#/docs" className="mt-2 inline-block text-sm font-medium text-[var(--accent)] hover:underline">{t("ws.visNext")}</a>
           </Panel>
+          {record && live && <Panel icon={<Bot className="size-4" aria-hidden />} title={t("vl.title")} sub={t("vl.sub")}><LiveVisibilityCheck record={record} /></Panel>}
           <Panel icon={<CircleHelp className="size-4" aria-hidden />} title={t("unk.title")}>
             <ul className="space-y-2 text-sm muted">
               {["unk.1", "unk.2", "unk.3"].map((k) => <li key={k} className="flex gap-2"><span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-stone-400" />{t(k)}</li>)}
@@ -412,6 +414,49 @@ export default function Results({ audit, onReset, record, reportId }: { audit: A
   );
 }
 
+
+/** On-demand check (costs a little API money, so never automatic): asks AI assistants shopping questions, shows observed answers. */
+function LiveVisibilityCheck({ record }: { record: Record<string, unknown> }) {
+  const { t, lang } = useI18n();
+  const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [res, setRes] = useState<LiveVisibility | null>(null);
+  const [err, setErr] = useState("");
+  async function run() {
+    setState("busy"); setErr("");
+    try {
+      setRes(await api<LiveVisibility>("/v1/visibility/live", { method: "POST", body: JSON.stringify({ product: record, language: lang }) }));
+      setState("done");
+    } catch (e) { setErr(errorText(e, t).msg); setState("error"); }
+  }
+  const pct = (x: number | null) => (x == null ? "–" : `${Math.round(x * 100)}%`);
+  return (
+    <div className="space-y-3 text-sm">
+      <p className="muted">{t("vl.cost")}</p>
+      <button type="button" className="btn-outline" onClick={run} disabled={state === "busy"}>{state === "busy" ? t("vl.running") : state === "done" ? t("vl.again") : t("vl.button")}</button>
+      {state === "busy" && <p role="status" className="muted">{t("vl.wait")}</p>}
+      {state === "error" && <p role="alert" className="text-rose-700 dark:text-rose-400">{err}</p>}
+      {state === "done" && res && !res.available && (
+        <p role="status" className="muted">{t(`vl.no.${res.reason === "no_api_key" || res.reason === "spend_cap" ? res.reason : "other"}`)}</p>
+      )}
+      {state === "done" && res?.available && res.models && (
+        <div className="space-y-3">
+          {Object.entries(res.models).map(([id, m]) => (
+            <div key={id} className="rounded-lg border border-[var(--border)] p-3">
+              <p className="font-medium">{liveModelName(id)}{m.partial && <span className="chip ml-2 bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">{t("vl.partial")}</span>}</p>
+              <p className="mt-1">{t("vl.rate", { m: m.mentioned, n: m.asked, p: pct(m.mention_rate) })}</p>
+              <p className="muted">{m.best_position ? t("vl.pos", { p: m.best_position, c: m.top3 }) : t("vl.noPos")}{m.cited > 0 && <> {t("vl.cited", { c: m.cited })}</>}</p>
+              {m.brands_named_instead.length > 0 && (
+                <p className="mt-1 text-xs"><span className="muted">{t("vl.instead")}</span> {m.brands_named_instead.map((b) => `${b.brand} (${b.count})`).join(", ")}</p>
+              )}
+            </div>
+          ))}
+          <p className="text-xs muted">{t("vl.spent", { c: (res.cost_usd ?? 0).toFixed(4) })}</p>
+          {(res.caveats || []).map((c) => <p key={c} className="text-xs muted">{c}</p>)}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function VisibilityFacts({ v }: { v: Audit["visibility"] }) {
   const { t } = useI18n();
