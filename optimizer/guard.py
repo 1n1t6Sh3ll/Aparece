@@ -1,57 +1,85 @@
-"""Grounding guardrail: every sentence of generated copy must be supported by Product Truth.
-
-Per sentence (brand and product name removed first, since they are verified identity):
-1. benchmark/claims.py extract_claims + check against the Truth; anything but SUPPORTED is a problem
-   (UNVERIFIABLE means "not in the Truth", which for generated copy is a fabrication).
-2. Material words (normalize.py MATERIALS) must be Truth materials.
-3. Numbers must occur in the Truth (values or evidence text).
-4. Risky claim terms (VISION §13: performance, sustainability, health, awards, reviews, certifications...) must
-   occur in the Truth text.
-This is deterministic and conservative; it cannot understand every paraphrase, so the merchant still reviews.
+"""Grounding guardrail (allowlist): a sentence of generated copy passes only if
+1. every claim benchmark/claims.py extracts from it is SUPPORTED by Product Truth (UNVERIFIABLE = not in the Truth,
+   which for generated copy is a fabrication), and
+2. every word and number in it comes from the Truth (its localized fact sentences in EN and ES, its evidence text,
+   brand, product name, product-type words) or from a small neutral vocabulary (articles, connectors, labels).
+Anything else ("bamboo", "health", "eco-conscious", "free shipping") rejects the sentence. Deterministic and strict:
+harmless paraphrases may be rejected, which only costs a regeneration or the template fallback.
 """
 import re
+import unicodedata
 
-from benchmark.claims import COARSE, FINE, SUPPORTED, check, extract_claims
+from benchmark.claims import SUPPORTED, check, extract_claims
 import normalize as N
 
 from optimizer.truth import LANGS, check_record, fact_sentences
 
 SENTENCE_RE = re.compile(r"(?<=[.!?])\s+|\n+")
-NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)?")
-RISKY = re.compile(
-    r"\b(?:water[- ]?proof|impermeable|water[- ]resistant|resistente al agua|breathable|transpirable|"
-    r"moisture[- ]wicking|quick[- ]dry\w*|secado r[aá]pido|sustainab\w*|sostenib\w*|eco[- ]?friendly|ecol[oó]gic\w*|"
-    r"organic|org[aá]nic\w*|recycled|reciclad\w*|vegan\w*|anti[- ]?bacterial|antibacterian\w*|hypoallergenic|"
-    r"hipoalerg\w*|uv|upf|awards?|award[- ]winning|premiad\w*|premios?|best[- ]?sell\w*|m[aá]s vendid\w*|"
-    r"reviews?|rese[ñn]as?|opiniones|stars?|estrellas|rated|valorad\w*|certifi\w*|handmade|hecho a mano|premium|"
-    r"luxur\w*|lujos\w*|durable|duraderos?|duraderas?|wrinkle[- ]free|antiarrugas|carbon\w*|guarante\w*|"
-    r"warrant\w*|garant\w*|patent\w*|clinically|dermatol\w*|ethical\w*|[eé]tic[oa]s?|fair trade|comercio justo)\b"
-    r"|#1", re.I)
+TOKEN_RE = re.compile(r"\d+(?:[.,]\d+)?|[^\W\d_]+(?:['’-][^\W\d_]+)*")
+NEUTRAL = set("""
+a an the this that these it its is are be has have with and or in of for from to at on by as per also both each all
+which made available comes come offered offer options option choose choice features featuring
+size sizes color colors colour colours fabric material materials composition blend weight weighs fit cut sleeve sleeves
+neck neckline collar price priced sale stock care style garment piece item product tee tees t-shirt shirt shirts top
+un una unos unas el la los las lo este esta estos estas es son esta estan tiene tienen con y e o u en de del para por
+al a su sus que se hecho hecha hechos hechas fabricado fabricada disponible disponibles viene vienen ofrece opciones
+talla tallas color colores tejido material materiales composicion mezcla gramaje peso corte manga mangas cuello precio
+rebajado oferta cuidado prenda producto camiseta camisetas camisa camisas
+""".split())
+
+
+def _fold(word):
+    word = unicodedata.normalize("NFKD", word.lower().replace("’", "'"))
+    return "".join(c for c in word if not unicodedata.combining(c))
+
+
+def _tokens(text):
+    return [_fold(t) for t in TOKEN_RE.findall(text or "")]
+
+
+def _is_num(tok):
+    return tok[0].isdigit()
+
+
+def _num(tok):
+    return float(tok.replace(",", "."))
 
 
 def allowed_text(truth):
     parts = [s for lang in LANGS for s in fact_sentences(truth, lang)]
     parts += [t for texts in truth["sources"].values() for t in texts]
+    parts += [str(truth["facts"].get(k) or "") for k in ("identity.brand", "identity.product_name")]
     return "\n".join(parts)
 
 
-def _materials(truth):
-    f = truth["facts"]
-    mats = set((f.get("materials.material_percentages") or {}).keys())
-    if f.get("materials.primary_material"):
-        mats.add(f["materials.primary_material"])
-    mats |= {FINE.get(m, m) for m in mats} | {COARSE.get(m, m) for m in mats} | {k for k, v in FINE.items() if v in mats}
-    return mats
+def vocabulary(truth):
+    """(words, numbers) a grounded sentence may use."""
+    words, numbers = set(NEUTRAL), set()
+    for t in _tokens(allowed_text(truth)):
+        if _is_num(t):
+            numbers.add(_num(t))
+        else:
+            words.add(t)
+            words.update(t.split("-"))
+    ptype = truth["facts"].get("identity.product_type")
+    if ptype:
+        key = "_shirt" if str(ptype).endswith("_shirt") and ptype not in dict(N.PRODUCT_TYPE) else ptype
+        pattern = dict(N.PRODUCT_TYPE).get(key)
+        if pattern:
+            words.add("__type__:" + pattern)
+    return words, numbers
 
 
-def _numbers(text):
-    return {float(n.replace(",", ".")) for n in NUMBER_RE.findall(text)}
+def _word_ok(tok, words):
+    if tok in words:
+        return True
+    return any(w.startswith("__type__:") and re.fullmatch(w[9:], tok, re.I) for w in words)
 
 
-def check_sentence(sentence, truth, rec=None, allowed=None):
-    """(claims, problems). claims: checked claim dicts; problems: reasons the sentence is not grounded."""
+def check_sentence(sentence, truth, rec=None, vocab=None):
+    """(claims, problems) for one sentence; problems empty means grounded."""
     rec = rec or check_record(truth)
-    allowed = allowed if allowed is not None else allowed_text(truth)
+    words, numbers = vocab or vocabulary(truth)
     s = sentence
     for k in ("identity.brand", "identity.product_name"):
         v = truth["facts"].get(k)
@@ -59,19 +87,13 @@ def check_sentence(sentence, truth, rec=None, allowed=None):
             s = re.sub(re.escape(str(v)), " ", s, flags=re.I)
     claims, problems = [], []
     for field, value in extract_claims(s):
-        status, gold, _ = check(field, value, rec)
+        status, _, _ = check(field, value, rec)
         claims.append({"field": field, "claim": value, "status": status})
         if status != SUPPORTED:
             problems.append(f"{field}={value!r} is {status.lower()} against Product Truth")
-    mats = _materials(truth)
-    for value, pat in N.MATERIALS:
-        if re.search(pat, s, re.I) and value not in mats:
-            problems.append(f"material {value!r} not in Product Truth")
-    extra = _numbers(re.sub(r"3/4", " ", s)) - _numbers(allowed)
-    problems += [f"number {n:g} not in Product Truth" for n in sorted(extra)]
-    for m in RISKY.finditer(s):
-        if not re.search(r"(?<!\w)" + re.escape(m.group(0)[:6]), allowed, re.I):  # stem: certified ~ Certification
-            problems.append(f"unsupported claim term {m.group(0)!r}")
+    bad = [t for t in _tokens(s) if (_num(t) not in numbers if _is_num(t) else not _word_ok(t, words))]
+    if bad:
+        problems.append("words not grounded in Product Truth: " + ", ".join(dict.fromkeys(bad)))
     return claims, list(dict.fromkeys(problems))
 
 
@@ -81,18 +103,17 @@ def sentences(text):
 
 def check_text(text, truth):
     """[{sentence, claims, problems}] for each sentence."""
-    rec, allowed = check_record(truth), allowed_text(truth)
+    rec, vocab = check_record(truth), vocabulary(truth)
     out = []
     for sent in sentences(text):
-        claims, problems = check_sentence(sent, truth, rec, allowed)
+        claims, problems = check_sentence(sent, truth, rec, vocab)
         out.append({"sentence": sent, "claims": claims, "problems": problems})
     return out
 
 
 def accuracy(report):
-    """Share of checked claims (plus each extra problem) that are supported. 1.0 when nothing is claimed."""
+    """Supported claims / (checked claims + sentences with ungrounded words). 1.0 when nothing is claimed."""
     supported = sum(c["status"] == SUPPORTED for r in report for c in r["claims"])
     total = sum(len(r["claims"]) for r in report) + sum(
-        sum(not p.startswith(("materials.", "fit_and_style.", "identity.", "commerce.", "variants.", "origin",
-                              "certification")) for p in r["problems"]) for r in report)
+        any(p.startswith("words not grounded") for p in r["problems"]) for r in report)
     return {"accuracy": round(supported / total, 4) if total else 1.0, "claims": total, "supported": supported}

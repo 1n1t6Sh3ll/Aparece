@@ -5,6 +5,7 @@ from optimizer import guard, llm
 from optimizer.truth import LANGS, fact_sentences, fallback_title, json_ld, missing_attributes, product_truth
 
 MAX_RETRIES = 2
+MIN_FACTS = 2  # localized fact sentences needed to write any copy
 LANG_NAME = {"en": "English", "es": "Spanish"}
 SYSTEM = ("You write factual e-commerce product copy. Use ONLY the facts given; they are verified. Do not add "
           "materials, features, certifications, origins, performance, sustainability or health claims, reviews, "
@@ -35,6 +36,10 @@ def generate(record, language="en", gaps=None, backend=None):
         raise ValueError(f"language must be one of {LANGS}")
     name, call = (getattr(backend, "__name__", "custom"), backend) if callable(backend) else llm.get_backend(backend)
     truth = product_truth(record)
+    facts = fact_sentences(truth, language)
+    if len(facts) < MIN_FACTS or not fallback_title(truth, language):
+        raise ValueError(f"not enough verified facts: {len(facts)} fact sentences (need {MIN_FACTS}) and a verified "
+                         "brand or product name; add evidence-backed attributes first")
     content = record.get("content") or {}
     before_text = "\n".join(x for x in (content.get("title"), content.get("full_description")) if isinstance(x, str))
     before = guard.accuracy(guard.check_text(before_text, truth))
@@ -56,10 +61,12 @@ def generate(record, language="en", gaps=None, backend=None):
 
     fallback = out is None
     if fallback:  # no usable output: the localized fact lines themselves
-        out = {"title": fallback_title(truth, language), "description": " ".join(fact_sentences(truth, language))}
+        out = {"title": fallback_title(truth, language), "description": " ".join(facts)}
     title_rep, desc_rep = guard.check_text(out["title"], truth), guard.check_text(out["description"], truth)
-    title = out["title"].strip() if not _flagged(title_rep) else fallback_title(truth, language)
+    title = out["title"].strip() if out["title"].strip() and not _flagged(title_rep) else fallback_title(truth, language)
     description = " ".join(r["sentence"] for r in desc_rep if not r["problems"])
+    if not description:  # everything was stripped: deterministic template from the facts
+        description, fallback = " ".join(facts), True
     removed = _flagged(title_rep) + _flagged(desc_rep)
     after = guard.accuracy(guard.check_text(title + "\n" + description, truth))
     if after["accuracy"] < before["accuracy"]:  # cannot happen with only grounded sentences left; keep it a hard stop

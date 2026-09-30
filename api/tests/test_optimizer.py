@@ -125,6 +125,34 @@ class OptimizerTest(unittest.TestCase):
         for s in ("60% cotton, 40% polyester.", "Short sleeves.", "Sizes S, M and L.", "Made in Portugal."):
             self.assertEqual(guard.check_text(s, truth)[0]["problems"], [], s)
 
+    def test_allowlist_rejects_ungrounded_claims(self):
+        truth = product_truth(RECORD)
+        for s in ("Good for your health.", "Relieves back pain.", "Ideal for sensitive skin.", "Made from bamboo.",
+                  "Eco-conscious.", "Free shipping.", "Bueno para tu salud.", "Alivia el dolor de espalda.",
+                  "Ideal para pieles sensibles.", "Hecho de bambú.", "Eco-consciente.", "Envío gratis.",
+                  "This tee is made with 60% cotton and ships free.", "Regular fit, not slim."):
+            self.assertTrue(guard.check_text(s, truth)[0]["problems"], s)
+        for s in ("This tee is made with 60% cotton, 40% polyester.", "Available in black, sizes S to L.",
+                  "Esta camiseta de corte regular tiene manga corta.", "Precio: 25.00 EUR."):
+            self.assertEqual(guard.check_text(s, truth)[0]["problems"], [], s)
+
+    def test_all_stripped_uses_template(self):
+        bad = json.dumps({"title": "", "description": "Good for your health. Free shipping."})
+        for lang, first in (("en", "Material: 60% cotton"), ("es", "Material: 60% algodón")):
+            out = fix.generate(RECORD, lang, None, backend=lambda s, u: bad)
+            self.assertTrue(out["used_fallback"])
+            self.assertTrue(out["title"])
+            self.assertTrue(out["description"].startswith(first), out["description"])
+            self.assertEqual(guard.accuracy(guard.check_text(out["description"], product_truth(RECORD)))["accuracy"], 1.0)
+
+    def test_not_enough_verified_facts(self):
+        thin = dict(RECORD, evidence=[ev("identity.brand", "Northwind", "Northwind")])
+        with self.assertRaisesRegex(ValueError, "not enough verified facts"):
+            fix.generate(thin, "en", None, backend="stub")
+        r = client.post("/v1/optimize", json={"product": thin})
+        self.assertEqual(r.status_code, 422)
+        self.assertIn("not enough verified facts", r.text)
+
     def test_missing_attributes_and_jsonld(self):
         out = fix.generate(RECORD, "en", GAPS, backend="stub")
         first = out["missing_attributes"][0]
