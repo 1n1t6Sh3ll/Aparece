@@ -18,7 +18,7 @@ python -m unittest discover -s analysis/tests -t .
 FastAPI service in `api/` (reuses `dataset/collect` extract + normalize). OpenAPI docs at `/docs`.
 - `GET /v1/health`
 - `POST /v1/extract` with one of `url`, `html`, `text` (+ optional `language`) -> `{product_id, language, raw, normalized, evidence, conflicts, quality_status}`.
-URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s total deadline, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default); `qwen` returns 501 until implemented.
+URL fetches: http(s) only, public IPs only (each redirect re-checked), robots.txt, 10 s total deadline, 3 MB cap. CORS allows `chrome-extension://` origins. `MODEL_BACKEND=rules` (default) or `qwen` (`api/model_backend.py`, `pip install -r api/requirements-qwen.txt`): base Qwen2.5-1.5B-Instruct + LoRA adapter from `QWEN_ADAPTER_PATH` (501 if unset; optional `QWEN_BASE_MODEL`, `QWEN_TIMEOUT_S`=30, `QWEN_MAX_NEW`=512), 4-bit on CUDA else CPU fp32, loaded lazily once, prompt from `train/common.py`. Rule facts with evidence stay primary; the model only fills fields the rules left null, schema-validated, returned as `predicted: {field: {value, confidence, model}}` (never in `normalized`) plus `model_status` (`ok` or `fallback: <reason>`, rules-only on any model error/timeout). `confidence` = geometric mean of the generated token probabilities over the field's value; uncalibrated, null if no scores. The Docker image is rules-only (no `train/`, schema or torch).
 Run: `docker compose up --build` (port 8000 on localhost) or `pip install -r api/requirements.txt && uvicorn main:app --app-dir api`. Tests: `python -m unittest discover -s api/tests`.
 
 ## Merchant dashboard
