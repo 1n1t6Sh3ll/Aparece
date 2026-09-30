@@ -54,7 +54,15 @@ def safe(model):
 
 
 def read_jsonl(path):
-    return [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()] if Path(path).exists() else []
+    """Read-only; skips a line still being written by a concurrent run."""
+    out = []
+    if Path(path).exists():
+        for line in open(path, encoding="utf-8"):
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return out
 
 
 def total_spent(out_dir):
@@ -126,19 +134,20 @@ def run(args, rows, prices, call=call, log=print):
 
 
 def score(rows, resp):
-    """eval.py summary, plus per-language and per-source breakdowns. Missing responses count as invalid."""
+    """eval.py summary over the rows that have a stored response (a run may still be in progress),
+    plus per-language and per-source breakdowns."""
     by_id = {x["product_id"]: x for x in resp}
+    total, rows = len(rows), [r for r in rows if r["product_id"] in by_id]
 
     def summ(rs):
-        return summarize([parse(by_id[r["product_id"]]["text"]) if r["product_id"] in by_id else None
-                          for r in rs], [r["_gold"] for r in rs])
+        return summarize([parse(by_id[r["product_id"]]["text"]) for r in rs], [r["_gold"] for r in rs])
 
     res = summ(rows)
     for key, col in (("by_language", "language"), ("by_source", "source")):
         res[key] = {v: summ([r for r in rows if r.get(col) == v]) for v in sorted({r.get(col) for r in rows})}
-    got = [by_id[r["product_id"]] for r in rows if r["product_id"] in by_id]
+    got = [by_id[r["product_id"]] for r in rows]
     res.update({
-        "answered": len(got), "complete": len(got) == len(rows),
+        "answered": len(got), "total": total, "partial": len(got) < total, "complete": len(got) == total,
         "model_versions": sorted({x["model_version"] for x in got}),
         "cost_usd": round(sum(x["cost_usd"] for x in got), 6),
         "usage": {k: sum(x["usage"][k] for x in got) for k in ("input_tokens", "output_tokens")},
@@ -164,7 +173,7 @@ def report(args, rows):
         results[model] = res
         with open(out / f"{safe(model)}_eval.json", "w", encoding="utf-8") as f:
             json.dump({"all_null_baseline": baseline, model: res}, f, indent=2)
-        print(f"{model}: n={res['answered']}/{res['n']} json_valid={res['json_valid']:.3f} "
+        print(f"{model}: answered={res['answered']}/{res['total']} json_valid={res['json_valid']:.3f} "
               f"non_null={res['non_null_acc']:.3f} null={res['null_acc']:.3f} mean_field={res['mean_field_exact']:.3f} "
               f"cost=${res['cost_usd']:.4f}")
     return baseline, results
@@ -182,7 +191,8 @@ def comparison_entry(label, res):
             "by_language": {k: {m: v[m] for m in ("non_null_acc", "null_acc", "json_valid", "n")}
                             for k, v in langs.items()},
             "cost_per_1k_usd": round(res["cost_usd"] / n * 1000, 4) if "cost_usd" in res else 0.0,
-            "latency_ms": res.get("latency_ms")}
+            "latency_ms": res.get("latency_ms"),
+            **({"partial": True, "answered": res["answered"], "total": res["total"]} if res.get("partial") else {})}
 
 
 def write_comparison(path, rows, baseline, results):
@@ -194,6 +204,9 @@ def write_comparison(path, rows, baseline, results):
         for v in sorted({r.get("language") for r in rows}) for rs in [[r for r in rows if r.get("language") == v]]})
     doc["models"]["all_null_baseline"] = comparison_entry("All-null baseline", base)
     for model, res in results.items():
+        if not res.get("answered"):
+            doc["models"].pop(model, None)
+            continue
         doc["models"][model] = comparison_entry(LABELS.get(model, model), res)
     doc["generated_at"] = datetime.now(timezone.utc).isoformat()
     doc["test"] = {"products": len(rows), "stores": len({r.get("domain") for r in rows}),
@@ -207,18 +220,21 @@ def main(argv=None):
     ap.add_argument("--data", required=True)
     ap.add_argument("--models", nargs="+", required=True, help="provider:model, e.g. openai:gpt-4o-mini")
     ap.add_argument("--out-dir", default=str(HERE / "runs" / "api_compare"))
-    ap.add_argument("--max-usd", type=float, required=True, help="cap on total spend across --out-dir")
+    ap.add_argument("--max-usd", type=float, help="cap on total spend across --out-dir (required unless --report-only)")
     ap.add_argument("--max-tokens", type=int, default=2048)
     ap.add_argument("--sample", type=int, default=0, help="stratified subset size (language x source)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--comparison", help="also merge results into this comparison.json")
-    ap.add_argument("--report-only", action="store_true", help="re-score stored responses, no calls")
+    ap.add_argument("--report-only", action="store_true",
+                    help="re-score stored responses, no calls; safe while a run is in progress")
     args = ap.parse_args(argv)
     prices = json.loads(PRICES.read_text(encoding="utf-8"))["models"]
     rows = load_rows(args.data)
     if args.sample:
         rows = stratified(rows, args.sample)
     if not args.report_only:
+        if args.max_usd is None:
+            ap.error("--max-usd is required for a run")
         run(args, rows, prices)
     if not args.dry_run:
         baseline, results = report(args, rows)

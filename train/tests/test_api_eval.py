@@ -97,3 +97,22 @@ def test_comparison_keeps_other_models(tmp_path):
     assert doc["test"] == {"products": 6, "stores": 3, "note": "Fine-tuned Qwen results coming next."}
     m = doc["models"]["fake-1"]
     assert m["by_language"]["en"]["n"] == 3 and m["cost_per_1k_usd"] == round(600 / 1e6 * 1000, 4)
+
+
+def test_partial_run_scores_only_answered_rows(tmp_path):
+    data, out = make_rows(tmp_path), tmp_path / "out"
+    rows, fake_call.n = api_eval.load_rows(data), 0
+    api_eval.run(args_for(data, out, max_usd=0.0015), rows, PRICES, call=fake_call, log=lambda *a: None)
+    with open(out / "fake-1_responses.jsonl", "a", encoding="utf-8") as f:
+        f.write('{"product_id": "p5", "trunc')  # line still being written by a live run
+    args = args_for(data, out)
+    args.models = ["fake:fake-1", "fake:none-1"]
+    base, res = api_eval.report(args, rows)
+    r = res["fake-1"]
+    assert (r["answered"], r["total"], r["partial"], r["n"]) == (2, 6, True, 2)
+    assert r["json_valid"] == 1.0 and r["null_acc"] == 1.0
+    comp = tmp_path / "comparison.json"
+    api_eval.write_comparison(comp, rows, base, res)
+    models = json.loads(comp.read_text())["models"]
+    assert "none-1" not in models and models["fake-1"]["partial"] is True
+    assert models["fake-1"]["answered"] == 2 and models["fake-1"]["total"] == 6

@@ -50,9 +50,9 @@ DATA=dataset/output/final_v2_2k_fixed/test_gold.jsonl
 M="openai:gpt-4.1 anthropic:claude-sonnet-5-5 openai:gpt-4o-mini anthropic:claude-haiku-4-5-20251001"
 $PY train/api_eval.py --data $DATA --models $M --max-usd 5 --dry-run          # calls + upper-bound cost, no spend
 $PY train/api_eval.py --data $DATA --models $M --max-usd 5 --comparison train/runs/comparison.json
-$PY train/api_eval.py --data $DATA --models $M --max-usd 5 --report-only      # re-score stored responses
+$PY train/api_eval.py --data $DATA --models $M --report-only --comparison train/runs/comparison.json  # re-score, read-only; safe mid-run
 ```
 
 Sends each record's stored system + user prompt (what `eval.py` gives Qwen; rebuilt with `common.messages` only if absent) at temperature 0, except `claude-sonnet-5-5`, which rejects `temperature`; it runs with thinking off (`between_tools`). Scores with `eval.py`'s `parse`/`summarize`, plus `by_language` and `by_source`. Needs `anthropic` and `openai`; keys come from `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` only.
 
-Raw responses (model version, timestamp, usage, latency, cost) go to `train/runs/api_compare/{model}_responses.jsonl`; results to `{model}_eval.json` in `eval.py`'s schema. Reruns resume and only re-call rows whose prompt changed. Cost is actual usage × `benchmark/prices.json`; a call is skipped when its upper-bound estimate would push the total across `--out-dir` over `--max-usd`. `--sample N` takes a stratified (language × source) subset.
+Raw responses (model version, timestamp, usage, latency, cost) go to `train/runs/api_compare/{model}_responses.jsonl`; results to `{model}_eval.json` in `eval.py`'s schema.  Metrics cover only rows with a stored response (`answered`/`total`, `partial: true` mid-run); models with none are left out of `comparison.json`. Reruns resume and only re-call rows whose prompt changed. Cost is actual usage × `benchmark/prices.json`; a call is skipped when its upper-bound estimate would push the total across `--out-dir` over `--max-usd`. `--sample N` takes a stratified (language × source) subset.
