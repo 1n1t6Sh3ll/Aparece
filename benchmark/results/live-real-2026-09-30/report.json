@@ -1,0 +1,1980 @@
+{
+ "spent_usd": 0.040263,
+ "items": [
+  {
+   "group": "g01",
+   "url": "https://merchmonger.com/products/green-line-short-sleeve-unisex-t-shirt",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 58.9
+   },
+   "cost_usd": 0.000938,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 32,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Green Line Short-Sleeve Unisex T-Shirt",
+     "tags": [],
+     "description": "Inspired by the Chicago L Transit System, this t-shirt is everything you need to rep your city and Irish pride! We all ride the Green Line on St. Patrick's Day! It feels soft and lightweight, with the right amount of stretch. It's comfortable and flattering for both men and women. • 100% combed and ring-spun cotton (heather colors contain polyester) • Fabric weight: 4.2 oz (142 g/m2) • Pre-shrunk fabric • Shoulder-to-shoulder taping • Side-seamed\nSize guide\nXS\nS\nM\nL\nXL\n2XL\n3XL\n4XL\nLength (inches)\n27\n28\n29\n30\n31\n32\n33\n34\nWidth (inches)\n16 ½\n18\n20\n22\n24\n26\n28\n30"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt - 100% cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "short sleeves",
+      "unisex",
+      "green",
+      "142 gsm"
+     ],
+     "description": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Colors: green. Price: 24.99 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "short sleeves",
+      "unisex",
+      "green",
+      "142 gsm"
+     ],
+     "description": "This unisex t-shirt is made from 100% cotton and features short sleeves. It has a fabric weight of 142 gsm and is available in green."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Merch Monger Green Line Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "unisex t-shirt",
+      "green t-shirt",
+      "short sleeve",
+      "cotton t-shirt",
+      "Merch Monger",
+      "casual wear"
+     ],
+     "description": "The Green Line Short-Sleeve Unisex T-Shirt by Merch Monger is made from 100% cotton with a fabric weight of 142 gsm. This t-shirt features short sleeves and a stretch fabric for comfort. Available in a vibrant green color, it is perfect for casual wear. Priced at 24.99 USD and currently in stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": "BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to ",
+     "title": null,
+     "tags": [],
+     "description": null
+    }
+   }
+  },
+  {
+   "group": "g02",
+   "url": "https://mercharoo.com/products/kawartha-short-sleeve-womens-organic-v-neck-t-shirt-38017",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 63.3
+   },
+   "cost_usd": 0.002008,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "anthropic:claude-haiku-4-5-20251001",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 14,
+     "unsupported_claims": 2,
+     "error": null,
+     "title": "Kawartha short sleeve women's organic v-neck t-shirt - 38017",
+     "tags": [],
+     "description": "The Kawartha short sleeve women's organic v-neck t-shirt is a stylish and more sustainable choice. Made from 95% organic cotton, with a fabric weight of 200 g/m², this t-shirt is soft and comfortable to wear. The 5% elastane ensures a soft and stretchy fit. With its V-neck and short sleeves this t-shirt is both more sustainable and modern.Available in sizes 4XS-3XL.\nQty\n10\n25\n50\n100\nPrice\n£4.46\n£4.46\n£4.35\n£4.32\nPrices based on basic printing method. Includes printing setup charge of £37.50. Excludes shipping costs; the cost of shipping will be included on the final quotation. Minimum order of 10 items."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Mercharoo Kawartha short sleeve women's organic v-neck t-shirt - 38017",
+     "tags": [
+      "t-shirt",
+      "organic cotton",
+      "elastane",
+      "short sleeves",
+      "v-neck",
+      "for women",
+      "200 gsm"
+     ],
+     "description": "Material: 95% organic cotton, 5% elastane. Fabric weight: 200 gsm. Stretch fabric. Short sleeves. V-neck. For women. Price: 4.32 GBP. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Mercharoo Kawartha short sleeve women's organic v-neck t-shirt - 38017",
+     "tags": [
+      "t-shirt",
+      "organic cotton",
+      "elastane",
+      "short sleeves",
+      "v-neck",
+      "for women",
+      "200 gsm"
+     ],
+     "description": "It features a stretch fabric with a fabric weight of 200 gsm."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Mercharoo Kawartha Women's Organic V-Neck T-Shirt - 38017",
+     "tags": [
+      "women's t-shirt",
+      "organic cotton",
+      "v-neck t-shirt",
+      "short sleeve",
+      "Mercharoo",
+      "casual wear"
+     ],
+     "description": "The Mercharoo Kawartha short sleeve women's organic v-neck t-shirt is made from 95% organic cotton and 5% elastane, providing a comfortable fit with stretch fabric. It features short sleeves and a stylish v-neck design. This t-shirt is currently in stock and priced at 4.32 GBP."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Mercharoo Kawartha Women's Short Sleeve Organic V-Neck T-Shirt",
+     "tags": [
+      "women's t-shirt",
+      "organic cotton",
+      "v-neck",
+      "short sleeve",
+      "stretch fabric"
+     ],
+     "description": "Women's short sleeve t-shirt featuring a v-neck design. Made from 95% organic cotton and 5% elastane with a 200 gsm fabric weight. The stretch fabric provides comfort and flexibility."
+    }
+   }
+  },
+  {
+   "group": "g03",
+   "url": "https://moderntribe.com/products/shofar-so-good-short-sleeve-unisex-t-shirt",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 56.2
+   },
+   "cost_usd": 0.002173,
+   "parts_winner": {
+    "title": "original",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 35,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Shofar So Good Short-Sleeve Unisex T-Shirt - (Choice of Colors) - (Sizes XS - 4XL)",
+     "tags": [],
+     "description": "How's your New Year going? Shofar so good as long as you are wearing this comfy Rosh Hashanah t-shirt! This t-shirt is everything you've dreamed of and more. It feels soft and lightweight, with the right amount of stretch. It's comfortable and flattering for both men and women.\n• 100% combed and ring-spun cotton (heather colors contain polyester) • Fabric weight: 4.2 oz (142 g/m2) • Shoulder-to-shoulder taping • Side-seamed\nItems are made to order. Please allow 1-2 weeks for delivery. Rush shipping is not available.\nSize guide\nXS\nS\nM\nL\nXL\n2X\n3X\n4X\nLength (in)\n27\n28\n29\n30\n31\n32\n33\n34\nWidth (in)\n16 ½\n18\n20\n22\n24\n26\n28\n30"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Shofar So Good Short-Sleeve Unisex T-Shirt - (Choice of Colors) - (Sizes XS - 4XL)",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "short sleeves",
+      "unisex",
+      "142 gsm"
+     ],
+     "description": "Material: 100% cotton. Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Price: 32.00 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Shofar So Good Short-Sleeve Unisex T-Shirt - (Choice of Colors) - (Sizes XS - 4XL)",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "short sleeves",
+      "unisex",
+      "142 gsm"
+     ],
+     "description": "This unisex t-shirt features short sleeves and is made from 100% cotton with a fabric weight of 142 gsm."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 6,
+     "unsupported_claims": 2,
+     "error": null,
+     "title": "Shofar So Good Short-Sleeve Unisex T-Shirt - (Colors & Sizes XS - 4XL)",
+     "tags": [
+      "unisex t-shirt",
+      "short sleeve",
+      "cotton t-shirt",
+      "ModernTribe Apparel",
+      "sizes XS-4XL",
+      "color options",
+      "casual wear"
+     ],
+     "description": "The Shofar So Good Short-Sleeve Unisex T-Shirt by ModernTribe Apparel is made from 100% cotton with a fabric weight of 142 gsm. This t-shirt features short sleeves and is available in a variety of colors and sizes ranging from XS to 4XL. Priced at 32.00 USD, it is currently in stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 2,
+     "error": null,
+     "title": "Shofar So Good Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "unisex t-shirt",
+      "cotton t-shirt",
+      "short sleeve",
+      "stretch fabric",
+      "sizes XS-4XL"
+     ],
+     "description": "This unisex t-shirt is made from 100% cotton with a fabric weight of 142 gsm and features stretch fabric for comfort. Available in multiple colors and sizes from XS to 4XL. Short sleeves provide a classic fit."
+    }
+   }
+  },
+  {
+   "group": "g04",
+   "url": "https://merchlink.com/products/il-performance-short-sleeve-mens-athletic-t-shirt",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 52.1
+   },
+   "cost_usd": 0.001924,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 22,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "IL Performance Short Sleeve Men's Athletic T-shirt",
+     "tags": [],
+     "description": "A t-shirt perfect for all kinds of workouts. Its moisture management and anti-microbial qualities are sure to keep athletes dry and comfortable even during the most vigorous of workouts.\n• 92% polyester, 8% spandex\n• Fabric weight: 4.42 oz/yd² (150 g/m²), weight may vary by 5%\n• MaxDri moisture management & MicroBlok anti-microbial fabric\n• Very soft four-way stretch sports mesh fabric\n• Comfortable fit\n• Overlock and coverstitchSize guide\nCHEST (inches)\nXS\n36 ¼\nS\n37 ¾\nM\n39 ⅜\nL\n42 ½\nXL\n45 ⅝\n2XL\n48 ⅞\n3XL\n52"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Merch Link IL Performance Short Sleeve Men's Athletic T-shirt - 92% polyester, 8% spandex",
+     "tags": [
+      "t-shirt",
+      "polyester",
+      "spandex",
+      "short sleeves",
+      "for men",
+      "150 gsm"
+     ],
+     "description": "Material: 92% polyester, 8% spandex. Fabric weight: 150 gsm. Stretch fabric. Short sleeves. For men. Price: 44.00 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Merch Link IL Performance Short Sleeve Men's Athletic T-shirt",
+     "tags": [
+      "t-shirt",
+      "polyester",
+      "spandex",
+      "short sleeves",
+      "for men",
+      "150 gsm"
+     ],
+     "description": "The IL Performance Short Sleeve Men's Athletic T-shirt by Merch Link is made from a blend of 92% polyester and 8% spandex."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Merch Link IL Performance Short Sleeve Men's Athletic T-shirt",
+     "tags": [
+      "men's t-shirt",
+      "athletic wear",
+      "short sleeve",
+      "stretch fabric",
+      "Merch Link"
+     ],
+     "description": "The IL Performance Short Sleeve Men's Athletic T-shirt by Merch Link is made from a blend of 92% polyester and 8% spandex, offering a comfortable fit with stretch fabric. Weighing 150 gsm, this t-shirt is designed for active wear. It is currently in stock and priced at 44.00 USD."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Merch Link IL Performance Short Sleeve Men's Athletic T-shirt",
+     "tags": [
+      "men's athletic t-shirt",
+      "short sleeve",
+      "polyester spandex",
+      "stretch fabric",
+      "performance wear"
+     ],
+     "description": "Men's short sleeve athletic t-shirt made from 92% polyester and 8% spandex with a fabric weight of 150 gsm. The stretch fabric provides flexibility for athletic wear. Available now at $44.00 USD."
+    }
+   }
+  },
+  {
+   "group": "g05",
+   "url": "https://www.wearall.com/en-us/products/paris-t-shirt",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 56.2
+   },
+   "cost_usd": 0.001732,
+   "parts_winner": {
+    "title": "openai:gpt-4o-mini",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 31,
+     "unsupported_claims": 3,
+     "error": null,
+     "title": "Paris T-Shirt",
+     "tags": [],
+     "description": "Unique Design: Stand out in style with our eye-catching butterfly and love heart print. This design radiates positivity and love, making it a perfect fit for the summer vibes and beyond.\nOversized Fit: Experience ultimate comfort with our oversized fitting style. Designed for all body types, this T-shirt offers a relaxed and breezy fit, ensuring you stay comfortable all day long.\nQuality Material: Made from 100% cotton, our T-shirt is all about comfort and durability. The skin-friendly, soft, and breathable fabric ensures a smooth feel against the skin, making it suitable for all-day wear.\nVersatile Wear: Whether you're looking for a casual day top, an outdoor adventure tee, or something cozy for a night in, this T-shirt has got you covered. Its versatility makes it perfect for layering under shirts or wearing as a standalone piece.\nSpecial Occasion Gift: Searching for the perfect Valentine's Day gift or a sweet anniversary present? Look no further! Our love-themed T-shirt is an ideal choice for spreading joy and love to your special someone, friends, or family.\nIntroducing the perfect addition to your summer wardrobe - our Women's Oversized Paris Print T-Shirt! This top is not just a piece of clothing; it's a blend of comfort, style, and versatility, making it ideal for any occasion, from casual outings to holiday celebrations and even as a thoughtful Valentine's Day gift.\nWhy Choose Our T-Shirt:\nComfort Guaranteed: Our T-shirt is crafted with attention to comfort and quality. The breathable fabric and soft feel ensure that you remain comfortable, no matter the weather.\nStyle & Versatility: With its unique design and oversized fit, this T-shirt is a stylish addition to any wardrobe. It's ideal for various occasions, offering both comfort and flair.\nPerfect Gift Idea: Give the gift of love and comfort with this charming T-shirt. It's a thoughtful and practical choice for Valentine's Day, anniversaries, or just because!\nEasy to Care For: Our T-shirt is not only comfortable but also easy to maintain. It retains its shape and color even after multiple washes, ensuring long-lasting wear.\nEmbrace the summer with ease, comfort, and style. Add our Women's Oversized Paris Print T-Shirt to your wardrobe today and enjoy the perfect combination of style and comfort! Ideal for anyone looking to add a touch of whimsy and affection to their daily attire. Get ready to receive compliments and spread love wherever you go!\nLength: Approx. 74 cm - suitable for a variety of heights and body types.\nNeckline: Classic crew neckline that complements all figures.\nSleeves: Short sleeves perfect for keeping cool in the warmer months.\nSize: Available in multiple sizes to ensure a perfect fit for everyone."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "WearAll Paris T-Shirt - 100% cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "oversized fit",
+      "short sleeves",
+      "crew neck",
+      "printed"
+     ],
+     "description": "Material: 100% cotton. Oversized fit. Short sleeves. Crew neck. Printed. Price: 15.00 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "WearAll Paris T-Shirt - Oversized Fit with Crew Neck",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "oversized fit",
+      "short sleeves",
+      "crew neck",
+      "printed"
+     ],
+     "description": "The WearAll Paris T-Shirt features a crew neck and short sleeves. This oversized fit t-shirt is made from 100% cotton and is printed."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "WearAll Paris T-Shirt - Oversized Fit, 100% Cotton",
+     "tags": [
+      "WearAll",
+      "Paris T-Shirt",
+      "cotton t-shirt",
+      "oversized fit",
+      "crew neck",
+      "short sleeves"
+     ],
+     "description": "The WearAll Paris T-Shirt features an oversized fit for a relaxed look. Made from 100% cotton, it offers comfort with short sleeves and a classic crew neck. This printed t-shirt is currently in stock and priced at 15.00 USD."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "WearAll Paris T-Shirt - 100% Cotton Oversized Fit",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "oversized",
+      "crew neck",
+      "printed",
+      "WearAll",
+      "short sleeve"
+     ],
+     "description": "WearAll Paris T-Shirt made from 100% cotton with an oversized fit. Features short sleeves, a crew neck, and printed design. Currently in stock at $15.00 USD."
+    }
+   }
+  },
+  {
+   "group": "g06",
+   "url": "https://www.bobrock.com.my/products/plus-size-t-shirt-thai-dye-plus-size-relax-fit-cotton-round-neck-short-sleeve-t-shirt",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 43.1
+   },
+   "cost_usd": 0.001752,
+   "parts_winner": {
+    "title": "original",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 14,
+     "unsupported_claims": 2,
+     "error": null,
+     "title": "Plus Size T-Shirt Tie Dye | Plus Size Relax Fit Cotton Round Neck Short Sleeve T-Shirt",
+     "tags": [],
+     "description": "Introduce our latest edition T-Shirt for you - Tie Dye T-Shirt\nProduct Details:\nMaterial: Cotton 180 gsm\nSize: 2XL, 4XL, 6XL and 8XL\nStretchable: Yes\nThickness: Opaque\nGraphic: Abstract\nCollar: Round Neck Collar\nSleeves: Short sleeves\nFeatures:\nBroad arm-hole for extra comfort\nCooling & comfortable fabric\nNote: The model is 175cm tall and wears size 6XL.\n**REMINDER**\nSize may different +/- 0.5\"-1\" from the actual product.Please ensure you check our size chart before making your purchase.\nThe best Plus Size Round Neck Shirt by BOBROCK Clothing. Malaysia's Most Awesome Plus Size Clothing Store for Men."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Plus Size T-Shirt Tie Dye | Plus Size Relax Fit Cotton Round Neck Short Sleeve T-Shirt",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "crew neck",
+      "graphic print",
+      "180 gsm"
+     ],
+     "description": "Fabric weight: 180 gsm. Short sleeves. Crew neck. Graphic print."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Plus Size T-Shirt Tie Dye | Plus Size Relax Fit Cotton Round Neck Short Sleeve T-Shirt",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "crew neck",
+      "graphic print",
+      "180 gsm"
+     ],
+     "description": "It has a fabric weight of 180 gsm."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Plus Size Tie Dye T-Shirt - Relax Fit Cotton Short Sleeve",
+     "tags": [
+      "plus size t-shirt",
+      "tie dye shirt",
+      "relax fit",
+      "cotton t-shirt",
+      "short sleeve",
+      "graphic print"
+     ],
+     "description": "The BOBROCK Clothing Plus Size T-Shirt features a vibrant tie-dye design with a graphic print. It is made with a fabric weight of 180 gsm, ensuring a comfortable fit. This t-shirt has short sleeves and a classic crew neck, making it a versatile addition to your wardrobe."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 1,
+     "error": null,
+     "title": "Plus Size T-Shirt Tie Dye | Relax Fit Cotton Crew Neck",
+     "tags": [
+      "plus size t-shirt",
+      "tie dye",
+      "cotton t-shirt",
+      "crew neck",
+      "short sleeve",
+      "graphic print",
+      "relax fit"
+     ],
+     "description": "BOBROCK Clothing plus size t-shirt featuring a tie dye graphic print. This short sleeve crew neck t-shirt is made from 180 gsm cotton fabric with a relaxed fit."
+    }
+   }
+  },
+  {
+   "group": "g07",
+   "url": "https://ladywhiteco.com/products/pima-lock-t-shirt-granite",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 45.3
+   },
+   "cost_usd": 0.001523,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 6,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "PIMA LOCK T-SHIRT - GRANITE",
+     "tags": [],
+     "description": "The Pima Lock T-Shirt is a boxy-fitting short sleeve t-shirt with a relaxed silhouette. Knit from a ringspun Supima cotton interlock, the fabric's dense construction and smooth hand provide softness and structure while maintaining a subtle luster. Finished with a bound collar and blind stitch finishing at the hem.\n100% COTTON\nBOXY FIT\nRINGSPUN INTERLOCK\nBINDED COLLAR\nMADE IN LOS ANGELES, CA"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "LADY WHITE CO. PIMA LOCK T-SHIRT - GRANITE - 100% cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "relaxed fit",
+      "short sleeves"
+     ],
+     "description": "Material: 100% cotton. Relaxed fit. Short sleeves. Made in Los Angeles."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "PIMA LOCK T-SHIRT - GRANITE by LADY WHITE CO.",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "relaxed fit",
+      "short sleeves"
+     ],
+     "description": "This t-shirt features a relaxed fit and short sleeves. It is made in Los Angeles from 100% cotton."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "LADY WHITE CO. PIMA LOCK T-SHIRT - GRANITE - 100% Cotton",
+     "tags": [
+      "LADY WHITE CO.",
+      "PIMA LOCK T-SHIRT",
+      "Granite T-Shirt",
+      "100% Cotton",
+      "Relaxed Fit",
+      "Short Sleeves",
+      "Made in Los Angeles"
+     ],
+     "description": "The PIMA LOCK T-SHIRT in Granite by LADY WHITE CO. features a relaxed fit and short sleeves, making it a comfortable choice for everyday wear. Crafted from 100% cotton, this t-shirt is made in Los Angeles, ensuring quality and style."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 1,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "LADY WHITE CO. PIMA LOCK T-SHIRT - GRANITE",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "relaxed fit",
+      "granite",
+      "short sleeve",
+      "Lady White Co."
+     ],
+     "description": "A relaxed-fit t-shirt made from 100% cotton with short sleeves. Made in Los Angeles."
+    }
+   }
+  },
+  {
+   "group": "g08",
+   "url": "https://www.merchbyintrepid.com/product-page/unisex-t-shirt-6",
+   "language": "en",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "group": "g09",
+   "url": "https://dadgrass.com/products/special-edition-pride-2023-daddy-chill-tee",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 53.4
+   },
+   "cost_usd": 0.001691,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 25,
+     "unsupported_claims": 2,
+     "error": null,
+     "title": "Special Edition Pride 2023 ‘Daddy Chill’ Tee",
+     "tags": [],
+     "description": "Our gender-neutral short sleeve fit with “Daddy Chill” screen printed on the front and a melange of iconic gender-bending queens and kings illustrated by Mexican-Persian artist, Dariush Alexander. Each one of these super-soft 100% cotton classics are cut, sewn, dyed, finished and printed in Downtown LA, down the street from where we roll all our joints.\n50% of proceeds from the sale of this hat will be donated to The Knox Pride Community Center\nFREE USPS First Class shipping on orders $100 and up!\nPride 2023 Collection\nTo celebrate Pride this year, we collaborated with Mexican-Persian artist, Dariush Alexander, to create an iconic suite of gender-bending queens and kings. Drag is an illusionary blend of masculine and feminine magic that reveals the power and freedom of true self-expression and individuality. An art form limited only by the edges of imagination. Always rooted in a powerful and rich tradition of dissidence in the name of radical self-love.\nThe Knox Pride Community Center\n50% of proceeds from the Special Edition Daddy Chill 2023 Collection will be donated to The Knox Pride Community Center, based in Knoxville, TN. They provide a gender-affirming environment, support groups, resources, social events, food pantries, and clothing closets for homeless & LGBTQIA+ communities.\n(If you're faced with the choice between buying Dad Grass or donating directly, please donate. But if you can do both, know we'll give back on your behalf.)\nDariush Alexander\nDariush Alexander AKA @hijx_de_laluna_ is an Iranian-Mexican artist who explores the relationship between myth, folklore, gender, and identity in his work. In addition to the spiritual and cultural manifestations of his roots, he incorporates historical, natural, and religious symbolism in a contemporary setting, which he refers to as post-folk.\nSizing\nThe sizing is pretty standard, with a nice boxy fit so it drapes just right on any body. It’s a unisex fit for dads, moms, and children of all ages! Refer to the size chart to figure out which will work best for you.\nAbout Dad Grass Merch\nOur special collections of apparel, accessories and smoking paraphernalia pay tribute to the timeless staples of dad style. Past, present and future. Like our hemp joints, flower and tinctures, Dad Grass merch is always simple, classic and of the highest quality."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dad Grass Special Edition Pride 2023 ‘Daddy Chill’ Tee - 100% cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "relaxed fit",
+      "short sleeves",
+      "printed"
+     ],
+     "description": "Material: 100% cotton. Relaxed fit. Short sleeves. Printed. Price: 49.00 USD. Out of stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dad Grass Special Edition Pride 2023 ‘Daddy Chill’ Tee - 100% Cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "relaxed fit",
+      "short sleeves",
+      "printed"
+     ],
+     "description": "The Special Edition Pride 2023 ‘Daddy Chill’ Tee by Dad Grass features a relaxed fit and short sleeves."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dad Grass Special Edition Pride 2023 ‘Daddy Chill’ Tee",
+     "tags": [
+      "Dad Grass",
+      "Pride 2023",
+      "Tee",
+      "Cotton",
+      "Short sleeves",
+      "Relaxed fit"
+     ],
+     "description": "The Dad Grass Special Edition Pride 2023 ‘Daddy Chill’ Tee is made from 100% cotton and features a relaxed fit with short sleeves. This printed tee is currently priced at 49.00 USD but is out of stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dad Grass Special Edition Pride 2023 'Daddy Chill' Tee",
+     "tags": [
+      "Dad Grass",
+      "cotton t-shirt",
+      "printed tee",
+      "relaxed fit",
+      "Pride 2023"
+     ],
+     "description": "This special edition tee from Dad Grass features a printed design and is made from 100% cotton. The relaxed fit and short sleeves provide comfortable everyday wear. Currently out of stock."
+    }
+   }
+  },
+  {
+   "group": "g10",
+   "url": "https://wearblackair.com/products/lurking-love-tee",
+   "language": "en",
+   "error": "HTTP Error 404: Not Found"
+  },
+  {
+   "group": "g11",
+   "url": "https://wearechimmi.com/products/children-of-immigrants-t-shirt-midnight-black",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 61.1
+   },
+   "cost_usd": 0.00178,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 9,
+     "unsupported_claims": 1,
+     "error": null,
+     "title": "Children of Immigrants T-Shirt - Midnight Black",
+     "tags": [],
+     "description": "Say it loud and say it proud. This genderless t-shirt is dedicated to those who came before us. Made with 100% cotton with \"Children of Immigrants\" screen printed on the center chest. It features a ribbed crew neck, short sleeves, and is meant to be worn oversized. Fits like a men's t-shirt.\nPreshrunk\n100% cotton\nMade in India\nScreen printed\nModel is 5 ft 8 in (172.7 cm) height, wearing size Small\nSee size chart below"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black - 100% cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "oversized fit",
+      "short sleeves",
+      "crew neck",
+      "printed",
+      "black"
+     ],
+     "description": "Material: 100% cotton. Oversized fit. Short sleeves. Crew neck. Printed. Colors: black. Price: 40.00 USD. In stock. Made in India."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "oversized fit",
+      "short sleeves",
+      "crew neck",
+      "printed",
+      "black"
+     ],
+     "description": "The Children of Immigrants T-Shirt by Chimmi features a crew neck and short sleeves. It is made in India."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black",
+     "tags": [
+      "Chimmi",
+      "t-shirt",
+      "children",
+      "immigrants",
+      "black",
+      "cotton",
+      "oversized",
+      "crew neck"
+     ],
+     "description": "The Chimmi Children of Immigrants T-Shirt in Midnight Black features an oversized fit with short sleeves and a classic crew neck. Made from 100% cotton, this printed t-shirt is comfortable and stylish. Available for $40.00 USD and currently in stock, it is made in India."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Chimmi Children of Immigrants T-Shirt - Midnight Black",
+     "tags": [
+      "t-shirt",
+      "oversized fit",
+      "cotton",
+      "crew neck",
+      "printed",
+      "black",
+      "short sleeves",
+      "Chimmi"
+     ],
+     "description": "100% cotton t-shirt with an oversized fit and crew neck. Features short sleeves and a printed design. Available in midnight black."
+    }
+   }
+  },
+  {
+   "group": "g12",
+   "url": "https://gillz-gear.com/collections/short-sleeve21/products/mens-contender-series-ss-graphic-tee?variant=39849965256777",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 46.2
+   },
+   "cost_usd": 0.001608,
+   "parts_winner": {
+    "title": "productlens@openai:gpt-4o-mini",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Men's Contender Series SS Graphic Tee",
+     "tags": [],
+     "description": "The Contender Series Short Sleeve UV is built with a 140 GSM. Built for comfort and style for Anglers in any situation.\n140 GSM Interlock Polyester\nPerforms Like Polyester Feels Like Cotton\nBrushed Back"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Gillz Men's Contender Series SS Graphic Tee",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "graphic print",
+      "for men",
+      "140 gsm"
+     ],
+     "description": "Fabric weight: 140 gsm. Short sleeves. Graphic print. For men. Price: 24.99 USD. Out of stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Gillz Men's Contender Series SS Graphic Tee - Out of Stock",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "graphic print",
+      "for men",
+      "140 gsm"
+     ],
+     "description": "The Gillz Men's Contender Series SS Graphic Tee features a graphic print and short sleeves. It has a fabric weight of 140 gsm."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Gillz Men's Contender Series SS Graphic Tee - Out of Stock",
+     "tags": [
+      "Gillz",
+      "Men's Tee",
+      "Graphic Tee",
+      "Short Sleeves",
+      "Contender Series"
+     ],
+     "description": "The Gillz Men's Contender Series SS Graphic Tee features a graphic print and short sleeves, designed specifically for men. The fabric weight is 140 gsm. This product is currently out of stock and priced at 24.99 USD."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Gillz Men's Contender Series SS Graphic Tee",
+     "tags": [
+      "men's graphic tee",
+      "short sleeve shirt",
+      "Gillz Contender",
+      "casual t-shirt",
+      "graphic print"
+     ],
+     "description": "Men's short sleeve graphic tee from Gillz's Contender Series. Features a 140 gsm fabric weight for durability. The shirt includes a graphic print design. Currently out of stock."
+    }
+   }
+  },
+  {
+   "group": "g13",
+   "url": "https://wearbahama.com/en-sa/products/orange-toweling-t-shirt-copy",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 45.8
+   },
+   "cost_usd": 0.001547,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Midnight Black Toweling T-Shirt",
+     "tags": [],
+     "description": "The light and breathable 100% cotton toweling short-sleeved crew neck shirt in the 2024 summer season exclusive Midnight Black.\nStraight hem with side seam vents, extended back hem"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Wear Bahama Midnight Black Toweling T-Shirt - 100% cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "short sleeves",
+      "crew neck",
+      "black"
+     ],
+     "description": "Material: 100% cotton. Short sleeves. Crew neck. Colors: black."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Wear Bahama Midnight Black Toweling T-Shirt - 100% Cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "short sleeves",
+      "crew neck",
+      "black"
+     ],
+     "description": "The Midnight Black Toweling T-Shirt by Wear Bahama is made from 100% cotton. It features short sleeves and a crew neck. This t-shirt is available in black."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Wear Bahama Midnight Black Toweling T-Shirt - 100% Cotton",
+     "tags": [
+      "Wear Bahama",
+      "t-shirt",
+      "black",
+      "cotton",
+      "short sleeves",
+      "crew neck"
+     ],
+     "description": "The Midnight Black Toweling T-Shirt by Wear Bahama is made from 100% cotton for comfort. It features short sleeves and a classic crew neck design. This t-shirt is available in a sleek black color."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 1,
+     "error": null,
+     "title": "Wear Bahama Midnight Black Toweling T-Shirt",
+     "tags": [
+      "black t-shirt",
+      "cotton t-shirt",
+      "crew neck",
+      "short sleeve",
+      "toweling fabric"
+     ],
+     "description": "A short-sleeve t-shirt made from 100% cotton in midnight black. Features a crew neck design for a classic fit. The toweling fabric offers a soft, textured feel."
+    }
+   }
+  },
+  {
+   "group": "g14",
+   "url": "https://www.wearwhatinspiresyou.com/products/believe-short-sleeve-unisex-t-shirt-2",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 43.8
+   },
+   "cost_usd": 0.001848,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 37,
+     "unsupported_claims": 6,
+     "error": null,
+     "title": "BELIEVE Short-Sleeve Unisex T-Shirt",
+     "tags": [],
+     "description": "This t-shirt is everything you've dreamed of and more. It feels soft and lightweight, with the right amount of stretch. It's comfortable and flattering for both men and women.\n• 100% combed and ring-spun cotton (Heather colors contain polyester)\n• Ash color is 99% combed and ring-spun cotton, 1% polyester\n• Heather colors are 52% combed and ring-spun cotton, 48% polyester\n• Athletic and Black Heather are 90% combed and ring-spun cotton, 10% polyester\n• Heather Prism colors are 99% combed and ring-spun cotton, 1% polyester\n• Fabric weight: 4.2 oz (142 g/m2)\n• Pre-shrunk fabric\n• Side-seamed construction\n• Shoulder-to-shoulder tapingSize guide\nXS\nS\nM\nL\nXL\n2XL\n3XL\n4XL\nLength (inches)\n27\n28\n29\n30\n31\n32\n33\n34\nWidth (inches)\n16 ½\n18\n20\n22\n24\n26\n28\n30"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Wear What Inspires You BELIEVE Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "unisex",
+      "142 gsm"
+     ],
+     "description": "Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Price: 30.00 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Wear What Inspires You BELIEVE Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "unisex",
+      "142 gsm"
+     ],
+     "description": "Fabric weight: 142 gsm. Stretch fabric. Short sleeves. Unisex. Price: 30.00 USD. In stock."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Wear What Inspires You BELIEVE Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "unisex t-shirt",
+      "short sleeve",
+      "stretch fabric",
+      "Wear What Inspires You",
+      "BELIEVE t-shirt",
+      "apparel",
+      "in stock"
+     ],
+     "description": "The BELIEVE Short-Sleeve Unisex T-Shirt from Wear What Inspires You features a lightweight fabric weight of 142 gsm and is designed with stretch for comfort. This t-shirt is suitable for all genders and comes with short sleeves. It is currently in stock and priced at 30.00 USD."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "BELIEVE Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "unisex t-shirt",
+      "short-sleeve",
+      "stretch fabric",
+      "casual wear",
+      "BELIEVE"
+     ],
+     "description": "This unisex t-shirt features a comfortable stretch fabric with a 142 gsm weight. It has short sleeves and is designed to fit all body types. The shirt is currently in stock and available for $30.00 USD."
+    }
+   }
+  },
+  {
+   "group": "g15",
+   "url": "https://shop.lidanceconnection.com/products/dance-dad-short-sleeve-unisex-t-shirt-1",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 46.2
+   },
+   "cost_usd": 0.001689,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dance Dad Short-Sleeve Unisex T-Shirt",
+     "tags": [],
+     "description": "The Bella + Canvas Unisex Jersey T-Shirt offers unparalleled softness and vibrant color options. Crafted from 100% airlume combed and ringspun cotton, this tee features a retail fit with side seams."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dance Connection Dance Dad Short-Sleeve Unisex T-Shirt - 100% cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "short sleeves",
+      "unisex"
+     ],
+     "description": "Material: 100% cotton. Short sleeves. Unisex. Price: 19.99 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dance Connection Dance Dad Short-Sleeve Unisex T-Shirt - 100% cotton",
+     "tags": [
+      "t-shirt",
+      "cotton",
+      "short sleeves",
+      "unisex"
+     ],
+     "description": "This t-shirt is made from 100% cotton and features short sleeves. The price is 19.99 USD."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dance Connection Dance Dad Short-Sleeve Unisex T-Shirt - 100% Cotton",
+     "tags": [
+      "Dance Dad T-Shirt",
+      "Unisex T-Shirt",
+      "Cotton T-Shirt",
+      "Short Sleeve Shirt",
+      "Dance Apparel"
+     ],
+     "description": "The Dance Dad Short-Sleeve Unisex T-Shirt from Dance Connection is made from 100% cotton for comfort. This t-shirt features short sleeves and is designed to fit all. Available for $19.99 and currently in stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dance Connection Dance Dad Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "dance dad t-shirt",
+      "unisex t-shirt",
+      "cotton t-shirt",
+      "short sleeve",
+      "dance apparel"
+     ],
+     "description": "This unisex short-sleeve t-shirt from Dance Connection is made from 100% cotton. The classic design is suitable for any fan of dance. Available now at $19.99 USD."
+    }
+   }
+  },
+  {
+   "group": "g16",
+   "url": "https://wearableprideus.com/products/every-kiss-begins-with-gay-gay-pride-flag-short-sleeve-unisex-t-shirt",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 42.6
+   },
+   "cost_usd": 0.001857,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 77,
+     "unsupported_claims": 5,
+     "error": null,
+     "title": "Every Kiss Begins with Gay (gay pride flag) - Short-Sleeve Unisex T-Shirt",
+     "tags": [],
+     "description": "You've now found the staple t-shirt of your wardrobe. It's made of 100% ring-spun cotton and is soft and comfy. The double stitching on the neckline and sleeves add more durability to what is sure to be a favorite!\n• 100% ring-spun cotton\n• Sport Grey is 90% ring-spun cotton, 10% polyester\n• Dark Heather is 65% polyester, 35% cotton\n• 4.5 oz/yd² (153 g/m²)\n• Pre-shrunk\n• Shoulder-to-shoulder taping\n• Quarter-turned to avoid crease down the center\n• Blank product sourced from Bangladesh, Honduras, Haiti, Mexico, or NicaraguaSize guide\nS\nM\nL\nXL\n2XL\n3XL\nLength (Worldwide) (inches)\n28\n29 ¼\n30 ¼\n31 ¼\n32 ½\n33 ½\nWidth (Worldwide) (inches)\n18\n20\n22\n24\n26\n28\nLength (East Asia) (inches)\n26 ⅜\n27 ½\n28 ¾\n29 ½\n30 ¼\nWidth (East Asia) (inches)\n18 ½\n19 ¾\n20 ⅞\n22\n23 ¼\nS\nM\nL\nXL\n2XL\n3XL\nLength (Worldwide) (cm)\n71\n74\n77\n79\n83\n85\nWidth (Worldwide) (cm)\n46\n51\n56\n61\n66\n71\nLength (East Asia) (cm)\n67\n70\n73\n75\n77\n0\nWidth (East Asia) (cm)\n47\n50\n53\n56\n59\n0"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "WearablePrideUS Every Kiss Begins with Gay (gay pride flag) - Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "unisex",
+      "153 gsm"
+     ],
+     "description": "Fabric weight: 153 gsm. Short sleeves. Unisex. Price: 18.00 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "WearablePrideUS Every Kiss Begins with Gay (gay pride flag) - Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "unisex",
+      "153 gsm"
+     ],
+     "description": "Priced at 18.00 USD."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 6,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "WearablePrideUS Every Kiss Begins with Gay - Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "t-shirt",
+      "unisex",
+      "gay pride",
+      "short sleeve",
+      "WearablePrideUS",
+      "fashion",
+      "apparel"
+     ],
+     "description": "Show your pride with the WearablePrideUS Every Kiss Begins with Gay short-sleeve unisex t-shirt. Made with a fabric weight of 153 gsm, this comfortable t-shirt is perfect for any occasion. Available for $18.00 and currently in stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 6,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Every Kiss Begins with Gay Pride Flag Short-Sleeve Unisex T-Shirt",
+     "tags": [
+      "pride t-shirt",
+      "gay pride flag",
+      "unisex tee",
+      "short sleeve",
+      "LGBT apparel",
+      "pride clothing"
+     ],
+     "description": "Short-sleeve unisex t-shirt featuring the gay pride flag design. Made with 153 gsm fabric weight. Available in unisex sizing. Currently in stock and priced at $18.00 USD."
+    }
+   }
+  },
+  {
+   "group": "g17",
+   "url": "https://www.abbiexpress.com/products/tshirts-6",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 44.5
+   },
+   "cost_usd": 0.001744,
+   "parts_winner": {
+    "title": "productlens@openai:gpt-4o-mini",
+    "tags": "openai:gpt-4o-mini",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Orange Tshirts (Unisex) | Ladies tshirt",
+     "tags": [],
+     "description": "Round neck African Print/Ankara ladies tshirt. This lovely short-sleeved shirt is great for the spring, summer, and fall seasons. Stand out in this lovely shirt that can be dressed up in, and worn to a cookout, reunion, or club by representing the culture in style.\nGet this as seen in the picture."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Abbiexpress Orange Tshirts (Unisex) | Ladies tshirt",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "crew neck",
+      "printed",
+      "unisex",
+      "orange"
+     ],
+     "description": "Short sleeves. Crew neck. Printed. Unisex. Colors: orange. Price: 38.00 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Abbiexpress Unisex Orange Tshirts with Short Sleeves",
+     "tags": [
+      "t-shirt",
+      "short sleeves",
+      "crew neck",
+      "printed",
+      "unisex",
+      "orange"
+     ],
+     "description": "This unisex t-shirt features a crew neck and short sleeves."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Abbiexpress Orange Tshirts (Unisex) | Ladies T-shirt",
+     "tags": [
+      "orange t-shirt",
+      "unisex t-shirt",
+      "ladies t-shirt",
+      "short sleeves",
+      "crew neck",
+      "printed t-shirt"
+     ],
+     "description": "This unisex orange T-shirt features short sleeves and a crew neck design. It is printed and available for purchase at a price of 38.00 USD. The T-shirt is currently in stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Abbiexpress Orange Unisex T-Shirt with Printed Design",
+     "tags": [
+      "orange t-shirt",
+      "unisex tshirt",
+      "crew neck",
+      "printed tee",
+      "short sleeve",
+      "ladies tshirt"
+     ],
+     "description": "Short-sleeved unisex t-shirt in orange with a printed design. Features a crew neck and is suitable for both men and women. Currently in stock and available for $38.00 USD."
+    }
+   }
+  },
+  {
+   "group": "g18",
+   "url": "https://dogbedsupplies.com/products/funny-dog-print-t-shirt-fashion-women",
+   "language": "en",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 46.2
+   },
+   "cost_usd": 0.001597,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 32,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Funny Dog Print T-Shirt Fashion women",
+     "tags": [],
+     "description": "Funny Doberman Dog Head Dog Lover Gift Print T-Shirt Fashion women T-shirt Cute Casual Tops Dog Lovers Simple Tees\n﻿Introducing our Funny Doberman Dog Head Dog Lover Gift Print T-Shirt, the perfect fashion statement for women who adore dogs! This adorable T-shirt is designed with a hilarious print of a Doberman dog head, making it an ideal choice for all dog lovers out there. Crafted with a blend of high-quality polyester and modal, this T-shirt offers unmatched comfort and durability. The short sleeves and regular length provide a relaxed fit, perfect for casual wear. With its O-neck collar and simple design, this T-shirt exudes simplicity and elegance. This T-shirt features a knitted fabric type, making it lightweight and breathable, suitable for the summer season. Its regular clothing length adds versatility, allowing you to pair it with your favorite jeans or shorts effortlessly. Designed with no additional decorations, this T-shirt showcases the charming Doberman print as the main highlight. Its street style and trendy design make it a must-have for fashion-forward individuals. This T-shirt is tailored for women aged 18-35 years old, catering to a wide range of ages and preferences. Whether you're a young adult or a trendy fashionista, this T-shirt is sure to complement your style and personality. Embrace your love for dogs and showcase your unique fashion sense with our Funny Doberman Dog Head Dog Lover Gift Print T-Shirt. Order yours today and let your inner dog lover shine through!\nThis is a women's T-shirt with a print of a funny Doberman dog head, designed for dog lovers. The T-shirt is made of polyester and modal, and has short sleeves and a regular length. It is a casual top with no decoration, and the collar is O-neck. The T-shirt has a street style and is suitable for ages 18-35 years old.\nSleeve Style: Regular\nFabric Type: Knitted\nSeason: Summer\nMaterial: Polyester\nMaterial: ModaL\nClothing Length: Regular\nDecoration: NONE\nSleeve Length(cm): Short\nPattern Type: Animal\nStyle: Street Style\nStreet Style: HIP HOP\nAge: Ages 18-35 Years Old\nCollar: O-Neck\n6771311673483--1005002018531591"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dog Bed & Supplies Funny Dog Print T-Shirt Fashion women",
+     "tags": [
+      "t-shirt",
+      "relaxed fit",
+      "short sleeves",
+      "printed",
+      "for women"
+     ],
+     "description": "Relaxed fit. Short sleeves. Printed. For women. Price: 23.99 USD. In stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Dog Bed & Supplies Funny Dog Print T-Shirt Fashion women",
+     "tags": [
+      "t-shirt",
+      "relaxed fit",
+      "short sleeves",
+      "printed",
+      "for women"
+     ],
+     "description": "Priced at 23.99 USD."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Funny Dog Print T-Shirt for Women - Relaxed Fit",
+     "tags": [
+      "dog t-shirt",
+      "women's fashion",
+      "relaxed fit",
+      "short sleeves",
+      "funny print"
+     ],
+     "description": "This Funny Dog Print T-Shirt for women features a relaxed fit and short sleeves, making it a comfortable choice for casual wear. The playful print adds a fun touch to your wardrobe. Available for $23.99 and currently in stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Funny Dog Print T-Shirt Fashion Women",
+     "tags": [
+      "women's t-shirt",
+      "dog print",
+      "short sleeve",
+      "relaxed fit",
+      "funny design",
+      "casual wear"
+     ],
+     "description": "Women's short-sleeved t-shirt with a funny dog print design. Features a relaxed fit for comfortable everyday wear. Currently in stock and available at $23.99 USD."
+    }
+   }
+  },
+  {
+   "group": "g19",
+   "url": "https://merchloop.com/products/cutler-cool-dri-short-sleeve-performance-t-shirt",
+   "language": "en",
+   "error": "HTTP Error 502: Bad Gateway"
+  },
+  {
+   "group": "g20",
+   "url": "https://thinkingmu.com/products/esque-blue-aaron-tee",
+   "language": "es",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 58.7
+   },
+   "cost_usd": 0.002542,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "openai:gpt-4o-mini",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 1,
+     "error": null,
+     "title": "Camiseta Esqué Aaron",
+     "tags": [],
+     "description": "Camiseta Esqué Aaron hecha de algodón orgánico diseñada en colaboración con la artista y diseñadora Júlia Esqué, que ha creado distintos estampados inspirados en la cestería y el trabajo artesanal, a partir de papeles de colores.\n→ Cuello redondo→ Manga corta→ Fit relaxed→ Tejido: algodón orgánico, gramaje 180 gsm (Grosor medio)→ Detalles de la prenda: diseño delantero estampado→ Largo de la prenda: regular\nRef: MTS00455\nMedidas en talla M: 73 cm largo total, 58 cm ancho pecho y 53 cm ancho de espalda con 22 cm largo de manga."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Thinking MU Camiseta Esqué Aaron - 100% algodón orgánico",
+     "tags": [
+      "camiseta",
+      "algodón orgánico",
+      "corte holgado",
+      "manga corta",
+      "cuello redondo",
+      "diseño estampado",
+      "para hombre",
+      "180 gsm"
+     ],
+     "description": "Camiseta para hombre de manga corta y cuello redondo. Composición: 100% algodón orgánico. Gramaje: 180 g/m². Corte holgado. Diseño estampado. Cuidados: LAVADO A MÁQUINA A 30º CON ACCIÓN MECÁNICA REDUCIDA. Cuidados: NO USAR LEJIA. Cuidados: NO USAR SECADORA. Cuidados: PLANCHAR DEL REVÉS A BAJA TEMPERATURA. Cuidados: PERMITE LIMPIEZA EN SECO."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta Esqué Aaron de Thinking MU para hombre",
+     "tags": [
+      "camiseta",
+      "algodón orgánico",
+      "corte holgado",
+      "manga corta",
+      "cuello redondo",
+      "diseño estampado",
+      "para hombre",
+      "180 gsm"
+     ],
+     "description": "Camiseta para hombre de manga corta y cuello redondo. Composición: 100% algodón orgánico con un gramaje de 180 g/m²."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta Esqué Aaron de Thinking MU para hombre",
+     "tags": [
+      "camiseta",
+      "manga corta",
+      "cuello redondo",
+      "algodón orgánico",
+      "corte holgado",
+      "diseño estampado"
+     ],
+     "description": "Camiseta para hombre de manga corta y cuello redondo. Presenta un corte holgado y un diseño estampado. Composición: 100% algodón orgánico con un gramaje de 180 g/m². Recomendaciones de cuidado: lavado a máquina a 30º con acción mecánica reducida, no usar lejía ni secadora, y planchar del revés a baja temperatura."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta Esqué Aaron hombre manga corta algodón orgánico",
+     "tags": [
+      "camiseta hombre",
+      "manga corta",
+      "algodón orgánico",
+      "corte holgado",
+      "estampado",
+      "Thinking MU"
+     ],
+     "description": "Camiseta para hombre de manga corta y cuello redondo en 100% algodón orgánico. Corte holgado con diseño estampado y gramaje de 180 g/m². Lavar a máquina a 30° con acción mecánica reducida, sin lejía ni secadora. Planchar del revés a baja temperatura o limpiar en seco."
+    }
+   }
+  },
+  {
+   "group": "g21",
+   "url": "https://sepiia.com/products/camiseta-hombre-cuello-redondo-estampado-rayas-rosa-palo-soft",
+   "language": "es",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 49.5
+   },
+   "cost_usd": 0.002652,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "anthropic:claude-haiku-4-5-20251001",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
+     "tags": [],
+     "description": "Camiseta de cuello redondo con diseño limpio y volumen equilibrado. Su tacto suave y natural aporta comodidad durante todo el día, manteniendo una silueta estable.\nFunciona con chino, denim o bajo una chaqueta ligera para jornadas largas, fines de semana y capas interiores."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Sepiia Camiseta hombre cuello redondo estampado rayas rosa Soft",
+     "tags": [
+      "camiseta",
+      "corte holgado",
+      "manga corta",
+      "cuello redondo",
+      "diseño de rayas",
+      "para hombre",
+      "rosa"
+     ],
+     "description": "Camiseta para hombre de manga corta y cuello redondo. Corte holgado. Diseño de rayas. Colores: rosa. Precio: 49,90 €. En stock. Cuidados: Menos tiempo pendiente de la camiseta. Se arruga menos, seca rápidamente y simplifica el cuidado entre usos. Cuidados: Cuidado: Fácil mantenimiento, no requiere plancha. Cuidados: LAVAR EN FRÍO O MÁX 30º. Cuidados: LAVAR Y COLGAR."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
+     "tags": [
+      "camiseta",
+      "corte holgado",
+      "manga corta",
+      "cuello redondo",
+      "diseño de rayas",
+      "para hombre",
+      "rosa"
+     ],
+     "description": "Camiseta para hombre de manga corta y cuello redondo con un diseño de rayas en color rosa. Disponible por 49,90 €."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta hombre cuello redondo estampado rayas rosa Soft",
+     "tags": [
+      "camiseta",
+      "manga corta",
+      "cuello redondo",
+      "rayas",
+      "hombre",
+      "Sepiia",
+      "fácil mantenimiento"
+     ],
+     "description": "Camiseta para hombre de manga corta y cuello redondo con un corte holgado. Presenta un diseño de rayas en color rosa. Esta prenda es fácil de mantener, ya que no requiere plancha y se arruga menos, lo que simplifica su cuidado entre usos. Precio: 49,90 €. En stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta hombre manga corta cuello redondo rayas rosa Soft",
+     "tags": [
+      "camiseta hombre",
+      "manga corta",
+      "cuello redondo",
+      "rayas rosa",
+      "corte holgado",
+      "fácil mantenimiento"
+     ],
+     "description": "Camiseta para hombre de manga corta y cuello redondo con diseño de rayas en rosa. Corte holgado que ofrece comodidad. Prenda de fácil mantenimiento que no requiere plancha, se arruga menos y seca rápidamente. Lavar en frío o máximo a 30°, lavar y colgar."
+    }
+   }
+  },
+  {
+   "group": "g22",
+   "url": "https://modestmolly.com/es/products/half-tees",
+   "language": "es",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 43.5
+   },
+   "cost_usd": 0.002117,
+   "parts_winner": {
+    "title": "productlens@openai:gpt-4o-mini",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 55,
+     "unsupported_claims": 3,
+     "error": null,
+     "title": "Medias camisetas en Plus *Múltiples colores y mangas*",
+     "tags": [],
+     "description": "¡Estas medias camisetas son una excelente manera de combinarlas sin agregar el volumen de una camiseta completa! ¡Puedes usar estos debajo de camisas que pueden verse un poco o debajo de vestidos para agregar un poco más de cobertura!\nViene en blanco y negro, en cada estilo.\nLos estilos incluyen manga corta, manga japonesa, manga de 3/4 de largo y camiseta sin mangas con tirantes anchos.\nCuello redondeado.\nMaterial elástico.\nBanda ancha que descansará debajo del busto. La longitud se mide desde la parte superior del hombro hasta la parte inferior de esta banda.\nLa manga 3/4 mide aproximadamente 16,5\" de largo. La manga corta mide aproximadamente 8,5\" de largo.\nSe ajusta a la talla real. La modelo lleva un 2x.\nCarta del tamaño\nBusto\nLongitud\nSS 1x\n38\"\n15\"\nSS 2x\n40\"\n15\"\nSS 3x\n42\"\n16,5\"\nTapa 1x\n40\"\n14\"\nTapa 2x\n42\"\n15\"\nTapa 3x\n44\"\ndieciséis\"\n3/4 1x\n38\"\n15\"\n3/4 2x\n40\"\n15,5\"\n3/4 3x\n42\"\ndieciséis\"\nTanque 1x\n38\"\n14\"\nTanque 2x\n40\"\n14\"\nTanque 3x\n41\"\ndieciséis\"\n*Todas las medidas son aproximadas y se realizan en posición horizontal.*\nTela y cuidado\n95% Rayón 5% Elastano\nLavar a máquina en frío. Para establecer planos seco."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "HALFTEE Layering Fashions Medias camisetas en Plus *Múltiples colores y mangas*",
+     "tags": [
+      "camiseta",
+      "manga corta"
+     ],
+     "description": "Camiseta de manga corta. Tejido elástico. Precio: 32,99 USD. En stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta de manga corta de HALFTEE Layering Fashions",
+     "tags": [
+      "camiseta",
+      "manga corta"
+     ],
+     "description": "Camiseta de manga corta con tejido elástico. Precio: 32,99 USD. Producto en stock."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta de manga corta en Plus de HALFTEE Layering Fashions",
+     "tags": [
+      "camiseta",
+      "manga corta",
+      "HALFTEE",
+      "plus size",
+      "ropa de mujer",
+      "moda",
+      "tejido elástico"
+     ],
+     "description": "Camiseta de manga corta con tejido elástico, ideal para combinar con otras prendas. Disponible en múltiples colores y mangas. Precio: 32,99 USD. Producto en stock."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta de manga corta HALFTEE Layering Fashions",
+     "tags": [
+      "camiseta manga corta",
+      "tejido elástico",
+      "HALFTEE Layering",
+      "múltiples colores",
+      "camiseta mujer",
+      "ropa en capas"
+     ],
+     "description": "Camiseta de manga corta fabricada en tejido elástico. Disponible en múltiples colores y estilos de manga. Prenda versátil para combinar y crear looks en capas. Precio: 32,99 USD. Actualmente en stock."
+    }
+   }
+  },
+  {
+   "group": "g23",
+   "url": "https://www.pipiuets.com/es/productos/camiseta-manga-corta-coral/562",
+   "language": "es",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 19.1
+   },
+   "cost_usd": 0.001839,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta manga corta coral",
+     "tags": [],
+     "description": "Camiseta manga corta 95% Algodón 5% Elastano )"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta manga corta coral - 95% algodón y 5% elastano",
+     "tags": [
+      "camiseta",
+      "algodón",
+      "elastano",
+      "manga corta",
+      "para niños"
+     ],
+     "description": "Camiseta para niños de manga corta. Composición: 95% algodón y 5% elastano. Precio: 6,99 €. En stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta manga corta coral - 95% algodón y 5% elastano",
+     "tags": [
+      "camiseta",
+      "algodón",
+      "elastano",
+      "manga corta",
+      "para niños"
+     ],
+     "description": "Camiseta para niños de manga corta. Composición: 95% algodón y 5% elastano. Precio: 6,99 €. Disponible en stock."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 2,
+     "unsupported_claims": 1,
+     "error": null,
+     "title": "Camiseta manga corta coral para niños",
+     "tags": [
+      "camiseta",
+      "manga corta",
+      "niños",
+      "coral",
+      "algodón",
+      "ropa infantil"
+     ],
+     "description": "Camiseta para niños de manga corta y cuello redondo. Composición: 95% algodón y 5% elastano. Disponible en stock por 6,99 €."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta para niños manga corta coral",
+     "tags": [
+      "camiseta niños",
+      "manga corta",
+      "coral",
+      "algodón elastano",
+      "6,99 €"
+     ],
+     "description": "Camiseta para niños de manga corta en color coral. Confeccionada con 95% algodón y 5% elastano para mayor comodidad y flexibilidad. Disponible en stock."
+    }
+   }
+  },
+  {
+   "group": "g24",
+   "url": "https://mundounico.us/es/products/camiseta-cuello-redondo-gorrion-morado",
+   "language": "es",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 48.5
+   },
+   "cost_usd": 0.001316,
+   "parts_winner": {
+    "title": "productlens",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 5,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "CAMISETA CUELLO REDONDO GORRIÓN MORADO",
+     "tags": [],
+     "description": "Camiseta cuello redondo. Diseño y color: Color lila con marquilla bandera en costado contramarcada y hiladilla en tapacuello. Composición tela: 94% Algodón, 6% ElastanoEsta camiseta en algodón es perfecta para disfrutar en el mar o piscina y llenar de estilo, confort y versatilidad tus días de sol. Gracias a sus materiales premium, podrás sentirte cómodo y fresco en todo momento. Esta prenda cuenta con la resistencia necesaria para conservar sus colores vivos y brillantes ante el sudor, agua de mar, cloro, exposición a la luz solar y al lavado. Además con su ajuste perfecto al cuerpo podrás realizar movimientos con completa libertad.¡Llena tu armario de una experiencia de comodidad, bienestar y estilo con prendas de Mundo Único!"
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "mundounicocolombia CAMISETA CUELLO REDONDO GORRIÓN MORADO - 100% algodón",
+     "tags": [
+      "camiseta",
+      "algodón",
+      "cuello redondo",
+      "morado"
+     ],
+     "description": "Camiseta con cuello redondo. Composición: 100% algodón. Colores: morado. Precio: 33,60 USD. En stock."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta cuello redondo Gorrión morado de mundounicocolombia",
+     "tags": [
+      "camiseta",
+      "algodón",
+      "cuello redondo",
+      "morado"
+     ],
+     "description": "Camiseta con cuello redondo en color morado. Composición: 100% algodón. Disponible en stock a un precio de 33,60 USD."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 2,
+     "error": null,
+     "title": "Camiseta para hombre de manga corta y cuello redondo Gorrión Morado",
+     "tags": [
+      "camiseta",
+      "cuello redondo",
+      "algodón",
+      "morado",
+      "moda masculina"
+     ],
+     "description": "Camiseta con cuello redondo en color morado. Composición 100% algodón, ideal para un uso diario. Disponible en stock a un precio de 33,60 USD."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 2,
+     "error": null,
+     "title": "Camiseta para hombre de cuello redondo morado 100% algodón",
+     "tags": [
+      "camiseta hombre",
+      "cuello redondo",
+      "algodón",
+      "morado",
+      "manga corta"
+     ],
+     "description": "Camiseta de manga corta con cuello redondo en color morado. Fabricada en 100% algodón. Disponible en stock a 33,60 USD."
+    }
+   }
+  },
+  {
+   "group": "g25",
+   "url": "https://lasmamisrockerasnuncaduermen.com/products/camisetas-satisfasion",
+   "language": "es",
+   "audit": {
+    "position": 1,
+    "total": 1,
+    "score": 41.8
+   },
+   "cost_usd": 0.002386,
+   "parts_winner": {
+    "title": "productlens@openai:gpt-4o-mini",
+    "tags": "productlens",
+    "description": "productlens"
+   },
+   "generators": {
+    "original": {
+     "qualified": false,
+     "flagged": 3,
+     "unsupported_claims": 3,
+     "error": null,
+     "title": "CAMISETAS SATISFASION",
+     "tags": [],
+     "description": "¿Una lengua, una estrella roja y unos colmillos sobre labios poderosos?. A mi estas Camisetas Satisfasion me representan.No se me ocurre mejor combinación para un día de curro, de vermut en terraza o de banco en el parque.LOF SATISFASION!!!* Camiseta Blanca con impresión en color.* En las fotos se muestra una talla S. Altura de la modelo 1,63 m, peso 61 Kg."
+    },
+    "productlens": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "PESCADERIA CAMISETAS SATISFASION - 100% algodón orgánico",
+     "tags": [
+      "camiseta",
+      "algodón orgánico",
+      "manga corta",
+      "color liso"
+     ],
+     "description": "Camiseta de manga corta. Composición: 100% algodón orgánico. Color liso. Precio: 33,00 €. Agotado. Cuidados: Lavar máximo 30ºC. Cuidados: Lavar y planchar del revés. Cuidados: No usar secadora."
+    },
+    "productlens@openai:gpt-4o-mini": {
+     "qualified": true,
+     "flagged": 0,
+     "unsupported_claims": 0,
+     "error": null,
+     "title": "Camiseta de manga corta PESCADERIA - 100% algodón orgánico",
+     "tags": [
+      "camiseta",
+      "algodón orgánico",
+      "manga corta",
+      "color liso"
+     ],
+     "description": "Composición de 100% algodón orgánico. Precio: 33,00 €."
+    },
+    "openai:gpt-4o-mini": {
+     "qualified": false,
+     "flagged": 7,
+     "unsupported_claims": 2,
+     "error": null,
+     "title": "Camiseta para hombre de manga corta y cuello redondo - PESCADERIA",
+     "tags": [
+      "camiseta",
+      "manga corta",
+      "cuello redondo",
+      "algodón orgánico",
+      "PESCADERIA",
+      "ropa hombre",
+      "agotado"
+     ],
+     "description": "Camiseta de manga corta con un diseño de color liso. Está confeccionada en 100% algodón orgánico, ofreciendo comodidad y frescura. Su precio es de 33,00 €, pero actualmente se encuentra agotada. Se recomienda lavar a un máximo de 30ºC y planchar del revés, evitando el uso de secadora."
+    },
+    "anthropic:claude-haiku-4-5-20251001": {
+     "qualified": false,
+     "flagged": 4,
+     "unsupported_claims": 1,
+     "error": null,
+     "title": "Camiseta de manga corta 100% algodón orgánico PESCADERIA",
+     "tags": [
+      "camiseta manga corta",
+      "algodón orgánico",
+      "color liso",
+      "PESCADERIA",
+      "camiseta hombre",
+      "33 euros"
+     ],
+     "description": "Camiseta para hombre de manga corta y color liso, confeccionada en 100% algodón orgánico. Precio: 33,00 €. Para mantener la prenda en óptimas condiciones, lavar a máximo 30ºC, lavar y planchar del revés, y no usar secadora."
+    }
+   }
+  }
+ ]
+}

@@ -15,6 +15,11 @@ if [ -x .venv/bin/python ]; then VPY=.venv/bin/python; else VPY=.venv/Scripts/py
 # SKIP_DOTENV=1 skips .env (e.g. to run with explicit env vars only).
 if [ -f .env ] && [ "${SKIP_DOTENV:-0}" != "1" ]; then set -a; . ./.env; set +a; fi
 
+# Paid AI comparison needs the provider SDKs; install them only when a key is set.
+if [ -n "${OPENAI_API_KEY:-}${ANTHROPIC_API_KEY:-}" ]; then
+  "$VPY" -m pip install -q -r benchmark/requirements.txt
+fi
+
 if [ "${1:-}" != "--skip-tests" ]; then
   for suite in analysis benchmark signals; do
     "$VPY" -m unittest discover -s "$suite/tests" -t .

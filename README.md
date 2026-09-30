@@ -44,6 +44,63 @@ flowchart LR
 
 A FastAPI service (`api/main.py`) exposes the `/v1` routes and serves the React build in `web/` at `/`. Every stage, with its code, is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## How it works
+
+1. **Fetch and read.** `api/safe_fetch.py` downloads the public page (private addresses are refused). Facts are read from the page markup and text with rules; every fact keeps the exact text it came from. A fine-tuned Qwen model can fill gaps, marked as *predicted*. Missing stays missing.
+2. **Rank.** The page is matched with comparable shirts (`analysis/peers.py`) and scored by a fixed, visible formula (facts stated, description quality, structured data). No AI in the score. It lists the 3 fixes that matter most, each with evidence. Without the dataset there are no peers, so the position reads "1 of 1".
+3. **Generate Fix.** `optimizer/` writes a title and description from the verified facts only. `optimizer/guard.py` checks every sentence: a word or number the facts do not support is flagged, and only a fully passing candidate can win.
+4. **AI comparison.** Five writers get the same facts: the shop's original text, Aparece (no model), Aparece + GPT-4o-mini, GPT-4o-mini alone, and Claude Haiku alone. Each part is fact-checked, then scored (title, tags, description). `POST /v1/shootout/live` (the *Compare with AI* button) does this for any audited page, live, with a spend cap. The committed benchmark run adds a simulated shopping test.
+5. **AI visibility.** `benchmark/` asks AI assistants real shopping questions and records which shops and brands they name, and whether their claims match the facts.
+6. **Model ranking against ground truth.** `train/api_eval.py` and `train/eval.py` score every model on the same 200 labelled products (exact match per field), so the Qwen fine-tunes, GPT-4.1, Claude and the rest are compared on one scale.
+7. **Keywords.** Shared keywords (product type, material, fit, neckline, sleeve, weight, colour) are the facts shoppers and assistants both use. Aparece only writes a keyword into a title or description when the page proves it.
+8. **Over time.** `monitor/` snapshots pages and reports changes, `chat/` answers only from stored records, `governance/` and `webhooks/` add approvals and signed events.
+
+Full detail with the code for each part: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+### The rank formula
+
+Listing quality is a fixed formula with no AI (`api/audit_api.py`: `weights`, `quality`, `rank`):
+
+```
+score = 60 x (key facts stated / 22)
+      + 20 x (shopper questions the description answers / 9)
+      + 20 x (schema.org Product and Offer markup found / 2)
+```
+
+Facts are counted only when the page states them. A description question counts once, only when a sentence answers it and matches a verified fact; keyword lists and repeated text do not count. The page is ranked among up to 24 comparable shirts (same product type, language, audience and sleeve length, price within 30%). Ties share a position. If structured data is unknown for any shirt in the group, that part is dropped for everyone and the other weights are rescaled to 100 (75 / 25). It ranks listing completeness only; it is not an AI-visibility or search rank.
+
+### Where the AI and the recommendations live
+
+| What | Files | AI or rules |
+|---|---|---|
+| Reading page facts | `dataset/collect/normalize.py`, `extract.py` | Rules, with evidence |
+| Filling empty fields | `api/model_backend.py`; training in `train/train.py` (QLoRA on Qwen), scoring in `train/eval.py`, `train/api_eval.py`, `train/reward.py` | **AI**: fine-tuned Qwen, optional (`MODEL_BACKEND=qwen`) |
+| Rank and top 3 fixes (the recommendation system) | `api/audit_api.py` (`rank`, `build_actions`), `analysis/gaps.py`, `analysis/peers.py` | Rules: compares the page with its peers and lists what most of them state and it does not |
+| Writing title and description | `optimizer/fix.py`, `optimizer/llm.py`, `optimizer/truth.py` | **AI** writer (`OPTIMIZER_BACKEND`: `stub` by default, or OpenAI, Anthropic, Qwen) |
+| Fact-check of every sentence | `optimizer/guard.py` | Rules: blocks any word or number the facts do not support |
+| AI comparison and visibility | `benchmark/shootout/`, `benchmark/harness.py` | Calls GPT and Claude, then scores with rules |
+| Merchant chat | `chat/engine.py` | LLM (`CHAT_LLM`, `stub` by default), answers only from stored records |
+
+So the ranking and the fix recommendations are transparent rules. The AI parts are the Qwen field filler and the copy writer, and both are checked by rules before anything is shown.
+
+### The web app
+
+`web/src/App.tsx` maps each address to a page (all under `#/`):
+
+| Address | Page | File |
+|---|---|---|
+| `#/` | Landing, then the overview once signed in | `components/Home.tsx` |
+| `#/audit`, `#/report/<id>` | Audit a link or draft and read the result, rank and fixes | `components/AuditPage.tsx`, `Results.tsx`, `FixPanel.tsx` |
+| `#/bulk` | Audit many links at once | `components/BulkPage.tsx` |
+| `#/products`, `#/products/<id>` | Saved products, monitoring and history | `components/ProductDetail.tsx`, `Monitor.tsx` |
+| `#/compare/<id>` | AI comparison, saved or live | `pages/AiComparison.tsx` |
+| `#/models` | Model ranking against ground truth | `components/ModelsPage.tsx` |
+| `#/reports`, `#/share/<id>` | Reports and shareable results | `components/Report.tsx` |
+| `#/chat` | Merchant chat | `components/Chat.tsx` |
+| `#/docs`, `#/settings`, `#/onboarding`, `#/signin` | Help, settings, first run, sign-in | `pages/DocsPage.tsx`, `Settings.tsx`, `Onboarding.tsx` |
+
+English and Spanish strings are in `web/src/i18n/`.
+
 ## Quickstart
 
 Docker (published image):
@@ -60,6 +117,19 @@ git clone https://github.com/1n1t6Sh3ll/powerlens.git && cd powerlens
 ```
 
 `run.sh` creates `.venv`, installs `api/requirements.txt`, builds `web/`, and starts the API. Open http://127.0.0.1:8000 (API docs at `/docs`, health at `/v1/health`). Without the dataset, ranking against real shirts is unavailable; set `PRODUCTLENS_DATA` to a built dataset (see [docs/DATASET_SPEC.md](docs/DATASET_SPEC.md)).
+
+### Run the whole project, including live AI comparison
+
+1. **Start the app** with `./run.sh --skip-tests` (Windows: `.\run.ps1 -SkipTests`), or Docker as above. Open http://127.0.0.1:8000. Check `http://127.0.0.1:8000/v1/health` returns `{"status":"ok"}`. Change the port with `PORT=8001`.
+2. **Audit a product:** paste a public product link on the home page. You get the facts with evidence, the rank, and the top 3 fixes. Click *Generate Fix* for a checked title and description.
+3. **Turn on live AI comparison** (optional, paid): copy `.env.example` to `.env`, uncomment `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY`, and restart. `run.sh` then installs the provider packages (`benchmark/requirements.txt`) itself. Without a key, only the free writers run; the paid ones are skipped and the page says so.
+   - Spending is capped: `SHOOTOUT_LIVE_MAX_USD` per request (default `0.05`) and `SHOOTOUT_LIVE_DAILY_USD` per server run (default `1`). One product costs about a tenth of a cent to a few tenths of a cent.
+   - In the site, audit a page, then click *Compare with AI*. Or call `POST /v1/shootout/live` with `{"product": <record from POST /v1/audits>, "language": "en"}`.
+4. **Compare many real pages:** with the server running, `python -m benchmark.shootout.live_batch run --out results.json --max-usd 0.5`, then `python -m benchmark.shootout.live_batch report results.json`. The run committed here is in [`benchmark/results/live-real-2026-09-30`](benchmark/results/live-real-2026-09-30/report.md).
+5. **Score models against ground truth:** `python train/api_eval.py --data dataset/output/final_v2_2k/test_gold.jsonl --models openai:gpt-4o-mini --max-usd 1 --dry-run` prints the cost first; drop `--dry-run` to run. Paid runs refuse to start without `--max-usd`.
+6. **Run the checks:** the commands under *Tests and build* below.
+
+If something looks wrong: *"not in the comparison set"* means the page could not find the audited record; open *Compare with AI* from the audit result. *Position "1 of 1"* means no peer dataset is loaded (`PRODUCTLENS_DATA`). A paid writer showing an error usually means a missing or empty-credit key.
 
 ## Configuration
 
@@ -94,13 +164,33 @@ CI (`.github/workflows/ci.yml`) runs these on every pull request.
 
 ## Results
 
-| Test (same input for every model) | Result |
-|---|---|
-| Reading product pages (200 products, 63 stores) | Aparece Qwen2.5-0.5B **85.8%** · GPT-4.1 27.2% · untuned Qwen 4.7% |
-| Writing copy, 5 products (`benchmark/shootout/results/2026-09-29`) | Aparece won title, tags and description; the visibility gap to the runner-up is not decisive (its interval includes 0) |
-| Which shops AI names (`benchmark/results/visibility-2026-09-30`) | 384 answers: none of the 103 small shops named; big brands named instead |
+**Model ranking: reading product pages** (200 products, 63 stores, same input for every system; share of filled fields that exactly match the label):
 
-Caveats: the extraction test uses our own label format (figures are from [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md); the raw run files are not committed). The copy-test judges are also AI models, and the test context is simulated. Nothing here predicts how a real assistant will rank your page.
+| # | System | Accuracy |
+|---|---|---|
+| 1 | Aparece Qwen2.5-0.5B, fine-tuned | **85.8%** |
+| 2 | Aparece Qwen2.5-1.5B, fine-tuned (16k shirts) | 81.2% |
+| 3 | GPT-4.1 | 27.2% |
+| 4 | Claude Sonnet 5.5 (answered 87 of 200 only, not comparable) | 8.1% |
+| 5 | Qwen2.5-0.5B, no fine-tuning | 4.7% |
+
+Scored on our own label format, which favours the fine-tuned models. These figures come from a local run (`train/runs/comparison.json`, not committed); see [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
+
+**Comparison on real product pages** ([`benchmark/results/live-real-2026-09-30`](benchmark/results/live-real-2026-09-30/report.md)): 25 pages fetched live, 22 with enough facts, total cost $0.04. Each version is fact-checked against the page's own verified facts.
+
+| Version | Passed fact check | Flagged sentences |
+|---|---|---|
+| Aparece (no AI model) | **22 / 22** | 0 |
+| Aparece + GPT-4o-mini | **22 / 22** | 0 |
+| Shop's original text | 1 / 22 | 417 |
+| GPT-4o-mini alone | 0 / 22 | 82 |
+| Claude Haiku 4.5 alone | 0 / 21 | 75 |
+
+Aparece won the description on all 22 pages, the title on 19 and the tags on 18. Flagged sentences are claims the page's facts do not support, such as "vibrant" or "perfect for casual wear". Repeat it with `python -m benchmark.shootout.live_batch run --out <file> --max-usd 0.5` (needs a running API and API keys). Three pages could not be fetched (400, 404, 502). Position "1 of 1" in the run is not a ranking, because that machine had no peer dataset.
+
+**Other tests**: the 5-product copy test (`benchmark/shootout/results/2026-09-29`) found no decisive visibility gap (interval includes 0). In 384 AI shopping answers (`benchmark/results/visibility-2026-09-30`), none of 103 small shops was named; Everlane, Uniqlo and Patagonia were.
+
+Caveats: the checks measure facts and listing quality, not how a real assistant will rank your page. Judges in the copy test are also AI models, and its context is simulated.
 
 ## Project layout
 
